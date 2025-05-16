@@ -39,7 +39,7 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
       },
     ]);
 
-    if (packageType === 'Demo') {
+    if (packageType === 'Freemium') {
       await supabase
         .from('demo_attempts')
         .update({ count: demoAttempts + 1 })
