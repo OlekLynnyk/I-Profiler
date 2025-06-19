@@ -64,7 +64,7 @@ importers:
         version: 9.16.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       stripe:
         specifier: ^18.1.1
-        version: 18.2.1(@types/node@20.17.43)
+        version: 18.2.1(@types/node@20.19.1)
       three:
         specifier: ^0.176.0
         version: 0.176.0
@@ -73,8 +73,8 @@ importers:
         specifier: ^4
         version: 4.1.5
       '@types/node':
-        specifier: ^20
-        version: 20.17.43
+        specifier: ^20.19.1
+        version: 20.19.1
       '@types/react':
         specifier: ^19
         version: 19.1.3
@@ -477,8 +477,8 @@ packages:
   '@types/draco3d@1.4.10':
     resolution: {integrity: sha512-AX22jp8Y7wwaBgAixaSvkoG4M/+PlAcm3Qs4OW8yT9DM4xUpWKeFhLueTAyZF39pviAdcDdeJoACapiAceqNcw==}
 
-  '@types/node@20.17.43':
-    resolution: {integrity: sha512-DnDEcDUnVAUYSa7U03QvrXbj1MZj00xoyi/a3lRGkR/c7BFUnqv+OY9EUphMqXUKdZJEOmuzu2mm+LmCisnPow==}
+  '@types/node@20.19.1':
+    resolution: {integrity: sha512-jJD50LtlD2dodAEO653i3YF04NWak6jN3ky+Ri3Em3mGR39/glWiboM/IePaRbgwSfqM1TpGXfAg8ohn/4dTgA==}
 
   '@types/offscreencanvas@2019.7.3':
     resolution: {integrity: sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A==}
@@ -1162,8 +1162,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  undici-types@6.19.8:
-    resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
   use-sync-external-store@1.5.0:
     resolution: {integrity: sha512-Rb46I4cGGVBmjamjphe8L/UnvJD+uPPtTkNvX5mZgqdbavhI4EbgIWJiIHXJ8bc/i9EQGPRh4DwEURJ552Do0A==}
@@ -1584,9 +1584,9 @@ snapshots:
 
   '@types/draco3d@1.4.10': {}
 
-  '@types/node@20.17.43':
+  '@types/node@20.19.1':
     dependencies:
-      undici-types: 6.19.8
+      undici-types: 6.21.0
 
   '@types/offscreencanvas@2019.7.3': {}
 
@@ -1620,7 +1620,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 20.17.43
+      '@types/node': 20.19.1
 
   '@use-gesture/core@10.3.1': {}
 
@@ -2144,11 +2144,11 @@ snapshots:
 
   streamsearch@1.1.0: {}
 
-  stripe@18.2.1(@types/node@20.17.43):
+  stripe@18.2.1(@types/node@20.19.1):
     dependencies:
       qs: 6.14.0
     optionalDependencies:
-      '@types/node': 20.17.43
+      '@types/node': 20.19.1
 
   styled-jsx@5.1.6(react@19.1.0):
     dependencies:
@@ -2225,7 +2225,7 @@ snapshots:
 
   typescript@5.8.3: {}
 
-  undici-types@6.19.8: {}
+  undici-types@6.21.0: {}
 
   use-sync-external-store@1.5.0(react@19.1.0):
     dependencies:
