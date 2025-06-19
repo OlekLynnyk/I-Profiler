@@ -10,11 +10,10 @@ import Footer from './components/Footer';
 import CubeCanvas from './components/CubeCanvas';
 import Testimonials from './components/Testimonials';
 import AuthModal from './components/AuthModal';
-import AnimatedHeadline from './components/AnimatedHeadline';
 
 export default function HomePage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const { session, signOut } = useAuth();
+  const { session } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -27,33 +26,30 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col font-inter text-[#E5E5E5] relative overflow-hidden bg-[#1A1E23]">
       <Header onLoginClick={() => setIsAuthModalOpen(true)} />
 
-      <main className="flex flex-col lg:flex-row items-center justify-between flex-grow text-left px-6 mt-20 gap-12 max-w-7xl mx-auto relative z-10">
-        <div className="lg:w-1/2 space-y-8 pl-[20px] max-w-[55%]">
+      <main className="flex flex-col lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
+        <div className="lg:w-1/2 space-y-2 pl-[20px] max-w-[55%]">
           <div className="min-h-[4rem]">
-            <AnimatedHeadline />
+            <h1 className="text-5xl md:text-7xl font-bold uppercase leading-tight tracking-tight break-words">
+              <span className="text-white">WE UNLOCK INSIGHTS WITH</span><br />
+              <span className="text-white">ADVANCED PROFILING</span><br />
+              <span className="text-[#C084FC]" style={{ fontSize: '28.6px' }}>
+                SEE WHAT OTHERS CANNOT
+              </span>
+            </h1>
           </div>
 
-          <div className="space-y-6 text-base md:text-lg leading-relaxed">
+          <div className="space-y-6 text-sm md:text-base leading-relaxed max-w-[28.6rem]">
             <p>
-              I,Profiler analyses subtle cues — appearance, social media posts, writing, and emphasis — to reveal what drives people and provide actionable insights.
-            </p>
-            <p>
-              We simplify your life, unlocking deeper human understanding for smarter decision-making. No fluff, just real value — delivered quickly and precisely.
+              Stay well ahead of others<br />
+              and influence situations
             </p>
 
-            {!session ? (
+            {!session && (
               <button
                 onClick={() => setIsAuthModalOpen(true)}
-                className="bg-[#C084FC] text-[#212529] font-inter font-weight-400 py-3 px-8 rounded-2xl text-lg hover:bg-[#D8B4FE] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)]"
+                className="bg-transparent text-[#E5E5E5] border-2 border-white font-inter font-weight-400 py-2 px-5 rounded-2xl text-base hover:bg-[#C084FC] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)]"
               >
-                Try for Free
-              </button>
-            ) : (
-              <button
-                onClick={signOut}
-                className="bg-[#C084FC] text-[#212529] font-inter font-weight-400 py-3 px-8 rounded-2xl text-lg hover:bg-[#D8B4FE] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)]"
-              >
-                Sign Out
+                Start Free Trial
               </button>
             )}
           </div>
@@ -79,10 +75,13 @@ export default function HomePage() {
       <section id="about" className="mt-4 mb-10 relative z-10">
         <div className="text-center space-y-6">
           <h2 className="text-3xl md:text-4xl font-montserrat font-weight-600 text-[#F5F5F5]">
-            About I,Profiler
+            About
           </h2>
-          <p className="text-[#E5E5E5] max-w-5xl mx-auto text-base md:text-lg leading-relaxed font-inter font-weight-400">
-            What drives people? That question sparked a journey into profiling — decoding the subtle cues behind how individuals dress, speak, move, and make decisions. Not to pigeonhole them, but to understand them as they truly are. At I,Profiler, we believe a poet might be hidden within a winemaker, and a winemaker within a poet. This philosophy guides our approach, blending art and science to uncover the layers of human behavior. Our tools delve into the nuances of personality, drawing from diverse data points like online presence, written communication, and visual style. The result is a richer, more empathetic understanding that empowers better connections and decisions. We’re committed to evolving this process, constantly refining our methods to reflect the complexity of human nature, ensuring our insights remain relevant and profound...
+          <p className="text-[#E5E5E5] max-w-3xl mx-auto text-base md:text-lg leading-relaxed font-inter font-weight-400 text-justify">
+            Like Pininfarina in design, I,Profiler in not really people's secrets! Understanding people is a profound challenge. Most view others through their own prism of fears and beliefs, yet every individual is unique. Then what motivates them? With I,Profiler, you get the answers.
+          </p>
+          <p className="text-[#E5E5E5] max-w-3xl mx-auto text-base md:text-lg leading-relaxed font-inter font-weight-400 text-justify">
+            With us curious minds can deepen their understanding of human behaviour. Decode subtle cues — how someone dresses, speaks, moves, or decides — not to stereotype, but to reveal their true selves and what fuels them. We see a poet in a winemaker, or a winemaker in a poet, but we never assume they're the same. We discern their unique drives, blending art and science to illuminate human nature. — Founder, I,Profiler
           </p>
         </div>
       </section>

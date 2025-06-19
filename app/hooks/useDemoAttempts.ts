@@ -1,48 +1,49 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PackageType, isValidPackageType } from '@/types/plan';
-import { getPackageFromServer } from '@/lib/subscription';
 import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { PACKAGE_LIMITS, ValidPackageType } from '@/types/plan';
 import { Database } from '@/types/supabase';
 
 export function useDemoAttempts(): {
   demoAttempts: number;
-  packageType: PackageType;
+  packageType: ValidPackageType;
   limitReached: boolean;
 } {
   const [demoAttempts, setDemoAttempts] = useState(0);
-  const [packageType, setPackageType] = useState<PackageType>('Freemium');
+  const [packageType, setPackageType] = useState<ValidPackageType>('Freemium');
 
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createBrowserSupabaseClient<Database>();
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
 
-      try {
-        const pkgFromAPI = await getPackageFromServer(supabase);
+      console.log('👤 Текущий userId:', userId); // ← Добавлено для проверки
 
-        if (isValidPackageType(pkgFromAPI)) {
-          setPackageType(pkgFromAPI);
-        } else {
-          console.warn('⚠️ Invalid package type from server:', pkgFromAPI);
-          setPackageType('Freemium');
-        }
+      if (!userId) return;
 
-        // TODO: fetch actual demoAttempts here if needed
-        // const { data, error } = await supabase...
-      } catch (err) {
-        console.error('❌ Failed to fetch package type', err);
-        setPackageType('Freemium');
-      }
+      const { data, error } = await supabase
+        .from('user_limits')
+        .select('used_today, plan, daily_limit')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error || !data) return;
+
+      const currentPlan = (data.plan ?? 'Freemium') as ValidPackageType;
+      setPackageType(currentPlan);
+      setDemoAttempts(data.used_today ?? 0);
     };
 
     fetchData();
   }, []);
 
+  const limit = PACKAGE_LIMITS[packageType].dailyGenerations;
+
   return {
     demoAttempts,
     packageType,
-    limitReached: packageType === 'Freemium' && demoAttempts >= 5,
+    limitReached: demoAttempts >= limit,
   };
 }
-

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 export default function AuthButton() {
   const router = useRouter();
@@ -22,17 +22,26 @@ export default function AuthButton() {
 
     getUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
     return () => {
       mounted = false;
-      listener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
-  const handleLogin = () => router.push('/login');
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'github', // или 'google'
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    });
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -40,13 +49,12 @@ export default function AuthButton() {
     router.push('/login');
   };
 
-  if (loading) return <button disabled className="px-4 py-2 bg-gray-400 rounded">...</button>;
+  if (loading) {
+    return <button disabled>...</button>;
+  }
 
   return (
-    <button
-      onClick={user ? handleLogout : handleLogin}
-      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-    >
+    <button onClick={user ? handleLogout : handleLogin}>
       {user ? 'Logout' : 'Login'}
     </button>
   );

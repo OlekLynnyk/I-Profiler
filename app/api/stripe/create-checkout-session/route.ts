@@ -1,52 +1,98 @@
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { stripe } from '@/lib/stripe';
+import type { Database } from '@/types/supabase';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-04-30.basil",
-});
+export async function POST(req: NextRequest) {
+  const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
 
-type PlanType = 'smarter' | 'business';
-
-export async function POST(req: Request) {
-  const cookieStore = cookies(); // no await here
-  const user_id = (await cookieStore).get("user_id")?.value;
-
-  if (!user_id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized: Missing access token' }, { status: 401 });
   }
 
-  const { plan } = await req.json();
-
-  const plans = {
-    smarter: { name: "Smarter Plan", amount: 1 },
-    business: { name: "Business Plan", amount: 1 },
-  };
-
-  const selectedPlan = plans[plan as PlanType];
-
-  if (!selectedPlan) {
-    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-  }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: { name: selectedPlan.name },
-          unit_amount: selectedPlan.amount,
-          recurring: { interval: "month" },
+  const supabase = createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        quantity: 1,
       },
-    ],
-    metadata: { user_id },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cancel`,
-  });
+    }
+  );
 
-  return NextResponse.json({ url: session.url });
+  const { priceId } = await req.json().catch(() => ({}));
+  if (!priceId || typeof priceId !== 'string') {
+    return NextResponse.json({ error: 'Missing or invalid priceId' }, { status: 400 });
+  }
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const {
+    data: subRecord,
+    error: subError,
+  } = await supabase
+    .from('user_subscription')
+    .select('stripe_customer_id')
+    .eq('user_id', user.id)
+    .single();
+
+  let customerId = subRecord?.stripe_customer_id;
+
+  if (customerId) {
+    try {
+      await stripe.customers.retrieve(customerId);
+    } catch (e: any) {
+      if (e.code === 'resource_missing') {
+        customerId = undefined;
+      } else {
+        return NextResponse.json({ error: 'Stripe customer fetch failed' }, { status: 500 });
+      }
+    }
+  }
+
+  if (!customerId) {
+    try {
+      const customer = await stripe.customers.create({
+        email: user.email ?? undefined,
+        metadata: { user_id: user.id },
+      });
+
+      customerId = customer.id;
+
+      await supabase.from('user_subscription').upsert(
+        {
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          created_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
+    } catch {
+      return NextResponse.json({ error: 'Stripe customer creation failed' }, { status: 500 });
+    }
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/workspace?checkout=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/workspace?checkout=cancel`,
+      metadata: { user_id: user.id },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch {
+    return NextResponse.json({ error: 'Stripe checkout session failed' }, { status: 500 });
+  }
 }

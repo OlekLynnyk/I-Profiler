@@ -11,9 +11,9 @@ import {
   Session,
   User,
 } from '@supabase/supabase-js';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 
-const supabase = createClientComponentClient();
+const supabase = createPagesBrowserClient();
 
 const AuthContext = createContext<{
   session: Session | null;
@@ -39,6 +39,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       setUser(data.session?.user ?? null);
+
+      // ✅ Путь обновлён: /api/user/init
+      if (data.session?.access_token) {
+        try {
+          await fetch('/api/user/init', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${data.session.access_token}`,
+            },
+          });
+        } catch (e) {
+          console.warn('❌ Failed to init user:', e);
+        }
+      }
+
       setIsLoading(false);
     };
 

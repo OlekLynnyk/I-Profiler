@@ -2,87 +2,76 @@
 
 import React, { useState, type ReactNode } from 'react';
 import { useProfile } from '../hooks/useProfile';
+import { PlanProgress } from '@/components/PlanProgress';
 import { PackageType } from '@/types/plan';
+import { useUserPlan } from '../hooks/useUserPlan';
 
 type SidebarProps = {
   onClose: () => void;
   packageType: PackageType;
 };
 
-function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(' ');
-}
-
 type SectionBox = {
   id: string;
   title: string;
-  imageUrl: string;
   content: ReactNode;
 };
+
+function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 export default function Sidebar({ onClose, packageType }: SidebarProps) {
   const { profile, loading } = useProfile();
   const [activeBox, setActiveBox] = useState<string | null>(null);
 
+  const openPricingSection = () => {
+    window.open('/#pricing', '_blank');
+  };
+
   const boxes: SectionBox[] = [
     {
-      id: 'your-plan',
-      title: 'Your Plan',
-      imageUrl:
-        'https://images.unsplash.com/photo-1695826637411-5d92c45a5b14?q=80&w=2062&auto=format&fit=crop',
+      id: 'plan-box',
+      title: packageType,
       content: (
-        <div>
-          <p className="text-sm text-gray-500">Plan Type:</p>
-          <p className="text-lg font-bold">{packageType}</p>
+        <div className="space-y-2 text-sm text-gray-700">
+          <button
+            onClick={openPricingSection}
+            className="text-xs text-white bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded-xl w-full"
+          >
+            Upgrade to Smarter
+          </button>
+          <button
+            onClick={openPricingSection}
+            className="text-xs text-white bg-purple-700 hover:bg-purple-800 px-3 py-1 rounded-xl w-full"
+          >
+            Upgrade to Business
+          </button>
         </div>
       ),
     },
     {
       id: 'profile-settings',
       title: 'Profile Settings',
-      imageUrl:
-        'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2069&auto=format&fit=crop',
       content: (
-        <ul className="space-y-2 text-sm text-gray-600">
-          <li className="hover:text-black cursor-pointer">Edit Profile</li>
-          <li className="hover:text-black cursor-pointer">Account Settings</li>
-        </ul>
-      ),
-    },
-    {
-      id: 'ai-settings',
-      title: 'AI Settings',
-      imageUrl:
-        'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070&auto=format&fit=crop',
-      content: (
-        <ul className="space-y-2 text-sm text-gray-600">
-          <li className="hover:text-black cursor-pointer">Custom Prompts</li>
-          <li className="hover:text-black cursor-pointer">Model Preferences</li>
-        </ul>
-      ),
-    },
-    {
-      id: 'analytics',
-      title: 'Analytics',
-      imageUrl:
-        'https://images.unsplash.com/photo-1573164574396-f0c5e6b76b2c?q=80&w=2070&auto=format&fit=crop',
-      content: (
-        <ul className="space-y-2 text-sm text-gray-600">
-          <li className="hover:text-black cursor-pointer">Usage Stats</li>
-          <li className="hover:text-black cursor-pointer">Export Data</li>
-        </ul>
-      ),
-    },
-    {
-      id: 'subscription',
-      title: 'Subscription',
-      imageUrl:
-        'https://images.unsplash.com/photo-1591696205602-2f950c417cb9?q=80&w=2070&auto=format&fit=crop',
-      content: (
-        <ul className="space-y-2 text-sm text-gray-600">
-          <li className="hover:text-black cursor-pointer">Upgrade Plan</li>
-          <li className="hover:text-black cursor-pointer">Billing History</li>
-        </ul>
+        <div className="space-y-2 text-sm text-gray-700">
+          <a
+            href="/settings/profile"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block hover:text-black"
+          >
+            Edit Profile
+          </a>
+          <a
+            href="/settings/subscription"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block hover:text-black"
+          >
+            Manage Subscription
+          </a>
+        </div>
       ),
     },
   ];
@@ -90,54 +79,68 @@ export default function Sidebar({ onClose, packageType }: SidebarProps) {
   return (
     <div className="fixed top-0 right-0 h-full w-80 bg-[#FDFCF9] text-black shadow-xl z-50 p-4 overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Settings</h2>
+        {!loading && profile && (
+          <p className="text-sm font-semibold text-gray-800">
+            Hi, {profile.full_name || 'User'}
+          </p>
+        )}
         <button onClick={onClose} className="text-gray-600 hover:text-black text-lg">✕</button>
       </div>
 
-      {/* Профиль вверху отдельно */}
-      {!loading && profile && (
-        <div className="mb-4">
-          <p className="text-sm text-gray-400">Signed in as</p>
-          <p className="font-medium text-black">{profile.full_name || 'Unnamed'}</p>
-          <p className="text-sm text-gray-500">{profile.email}</p>
-          <p className="text-xs mt-1 text-green-500">
-            {profile.email_verified ? 'Email Verified' : 'Email Not Verified'}
-          </p>
-          <p className="text-xs mt-1 text-blue-500">Role: {profile.role}</p>
+      <div
+        onClick={() => setActiveBox(prev => (prev === 'plan-box' ? null : 'plan-box'))}
+        className={cn(
+          'transition-all duration-300 cursor-pointer mb-4 rounded-xl border',
+          activeBox === 'plan-box' ? 'border-[#C084FC] bg-gray-50' : 'border-gray-300 bg-white',
+          'hover:shadow-sm'
+        )}
+      >
+        <div className="px-4 py-3 flex justify-between items-center">
+          <PlanProgressFetcher />
+          <span className="text-gray-500 text-xs">{activeBox === 'plan-box' ? '▲' : '▼'}</span>
         </div>
-      )}
+        {activeBox === 'plan-box' && (
+          <div className="px-4 pb-4">{boxes[0].content}</div>
+        )}
+      </div>
 
-      {boxes.map((box) => {
+      {boxes.slice(1).map((box) => {
         const isActive = activeBox === box.id;
-
         return (
           <div
             key={box.id}
-            onClick={() => setActiveBox((prev) => (prev === box.id ? null : box.id))}
+            onClick={() => setActiveBox(prev => (prev === box.id ? null : box.id))}
             className={cn(
-              'transition-all duration-300 ease-in-out cursor-pointer mb-4 rounded-xl overflow-hidden border',
-              isActive ? 'border-[#C084FC] h-64' : 'border-gray-300 h-28',
-              'hover:shadow-md'
+              'transition-all duration-300 cursor-pointer mb-4 rounded-xl border',
+              isActive ? 'border-[#C084FC] bg-gray-50' : 'border-gray-300 bg-white',
+              'hover:shadow-sm'
             )}
           >
-            <div className="flex h-full">
-              <div className="w-1/3 p-3 flex items-center text-sm text-gray-800 font-medium">
-                {box.title}
-              </div>
-              <div
-                className="w-2/3 h-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${box.imageUrl})` }}
-              />
+            <div className="px-4 py-3 flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-800">{box.title}</span>
+              <span className="text-gray-500 text-xs">{isActive ? '▲' : '▼'}</span>
             </div>
-
             {isActive && (
-              <div className="p-3 text-xs text-gray-700 bg-gray-50 border-t border-gray-200">
+              <div className="px-4 pb-4">
                 {box.content}
               </div>
             )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function PlanProgressFetcher() {
+  const { plan, limits, used, hasReachedLimit } = useUserPlan();
+
+  if (!plan) return <div className="text-xs text-gray-400">Loading plan data...</div>;
+
+  return (
+    <div>
+      <PlanProgress planName={plan} used={used} total={limits.dailyGenerations} />
+      {hasReachedLimit && <p className="text-xs text-red-500 mt-1">Daily Limit Reached</p>}
     </div>
   );
 }

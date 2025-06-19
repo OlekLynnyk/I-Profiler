@@ -1,6 +1,33 @@
-// types/plan.ts
-export type PackageType = 'Freemium' | 'Smarter' | 'Business';
+export const PACKAGE_TYPES = ['Freemium', 'Smarter', 'Business'] as const;
+export type ValidPackageType = typeof PACKAGE_TYPES[number];
+export type PackageType = ValidPackageType | string;
 
-export const isValidPackageType = (value: string): value is PackageType => {
-  return ['Freemium', 'Smarter', 'Business'].includes(value);
+export const PACKAGE_LIMITS: Record<ValidPackageType, {
+  requestsPerMonth: number;
+  dailyGenerations: number;
+  allowExport: boolean;
+  allowCustomBranding: boolean;
+}> = {
+  Freemium: {
+    requestsPerMonth: 10,
+    dailyGenerations: 5,
+    allowExport: false,
+    allowCustomBranding: false,
+  },
+  Smarter: {
+    requestsPerMonth: 1000,
+    dailyGenerations: 6,
+    allowExport: true,
+    allowCustomBranding: true,
+  },
+  Business: {
+    requestsPerMonth: 10000,
+    dailyGenerations: 7,
+    allowExport: true,
+    allowCustomBranding: true,
+  },
 };
+
+export function isValidPackageType(pkg: string): pkg is ValidPackageType {
+  return PACKAGE_TYPES.includes(pkg as ValidPackageType);
+}

@@ -1,22 +1,55 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+
+const supabase = createPagesBrowserClient();
 
 export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
-  const router = useRouter();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const handleCheckout = async (plan: string) => {
-    setLoadingPlan(plan);
-    const res = await fetch('/api/stripe/create-checkout-session', {
-      method: 'POST',
-      body: JSON.stringify({ plan }),
-      headers: { 'Content-Type': 'application/json' },
-    });
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!!data.session);
+    };
+    checkSession();
+  }, []);
 
-    const { url } = await res.json();
-    window.location.href = url;
+  const handleCheckout = async (priceId: string) => {
+    try {
+      setLoadingPlan(priceId);
+
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        body: JSON.stringify({ priceId }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Stripe checkout failed (${res.status}): ${errorText}`);
+      }
+
+      const { url } = await res.json();
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('Missing Stripe redirect URL');
+      }
+    } catch (error) {
+      console.error('❌ Stripe Checkout Error:', error);
+      alert('Something went wrong with Stripe checkout. Please try again later.');
+      setLoadingPlan(null);
+    }
   };
 
   const plans = [
@@ -29,18 +62,18 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     },
     {
       name: 'Smarter',
-      price: '€19.99/month',
+      price: '€249/month',
       description: 'Enhanced AI features and deeper profiling for individuals & teams.',
       features: ['1,000 AI queries/month', 'Advanced profiling tools', 'Team dashboard', 'Email support'],
       highlight: true,
-      action: () => handleCheckout('smarter'),
+      action: () => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm'),
     },
     {
       name: 'Business',
-      price: '€249.99/month',
+      price: '€899/month',
       description: 'Full-featured access for organisations.',
       features: ['10,000 AI queries/month', 'All features from Smarter', 'Priority support', 'Custom options'],
-      action: () => handleCheckout('business'),
+      action: () => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV'),
     },
   ];
 
@@ -69,8 +102,9 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                 ))}
               </ul>
               <button
-                onClick={plan.action}
-                className="w-full py-2 px-4 rounded-2xl bg-[#C084FC] text-[#212529] hover:bg-[#D8B4FE]"
+                onClick={plan.name === 'Freemium' && isLoggedIn ? undefined : plan.action}
+                className="w-full py-2 px-4 rounded-2xl bg-[#C084FC] text-[#212529] hover:bg-[#D8B4FE] disabled:opacity-50"
+                disabled={plan.name === 'Freemium' && isLoggedIn}
               >
                 {loadingPlan === plan.name ? 'Redirecting...' : plan.name === 'Freemium' ? 'Try Demo' : 'Get Started'}
               </button>

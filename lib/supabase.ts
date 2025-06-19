@@ -1,7 +1,13 @@
-'use client';
-
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+// lib/supabase.ts
+import { createPagesBrowserClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { type SupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { type Database } from '../types/supabase'; // (необязательно, если используешь типизацию для DB schema)
+import { cookies } from 'next/headers';
+import { type Database } from '@/types/supabase';
 
-export const supabase: SupabaseClient<Database> = createPagesBrowserClient<Database>();
+export function createBrowserClient(): SupabaseClient<Database> {
+  return createPagesBrowserClient<Database>();
+}
+
+export function createServerClient(): SupabaseClient<Database> {
+  return createServerComponentClient<Database>({ cookies });
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+const supabase = createPagesBrowserClient(); 
 
 // 1. Тип профиля — укажи все поля, которые у тебя есть в таблице Supabase
 export type Profile = {

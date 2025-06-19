@@ -1,38 +1,175 @@
-import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
+import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
+import { isValidPackageType } from "@/types/plan";
+import { updateUserLimits } from "@/lib/updateUserLimits";
+import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-04-30.basil",
-});
+const supabase = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-export async function POST(req: NextRequest) {
-  const body = await req.text();
-  const sig = req.headers.get("stripe-signature")!;
-  const secret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
+export async function POST(req: Request) {
+  const rawBody = await req.text();
+  const sig = (await headers()).get("stripe-signature");
+
+  if (!sig) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+  }
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, secret);
+    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
   } catch (err) {
-    return new NextResponse(`Webhook Error: ${(err as Error).message}`, { status: 400 });
+    console.error("❌ Webhook verification failed:", (err as Error).message);
+    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const user_id = session.metadata?.user_id;
+  try {
+    switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted":
+        await handleSubscriptionChange(event.data.object as Stripe.Subscription);
+        break;
+      default:
+        console.log(`ℹ️ Unhandled event type: ${event.type}`);
+    }
+  } catch (err) {
+    console.error("❌ Error handling webhook:", err);
+    return NextResponse.json({ error: "Webhook handling failed" }, { status: 500 });
+  }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return NextResponse.json({ message: "✅ OK" });
+}
+
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  console.log("✅ Webhook received for checkout.session.completed");
+
+  const userId = session.metadata?.user_id;
+  const subscriptionId = session.subscription as string;
+
+  if (!userId || !subscriptionId) {
+    console.warn("⚠️ Missing metadata.user_id or subscriptionId");
+    return;
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  await updateUserSubscription(userId, subscription);
+  await initializeCurrentPeriodStartIfMissing(userId);
+}
+
+async function handleSubscriptionChange(subscription: Stripe.Subscription) {
+  const customerId = subscription.customer as string;
+
+  const { data, error } = await supabase
+    .from("user_subscription")
+    .select("user_id")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+
+  if (error || !data?.user_id) {
+    console.error("❌ Не найден user_id по customerId:", customerId);
+    return;
+  }
+
+  await updateUserSubscription(data.user_id, subscription);
+}
+
+async function updateUserSubscription(userId: string, subscription: Stripe.Subscription) {
+  const priceId = subscription.items.data[0]?.price.id;
+  if (!priceId) {
+    console.warn("⚠️ Subscription has no priceId");
+    return;
+  }
+
+  const plan = PLAN_MAPPING[priceId] ?? null;
+
+  if (!plan || !isValidPackageType(plan)) {
+    console.warn("⚠️ Invalid plan mapped from priceId:", priceId);
+    return;
+  }
+
+  const item = subscription.items.data?.[0];
+  const timestamp = item?.current_period_end;
+  const subscriptionEndsAt = timestamp
+    ? new Date(timestamp * 1000).toISOString()
+    : new Date().toISOString();
+
+  const { error } = await supabase
+    .from("user_subscription")
+    .upsert(
+      {
+        user_id: userId,
+        stripe_customer_id: subscription.customer as string,
+        stripe_subscription_id: subscription.id,
+        stripe_price_id: priceId,
+        status: normalizeStatus(subscription.status),
+        subscription_ends_at: subscriptionEndsAt,
+        plan,
+        package_type: plan,
+        active: true,
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" }
     );
 
-    if (user_id) {
-      await supabase
-        .from("user_subscription")
-        .upsert({ user_id, active: true, plan: 'pro' });
-    }
+  if (error) {
+    console.error("❌ Failed to upsert user subscription:", error.message);
+  } else {
+    await updateUserLimits(supabase, userId, plan);
+  }
+}
+
+async function initializeCurrentPeriodStartIfMissing(userId: string) {
+  const { data, error } = await supabase
+    .from("user_subscription")
+    .select("current_period_start")
+    .eq("user_id", userId)
+    .single();
+
+  if (error) {
+    console.error("❌ Failed to fetch current_period_start:", error.message);
+    return;
   }
 
-  return new NextResponse(null, { status: 200 });
+  if (!data?.current_period_start) {
+    const { error: updateError } = await supabase
+      .from("user_subscription")
+      .update({ current_period_start: new Date().toISOString() })
+      .eq("user_id", userId);
+
+    if (updateError) {
+      console.error("❌ Failed to initialize current_period_start:", updateError.message);
+    }
+  }
 }
+
+function normalizeStatus(status: string): "active" | "canceled" | "incomplete" {
+  switch (status) {
+    case "active":
+    case "trialing":
+      return "active";
+    case "canceled":
+    case "unpaid":
+      return "canceled";
+    case "incomplete":
+    case "incomplete_expired":
+      return "incomplete";
+    default:
+      return "canceled";
+  }
+}
+
+const PLAN_MAPPING: Record<string, string> = {
+  "price_1RQYE4AGnqjZyhfAY8kOMZwm": "Smarter",
+  "price_1RQYEXAGnqjZyhfAryCzNkqV": "Business",
+  "freemium": "Freemium",
+};
