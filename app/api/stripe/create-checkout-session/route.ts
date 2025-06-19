@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { stripe } from '@/lib/stripe';
+import Stripe from 'stripe';
 import type { Database } from '@/types/supabase';
+
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY is not defined');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
+  apiVersion: '2025-05-28.basil',
+  typescript: true,
+});
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
