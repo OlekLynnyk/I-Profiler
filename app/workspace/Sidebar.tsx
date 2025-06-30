@@ -1,32 +1,43 @@
 'use client';
 
-import React, { useState, type ReactNode } from 'react';
+import React, { useState, type ReactNode, KeyboardEvent } from 'react';
+import { useTheme } from 'next-themes';
 import { useProfile } from '../hooks/useProfile';
 import { PlanProgress } from '@/components/PlanProgress';
 import { PackageType } from '@/types/plan';
 import { useUserPlan } from '../hooks/useUserPlan';
+import { usePlanUsage, PlanUsageProvider } from '../workspace/context/PlanUsageContext';
+import { useStripeCheckout } from '../hooks/useStripeCheckout';
 
 type SidebarProps = {
   onClose: () => void;
   packageType: PackageType;
+  refreshToken: number;
 };
 
 type SectionBox = {
   id: string;
   title: string;
-  content: ReactNode;
+  content: React.ReactNode;
 };
 
 function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function Sidebar({ onClose, packageType }: SidebarProps) {
-  const { profile, loading } = useProfile();
+export default function Sidebar({ onClose, packageType, refreshToken }: SidebarProps) {
+  const { profile, loading: profileLoading } = useProfile();
   const [activeBox, setActiveBox] = useState<string | null>(null);
+  const { theme, setTheme } = useTheme();
 
-  const openPricingSection = () => {
-    window.open('/#pricing', '_blank');
+  // ✅ ИСПРАВЛЕНИЕ ЗДЕСЬ
+  const { handleCheckout, loading: upgradeLoading, error: upgradeError } = useStripeCheckout();
+
+  const handleKeyToggle = (e: KeyboardEvent<HTMLDivElement>, boxId: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setActiveBox(prev => (prev === boxId ? null : boxId));
+    }
   };
 
   const boxes: SectionBox[] = [
@@ -34,16 +45,19 @@ export default function Sidebar({ onClose, packageType }: SidebarProps) {
       id: 'plan-box',
       title: packageType,
       content: (
-        <div className="space-y-2 text-sm text-gray-700">
+        <div
+          className="space-y-2 text-sm text-[var(--text-primary)]"
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
-            onClick={openPricingSection}
-            className="text-xs text-white bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded-xl w-full"
+            onClick={() => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm')}
+            className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-xl w-full"
           >
             Upgrade to Smarter
           </button>
           <button
-            onClick={openPricingSection}
-            className="text-xs text-white bg-purple-700 hover:bg-purple-800 px-3 py-1 rounded-xl w-full"
+            onClick={() => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV')}
+            className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl w-full"
           >
             Upgrade to Business
           </button>
@@ -54,12 +68,15 @@ export default function Sidebar({ onClose, packageType }: SidebarProps) {
       id: 'profile-settings',
       title: 'Profile Settings',
       content: (
-        <div className="space-y-2 text-sm text-gray-700">
+        <div
+          className="space-y-2 text-sm text-[var(--text-primary)]"
+          onClick={(e) => e.stopPropagation()}
+        >
           <a
             href="/settings/profile"
             target="_blank"
             rel="noopener noreferrer"
-            className="block hover:text-black"
+            className="block hover:text-[var(--accent)]"
           >
             Edit Profile
           </a>
@@ -67,61 +84,113 @@ export default function Sidebar({ onClose, packageType }: SidebarProps) {
             href="/settings/subscription"
             target="_blank"
             rel="noopener noreferrer"
-            className="block hover:text-black"
+            className="block hover:text-[var(--accent)]"
           >
             Manage Subscription
           </a>
         </div>
       ),
     },
+    {
+      id: 'theme-settings',
+      title: 'Theme',
+      content: (
+        <div
+          className="space-y-2 text-sm text-[var(--text-primary)]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => setTheme('light')}
+            className={cn(
+              'w-full px-3 py-1 rounded-xl flex items-center justify-between transition-colors',
+              theme === 'light'
+                ? 'bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--card-border)]'
+                : 'hover:bg-[var(--surface-secondary)]'
+            )}
+          >
+            Light 🌞
+          </button>
+          <button
+            onClick={() => setTheme('dark')}
+            className={cn(
+              'w-full px-3 py-1 rounded-xl flex items-center justify-between transition-colors',
+              theme === 'dark'
+                ? 'bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--card-border)]'
+                : 'hover:bg-[var(--surface-secondary)]'
+            )}
+          >
+            Dark 🌙
+          </button>
+        </div>
+      ),
+    },
   ];
 
   return (
-    <div className="fixed top-0 right-0 h-full w-80 bg-[#FDFCF9] text-black shadow-xl z-50 p-4 overflow-y-auto">
+    <div
+      className="
+        fixed right-0 w-full max-w-sm md:w-80 sm:w-full
+        text-[var(--text-primary)]
+        shadow-xl z-50
+        p-4 sm:p-4
+        overflow-y-auto
+        transition-colors duration-500
+        rounded-lg
+      "
+      style={{
+        top: '48px',
+        bottom: '160px',
+        backgroundColor: 'var(--vanilla)',
+      }}
+    >
       <div className="flex justify-between items-center mb-4">
-        {!loading && profile && (
-          <p className="text-sm font-semibold text-gray-800">
-            Hi, {profile.full_name || 'User'}
-          </p>
-        )}
-        <button onClick={onClose} className="text-gray-600 hover:text-black text-lg">✕</button>
+        <button
+          onClick={onClose}
+          onKeyDown={(e) => e.key === 'Escape' && onClose()}
+          className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]
+            text-base sm:text-lg transition-colors"
+        >
+          ✕
+        </button>
       </div>
 
-      <div
-        onClick={() => setActiveBox(prev => (prev === 'plan-box' ? null : 'plan-box'))}
-        className={cn(
-          'transition-all duration-300 cursor-pointer mb-4 rounded-xl border',
-          activeBox === 'plan-box' ? 'border-[#C084FC] bg-gray-50' : 'border-gray-300 bg-white',
-          'hover:shadow-sm'
-        )}
-      >
-        <div className="px-4 py-3 flex justify-between items-center">
-          <PlanProgressFetcher />
-          <span className="text-gray-500 text-xs">{activeBox === 'plan-box' ? '▲' : '▼'}</span>
-        </div>
-        {activeBox === 'plan-box' && (
-          <div className="px-4 pb-4">{boxes[0].content}</div>
-        )}
-      </div>
-
-      {boxes.slice(1).map((box) => {
+      {boxes.map((box) => {
         const isActive = activeBox === box.id;
+
         return (
           <div
             key={box.id}
             onClick={() => setActiveBox(prev => (prev === box.id ? null : box.id))}
+            onKeyDown={(e) => handleKeyToggle(e, box.id)}
+            role="button"
+            tabIndex={0}
+            aria-expanded={isActive}
+            aria-controls={`${box.id}-content`}
             className={cn(
               'transition-all duration-300 cursor-pointer mb-4 rounded-xl border',
-              isActive ? 'border-[#C084FC] bg-gray-50' : 'border-gray-300 bg-white',
+              isActive
+                ? 'border-[var(--accent)]'
+                : 'border-[var(--card-border)] bg-[var(--card-bg)]',
               'hover:shadow-sm'
             )}
+            style={{ backgroundColor: isActive ? 'transparent' : undefined }}
           >
-            <div className="px-4 py-3 flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-800">{box.title}</span>
-              <span className="text-gray-500 text-xs">{isActive ? '▲' : '▼'}</span>
+            <div className="px-3 sm:px-4 py-3 flex justify-between items-center">
+              {box.id === 'plan-box' ? (
+                <PlanUsageProvider>
+                  <PlanProgressFetcher refreshToken={refreshToken} />
+                </PlanUsageProvider>
+              ) : (
+                <span className="text-sm font-medium text-[var(--text-primary)]">
+                  {box.title}
+                </span>
+              )}
+              <span className="text-[var(--text-secondary)] text-xs">
+                {isActive ? '▲' : '▼'}
+              </span>
             </div>
             {isActive && (
-              <div className="px-4 pb-4">
+              <div id={`${box.id}-content`} className="px-3 sm:px-4 pb-4">
                 {box.content}
               </div>
             )}
@@ -132,15 +201,35 @@ export default function Sidebar({ onClose, packageType }: SidebarProps) {
   );
 }
 
-function PlanProgressFetcher() {
-  const { plan, limits, used, hasReachedLimit } = useUserPlan();
+function PlanProgressFetcher({ refreshToken }: { refreshToken: number }) {
+  const { updatedAt } = usePlanUsage();
+  const { plan, limits, used, hasReachedDailyLimit, limitResetAt } = useUserPlan(updatedAt + refreshToken);
 
-  if (!plan) return <div className="text-xs text-gray-400">Loading plan data...</div>;
+  if (!plan)
+    return (
+      <div className="text-xs text-[var(--text-secondary)]">
+        Loading plan data...
+      </div>
+    );
 
   return (
     <div>
-      <PlanProgress planName={plan} used={used} total={limits.dailyGenerations} />
-      {hasReachedLimit && <p className="text-xs text-red-500 mt-1">Daily Limit Reached</p>}
+      <PlanProgress
+        planName={plan}
+        used={used}
+        total={limits.dailyGenerations}
+      />
+      {hasReachedDailyLimit && (
+        <p className="text-xs text-[var(--danger)] mt-1">
+          Daily Limit Reached. Resets at{' '}
+          {limitResetAt
+            ? limitResetAt.toLocaleTimeString(undefined, {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '00:00'}
+        </p>
+      )}
     </div>
   );
 }

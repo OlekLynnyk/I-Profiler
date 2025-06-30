@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
+import { PACKAGE_LIMITS } from '@/types/plan';
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
+  const agreedHeader = req.headers.get('x-agreed-to-terms');
+  const agreedToTerms = agreedHeader === 'true';
 
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized: Missing access token' }, { status: 401 });
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
   ) => {
     const { data: existing, error: selectError } = await supabase
       .from(table)
-      .select('*') // ✅ Исправлено: универсально работает для всех таблиц
+      .select('*')
       .match(match)
       .maybeSingle();
 
@@ -69,16 +72,22 @@ export async function POST(req: NextRequest) {
     avatar_url: user.user_metadata?.avatar_url || null,
     role: 'user',
     email_verified: Boolean(user.email_confirmed_at),
-    agreed_to_terms: false,
+    agreed_to_terms: agreedToTerms, // ← теперь динамически
   });
 
   // 🧾 Централизованная инициализация лимитов
+  const freemiumLimits = PACKAGE_LIMITS.Freemium;
+  const now = new Date();
+
   await insertIfNotExists('user_limits', { user_id: user.id }, {
     user_id: user.id,
     plan: 'Freemium',
     used_today: 0,
-    daily_limit: 10,
-    limit_reset_at: new Date().toISOString(),
+    used_monthly: 0,
+    daily_limit: freemiumLimits.dailyGenerations,
+    monthly_limit: freemiumLimits.requestsPerMonth,
+    limit_reset_at: now.toISOString(),
+    monthly_reset_at: now.toISOString(),
     active: false,
   });
 

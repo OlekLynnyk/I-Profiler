@@ -1,20 +1,67 @@
 @import "tailwindcss";
 
+/* Светлая тема — переменные по умолчанию */
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --font-sans: var(--font-orbitron); /* <--- корректно под Orbitron */
+
+  --surface: #f5f5f5;
+  --surface-secondary: #e5e5e5;
+  --text-primary: #171717;
+  --text-secondary: #4a4a4a;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --danger: #ef4444;
+
+  --card-bg: #fdfdfd;
+  --card-border: #d4d4d4;
+
+  --font-sans: var(--font-orbitron);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Тёмная тема — переопределение */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+
+  --surface: #1e1e1e;
+  --surface-secondary: #2c2c2c;
+  --text-primary: #ededed;
+  --text-secondary: #a1a1a1;
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --danger: #f87171;
+
+  --card-bg: #1a1a1a;
+  --card-border: #3d3d3d;
 }
 
+/* Базовые стили */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Универсальное скрытие полосы прокрутки */
+.no-scrollbar {
+  -ms-overflow-style: none;       /* IE 10+ */
+  scrollbar-width: none;          /* Firefox */
+  overflow-y: scroll;             /* оставляем скролл, но без полосы */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+/* Глобальное скрытие скроллбаров */
+html {
+  scrollbar-width: none; /* Firefox */
+}
+
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }

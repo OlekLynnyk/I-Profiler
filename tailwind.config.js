@@ -1,10 +1,11 @@
-/** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./app/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class', // ❌ удаляем data-theme
+  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['var(--font-orbitron)', 'sans-serif'],
+      colors: {
+        lightBg: '#FDFCF9',
+        darkBg: '#1e1e1e',
       },
     },
   },

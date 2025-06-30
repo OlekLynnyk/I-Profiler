@@ -15,14 +15,14 @@ export const PACKAGE_LIMITS: Record<ValidPackageType, {
     allowCustomBranding: false,
   },
   Smarter: {
-    requestsPerMonth: 1000,
-    dailyGenerations: 6,
+    requestsPerMonth: 250,
+    dailyGenerations: 25,
     allowExport: true,
     allowCustomBranding: true,
   },
   Business: {
-    requestsPerMonth: 10000,
-    dailyGenerations: 7,
+    requestsPerMonth: 1000,
+    dailyGenerations: 100,
     allowExport: true,
     allowCustomBranding: true,
   },

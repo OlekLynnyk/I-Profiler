@@ -27,10 +27,19 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   const handleGoogleLogin = async () => {
+    setError('');
+    if (!agree) {
+      setError('You must agree to the Terms to continue.');
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
       },
     });
 
@@ -71,14 +80,15 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       if (error) {
         setError(error.message);
       } else {
+        localStorage.setItem('agreed_to_terms', 'true');
         setInfo('Check your email to confirm your registration.');
       }
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div ref={modalRef} className="bg-white text-black w-full max-w-md p-6 rounded-xl space-y-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+      <div ref={modalRef} className="bg-white text-black w-full max-w-md max-h-[90vh] overflow-y-auto p-6 rounded-xl space-y-4">
         <h2 className="text-xl font-bold text-center">Welcome to I,Profiler</h2>
 
         <button
@@ -90,41 +100,43 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
         <div className="text-center text-gray-500 text-sm">or enter your email and password</div>
 
-        <input
-          type="email"
-          placeholder="Email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border p-2 rounded text-black"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border p-2 rounded text-black"
-        />
-
-        <div className="flex items-center gap-2">
+        <form onSubmit={(e) => { e.preventDefault(); handleAuth(); }} className="space-y-4">
           <input
-            type="checkbox"
-            checked={agree}
-            onChange={() => setAgree(!agree)}
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border p-2 rounded text-black"
           />
-          <label className="text-sm text-gray-600">
-            I agree to the <a href="/terms" className="underline" target="_blank">Terms of Use</a> and <a href="/privacy" className="underline" target="_blank">Privacy Policy</a>
-          </label>
-        </div>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border p-2 rounded text-black"
+          />
 
-        {error && <div className="text-red-500 text-sm">{error}</div>}
-        {info && <div className="text-green-600 text-sm">{info}</div>}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={() => setAgree(!agree)}
+            />
+            <label className="text-sm text-gray-600">
+              I agree to the <a href="/terms" className="underline" target="_blank">Terms of Use</a> and <a href="/privacy" className="underline" target="_blank">Privacy Policy</a>
+            </label>
+          </div>
 
-        <button
-          onClick={handleAuth}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-        >
-          {isLogin ? 'Login' : 'Create Account'}
-        </button>
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+          {info && <div className="text-green-600 text-sm">{info}</div>}
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          >
+            {isLogin ? 'Login' : 'Create Account'}
+          </button>
+        </form>
 
         <div className="flex justify-between text-sm text-gray-600 pt-2">
           <button onClick={() => setIsLogin(!isLogin)} className="underline">

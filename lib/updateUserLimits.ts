@@ -7,7 +7,8 @@ export async function updateUserLimits(
   userId: string,
   plan: ValidPackageType
 ) {
-  const newLimit = PACKAGE_LIMITS[plan].dailyGenerations;
+  const planLimits = PACKAGE_LIMITS[plan];
+  const now = new Date().toISOString();
 
   const { error } = await supabase
     .from('user_limits')
@@ -15,11 +16,16 @@ export async function updateUserLimits(
       {
         user_id: userId,
         plan,
-        daily_limit: newLimit,
+        daily_limit: planLimits.dailyGenerations,
         used_today: 0,
-        limit_reset_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        limit_reset_at: now,
+        updated_at: now,
         active: true,
+
+        // ✅ добавлено для месячного лимита
+        monthly_limit: planLimits.requestsPerMonth,
+        used_monthly: 0,
+        monthly_reset_at: now,
       },
       { onConflict: 'user_id' }
     );

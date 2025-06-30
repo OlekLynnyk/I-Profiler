@@ -8,7 +8,6 @@ import Pricing from './components/Pricing';
 import { useAuth } from '@/app/context/AuthProvider';
 import Footer from './components/Footer';
 import CubeCanvas from './components/CubeCanvas';
-import Testimonials from './components/Testimonials';
 import AuthModal from './components/AuthModal';
 
 export default function HomePage() {
@@ -23,11 +22,11 @@ export default function HomePage() {
   }, [session]);
 
   return (
-    <div className="min-h-screen flex flex-col font-inter text-[#E5E5E5] relative overflow-hidden bg-[#1A1E23]">
+    <div className="min-h-screen flex flex-col font-inter text-[#E5E5E5] relative overflow-hidden bg-[#1A1E23] no-scrollbar">
       <Header onLoginClick={() => setIsAuthModalOpen(true)} />
 
       <main className="flex flex-col lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
-        <div className="lg:w-1/2 space-y-2 pl-[20px] max-w-[55%]">
+        <div className="w-full lg:w-1/2 space-y-2 lg:max-w-[55%] pl-[20px]">
           <div className="min-h-[4rem]">
             <h1 className="text-5xl md:text-7xl font-bold uppercase leading-tight tracking-tight break-words">
               <span className="text-white">WE UNLOCK INSIGHTS WITH</span><br />
@@ -38,10 +37,12 @@ export default function HomePage() {
             </h1>
           </div>
 
-          <div className="space-y-6 text-sm md:text-base leading-relaxed max-w-[28.6rem]">
+          <div className="space-y-6 text-[0.8rem] md:text-[0.9rem] leading-relaxed max-w-[28.6rem]">
             <p>
-              Stay well ahead of others<br />
-              and influence situations
+              Since people do not tell us who they are but show it <br />
+              unconsciously, there is a need to interpret their signals.  <br />
+              We do this successfully, helping you make better decisions <br />
+              influence situations, and get as many YES as you need.
             </p>
 
             {!session && (
@@ -55,17 +56,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="lg:w-1/2 w-full h-[400px] lg:h-[500px]">
+        <div className="w-full lg:w-1/2 h-[250px] sm:h-[350px] lg:h-[500px]">
           <CubeCanvas />
         </div>
       </main>
 
       <section className="mt-8 relative z-10">
         <HowItWorks />
-      </section>
-
-      <section className="mt-4 relative z-10">
-        <Testimonials />
       </section>
 
       <section id="pricing" className="mt-4 relative z-10">
@@ -77,11 +74,11 @@ export default function HomePage() {
           <h2 className="text-3xl md:text-4xl font-montserrat font-weight-600 text-[#F5F5F5]">
             About
           </h2>
-          <p className="text-[#E5E5E5] max-w-3xl mx-auto text-base md:text-lg leading-relaxed font-inter font-weight-400 text-justify">
-            Like Pininfarina in design, I,Profiler in not really people's secrets! Understanding people is a profound challenge. Most view others through their own prism of fears and beliefs, yet every individual is unique. Then what motivates them? With I,Profiler, you get the answers.
+          <p className="text-[#E5E5E5] w-full md:max-w-3xl mx-auto text-sm md:text-base leading-relaxed font-inter font-weight-400 text-justify hyphens-auto break-words">
+            We don’t claim to read minds. Instead, we interpret silent signals — how someone dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves them. Powered by advanced AI, we blend behavioural science with elegant inference to transform fragments into full pictures.
           </p>
-          <p className="text-[#E5E5E5] max-w-3xl mx-auto text-base md:text-lg leading-relaxed font-inter font-weight-400 text-justify">
-            With us curious minds can deepen their understanding of human behaviour. Decode subtle cues — how someone dresses, speaks, moves, or decides — not to stereotype, but to reveal their true selves and what fuels them. We see a poet in a winemaker, or a winemaker in a poet, but we never assume they're the same. We discern their unique drives, blending art and science to illuminate human nature. — Founder, I,Profiler
+          <p className="text-[#E5E5E5] w-full md:max-w-3xl mx-auto text-sm md:text-base leading-relaxed font-inter font-weight-400 text-justify hyphens-auto break-words">
+            Much like Pininfarina designs beauty into motion, we design insight into human nature. Every person carries a unique internal compass — we help you interpret it. Not to label, but to understand. To lead. To connect. Whether you're a strategist, founder or curious, I,Profiler offers a new lens. See nuance. Sense motivation. Speak with resonance. Because influence begins with pure understanding.
           </p>
         </div>
       </section>

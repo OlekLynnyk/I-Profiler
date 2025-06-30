@@ -9,47 +9,68 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      demo_attempts: {
+      chat_messages: {
         Row: {
-          attempt_data: Json | null
-          count: number | null
-          created_at: string | null
+          content: string
           id: string
+          role: string
+          timestamp: number
           user_id: string | null
         }
         Insert: {
-          attempt_data?: Json | null
-          count?: number | null
-          created_at?: string | null
-          id?: string
+          content: string
+          id: string
+          role: string
+          timestamp: number
           user_id?: string | null
         }
         Update: {
-          attempt_data?: Json | null
-          count?: number | null
-          created_at?: string | null
+          content?: string
           id?: string
+          role?: string
+          timestamp?: number
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "demo_attempts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      message_ratings: {
+        Row: {
+          id: string
+          inserted_at: string | null
+          message_id: string
+          rating: string | null
+          timestamp: number
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          inserted_at?: string | null
+          message_id: string
+          rating?: string | null
+          timestamp: number
+          user_id: string
+        }
+        Update: {
+          id?: string
+          inserted_at?: string | null
+          message_id?: string
+          rating?: string | null
+          timestamp?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
           agreed_to_terms: boolean | null
           avatar_url: string | null
           created_at: string
+          deleted_at: string | null
           email: string | null
           email_verified: boolean | null
           full_name: string | null
           id: string
+          is_deleted: boolean | null
           role: string | null
           updated_at: string | null
         }
@@ -57,10 +78,12 @@ export type Database = {
           agreed_to_terms?: boolean | null
           avatar_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           email_verified?: boolean | null
           full_name?: string | null
           id?: string
+          is_deleted?: boolean | null
           role?: string | null
           updated_at?: string | null
         }
@@ -68,10 +91,12 @@ export type Database = {
           agreed_to_terms?: boolean | null
           avatar_url?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           email_verified?: boolean | null
           full_name?: string | null
           id?: string
+          is_deleted?: boolean | null
           role?: string | null
           updated_at?: string | null
         }
@@ -109,60 +134,17 @@ export type Database = {
           },
         ]
       }
-      request_log: {
-        Row: {
-          created_at: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "request_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      usage_logs: {
-        Row: {
-          created_at: string
-          id: number
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       user_limits: {
         Row: {
           active: boolean
           created_at: string | null
           daily_limit: number
           limit_reset_at: string | null
+          monthly_limit: number | null
+          monthly_reset_at: string | null
           plan: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           updated_at: string | null
+          used_monthly: number | null
           used_today: number
           user_id: string
         }
@@ -171,10 +153,11 @@ export type Database = {
           created_at?: string | null
           daily_limit?: number
           limit_reset_at?: string | null
+          monthly_limit?: number | null
+          monthly_reset_at?: string | null
           plan?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           updated_at?: string | null
+          used_monthly?: number | null
           used_today?: number
           user_id: string
         }
@@ -183,10 +166,11 @@ export type Database = {
           created_at?: string | null
           daily_limit?: number
           limit_reset_at?: string | null
+          monthly_limit?: number | null
+          monthly_reset_at?: string | null
           plan?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           updated_at?: string | null
+          used_monthly?: number | null
           used_today?: number
           user_id?: string
         }
@@ -197,51 +181,48 @@ export type Database = {
           active: boolean | null
           cancel_at_period_end: boolean | null
           created_at: string
-          current_period_end: string | null
           current_period_start: string | null
-          current_usage: number | null
           id: number
+          package_type: string | null
           plan: string | null
           status: string | null
           stripe_customer_id: string | null
           stripe_price_id: string | null
           stripe_subscription_id: string | null
+          subscription_ends_at: string | null
           updated_at: string | null
-          usage_limit: number | null
           user_id: string
         }
         Insert: {
           active?: boolean | null
           cancel_at_period_end?: boolean | null
           created_at: string
-          current_period_end?: string | null
           current_period_start?: string | null
-          current_usage?: number | null
           id?: number
+          package_type?: string | null
           plan?: string | null
           status?: string | null
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_ends_at?: string | null
           updated_at?: string | null
-          usage_limit?: number | null
           user_id?: string
         }
         Update: {
           active?: boolean | null
           cancel_at_period_end?: boolean | null
           created_at?: string
-          current_period_end?: string | null
           current_period_start?: string | null
-          current_usage?: number | null
           id?: number
+          package_type?: string | null
           plan?: string | null
           status?: string | null
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          subscription_ends_at?: string | null
           updated_at?: string | null
-          usage_limit?: number | null
           user_id?: string
         }
         Relationships: []
