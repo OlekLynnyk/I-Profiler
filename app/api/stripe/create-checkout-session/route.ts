@@ -4,9 +4,14 @@ import Stripe from 'stripe';
 import type { Database } from '@/types/supabase';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
 if (!stripeSecretKey) {
   throw new Error('STRIPE_SECRET_KEY is not defined');
+}
+
+if (!appUrl) {
+  throw new Error('NEXT_PUBLIC_APP_URL is not defined');
 }
 
 const stripe = new Stripe(stripeSecretKey, {
@@ -65,6 +70,7 @@ export async function POST(req: NextRequest) {
       if (e.code === 'resource_missing') {
         customerId = undefined;
       } else {
+        console.error('❌ Stripe customer fetch failed:', e);
         return NextResponse.json({ error: 'Stripe customer fetch failed' }, { status: 500 });
       }
     }
@@ -79,15 +85,23 @@ export async function POST(req: NextRequest) {
 
       customerId = customer.id;
 
-      await supabase.from('user_subscription').upsert(
-        {
-          user_id: user.id,
-          stripe_customer_id: customerId,
-          created_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id' }
-      );
-    } catch {
+      const { error: upsertError } = await supabase
+        .from('user_subscription')
+        .upsert(
+          {
+            user_id: user.id,
+            stripe_customer_id: customerId,
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        );
+
+      if (upsertError) {
+        console.error('❌ Supabase upsert error:', upsertError);
+        return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+      }
+    } catch (e: any) {
+      console.error('❌ Stripe customer creation error:', e);
       return NextResponse.json({ error: 'Stripe customer creation failed' }, { status: 500 });
     }
   }
@@ -97,13 +111,14 @@ export async function POST(req: NextRequest) {
       mode: 'subscription',
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/workspace?checkout=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/workspace?checkout=cancel`,
+      success_url: `${appUrl}/workspace?checkout=success`,
+      cancel_url: `${appUrl}/workspace?checkout=cancel`,
       metadata: { user_id: user.id },
     });
 
     return NextResponse.json({ url: session.url });
-  } catch {
+  } catch (e: any) {
+    console.error('❌ Stripe checkout session error:', e);
     return NextResponse.json({ error: 'Stripe checkout session failed' }, { status: 500 });
   }
 }
