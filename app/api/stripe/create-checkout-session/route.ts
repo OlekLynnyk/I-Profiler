@@ -15,7 +15,7 @@ if (!appUrl) {
 }
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-04-30.basil',
+  apiVersion: '2025-06-30.basil',
   typescript: true,
 });
 

@@ -225,16 +225,13 @@ export default function WorkspacePage() {
       {isSidebarOpen && (
         <ErrorBoundary>
           <Sidebar
-            onClose={() => setIsSidebarOpen(false)}
             packageType={packageType}
             refreshToken={refreshToken}
           />
         </ErrorBoundary>
       )}
-
+ 
       <HeaderBar
-        onOpenSidebar={() => setIsSidebarOpen(true)}
-        onOpenHelper={() => setIsHelperOpen(true)}
         onLogout={handleLogoutConfirm}
         onSaveProfiling={handleSaveClick}
         disableSaveProfiling={isGenerating || messages.length === 0}
