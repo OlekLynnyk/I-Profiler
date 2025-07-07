@@ -8,9 +8,9 @@ import { PackageType } from '@/types/plan';
 import { useUserPlan } from '../hooks/useUserPlan';
 import { usePlanUsage, PlanUsageProvider } from '../workspace/context/PlanUsageContext';
 import { useStripeCheckout } from '../hooks/useStripeCheckout';
+import { useSidebar } from '@/app/context/SidebarContext';
 
 type SidebarProps = {
-  onClose: () => void;
   packageType: PackageType;
   refreshToken: number;
 };
@@ -25,13 +25,13 @@ function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function Sidebar({ onClose, packageType, refreshToken }: SidebarProps) {
+export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   const { profile, loading: profileLoading } = useProfile();
   const [activeBox, setActiveBox] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
+  const { openSidebar } = useSidebar();
 
-  // ✅ ИСПРАВЛЕНИЕ ЗДЕСЬ
-  const { handleCheckout, loading: upgradeLoading, error: upgradeError } = useStripeCheckout();
+  const { handleCheckout } = useStripeCheckout();
 
   const handleKeyToggle = (e: KeyboardEvent<HTMLDivElement>, boxId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -39,6 +39,8 @@ export default function Sidebar({ onClose, packageType, refreshToken }: SidebarP
       setActiveBox(prev => (prev === boxId ? null : boxId));
     }
   };
+
+  if (!openSidebar.right) return null;
 
   const boxes: SectionBox[] = [
     {
@@ -127,33 +129,22 @@ export default function Sidebar({ onClose, packageType, refreshToken }: SidebarP
   ];
 
   return (
-    <div
-      className="
-        fixed right-0 w-full max-w-sm md:w-80 sm:w-full
+    <aside
+      className={`
+        fixed right-0 top-12 bottom-0
+        w-full max-w-sm md:w-80
         text-[var(--text-primary)]
-        shadow-xl z-50
-        p-4 sm:p-4
-        overflow-y-auto
-        transition-colors duration-500
-        rounded-lg
-      "
+        z-50
+        p-4 overflow-y-auto
+        transition-transform duration-500 ease-in-out
+        ${openSidebar.right ? 'translate-x-0' : 'translate-x-full'}
+      `}
       style={{
-        top: '48px',
-        bottom: '160px',
-        backgroundColor: 'var(--vanilla)',
+        backgroundColor: 'var(--background)',
+        boxShadow: 'none',
+        border: 'none',
       }}
     >
-      <div className="flex justify-between items-center mb-4">
-        <button
-          onClick={onClose}
-          onKeyDown={(e) => e.key === 'Escape' && onClose()}
-          className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]
-            text-base sm:text-lg transition-colors"
-        >
-          ✕
-        </button>
-      </div>
-
       {boxes.map((box) => {
         const isActive = activeBox === box.id;
 
@@ -197,7 +188,7 @@ export default function Sidebar({ onClose, packageType, refreshToken }: SidebarP
           </div>
         );
       })}
-    </div>
+    </aside>
   );
 }
 

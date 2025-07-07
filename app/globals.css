@@ -65,3 +65,16 @@ html {
 html::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge */
 }
+
+/* ✅ Добавляем translate-x классы */
+@layer utilities {
+  .translate-x-0 {
+    transform: translateX(0);
+  }
+  .-translate-x-full {
+    transform: translateX(-100%);
+  }
+  .translate-x-full {
+    transform: translateX(100%);
+  }
+}

@@ -2,32 +2,34 @@
 
 import { useEffect } from 'react';
 import { AuthProvider } from './context/AuthProvider';
+import { SidebarProvider } from './context/SidebarContext';
+import SidebarHelper from '@/app/workspace/SidebarHelper';
+import Sidebar from '@/app/workspace/Sidebar';
 import CookieBanner from '@/components/CookieBanner';
 
 export default function LayoutClient({ children }: { children: React.ReactNode }) {
   useCookieConsent();
 
   return (
-    <AuthProvider>
-      {children}
-      <CookieBanner />
-    </AuthProvider>
+    <SidebarProvider>
+      <AuthProvider>
+        {children}
+        <SidebarHelper />
+        <Sidebar packageType="Free" refreshToken={0} /> 
+        <CookieBanner />
+      </AuthProvider>
+    </SidebarProvider>
   );
 }
 
 /**
  * Прод-уровня хук для управления cookie consent.
- *
- * 🚀 Загружает скрипты (например, Google Analytics) ТОЛЬКО если пользователь дал согласие.
  */
 function useCookieConsent() {
   useEffect(() => {
     const consent = localStorage.getItem('cookieConsent');
 
     if (consent === 'accepted') {
-      // ✅ Здесь грузим Google Analytics или другие трекеры
-      // замените G-XXXXXXX на свой реальный Google Analytics ID
-
       const script = document.createElement('script');
       script.src = 'https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX';
       script.async = true;

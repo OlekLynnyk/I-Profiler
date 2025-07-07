@@ -1,5 +1,5 @@
-// SidebarHelper/sidebar-helper.data.ts
 import { BoxData } from './types';
+import SavedProfileList from '@/app/components/SavedProfileList';
 
 export const sidebarBoxes: BoxData[] = [
   {
@@ -12,7 +12,7 @@ export const sidebarBoxes: BoxData[] = [
     id: 'saved-messages',
     title: 'Saved messages',
     description: 'Your collection of saved messages.',
-    renderContent: null,
+    renderContent: <SavedProfileList />,
   },
   {
     id: 'library',
@@ -26,9 +26,14 @@ export const sidebarBoxes: BoxData[] = [
     description: 'Contact support via email for assistance.',
     renderContent: (
       <div className="text-sm">
-        <p className="mb-1">If you need help or have questions, please reach out to us at:</p>
+        <p className="mb-1">
+          If you need help or have questions, please reach out to us at:
+        </p>
         <p className="font-semibold text-[var(--accent)]">
-          <a href="mailto:support@iprofiler.ai" className="underline hover:text-[var(--text-primary)]">
+          <a
+            href="mailto:support@iprofiler.ai"
+            className="underline hover:text-[var(--text-primary)]"
+          >
             support@iprofiler.ai
           </a>
         </p>

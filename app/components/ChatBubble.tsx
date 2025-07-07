@@ -16,7 +16,7 @@ interface Attachment {
 }
 
 interface ChatBubbleProps {
-  role: 'user' | 'ai';
+  role: 'user' | 'assistant';
   content: string;
   index: number;
   messageId: string;
@@ -55,7 +55,6 @@ export default function ChatBubble({
     text = content;
   }
 
-  // ✅ Гарантируем, что text никогда не будет JSON-строкой
   if (!text && isUser) {
     text = '';
   }
@@ -63,13 +62,10 @@ export default function ChatBubble({
   useEffect(() => {
     if (!isUser && !attachments?.length) {
       let i = 0;
-      const maxChars = 1000;
-      const safeText = text.slice(0, maxChars);
-
       const interval = setInterval(() => {
-        setDisplayedText(safeText.slice(0, i + 1));
+        setDisplayedText(text.slice(0, i + 1));
         i++;
-        if (i >= safeText.length) clearInterval(interval);
+        if (i >= text.length) clearInterval(interval);
       }, 10);
 
       return () => clearInterval(interval);
@@ -100,35 +96,56 @@ export default function ChatBubble({
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       className={`w-full py-1 flex ${isUser ? 'justify-end' : 'justify-start'}`}
     >
-      <div
-        className={`max-w-full sm:max-w-[80%] text-sm whitespace-pre-wrap px-4 py-2 rounded-xl text-[var(--text-primary)] text-left shadow-none
-          ${
-            isUser
-              ? 'bg-[var(--vanilla)] border border-gray-300 border-opacity-20'
-              : 'bg-transparent border-none'
-          }
-        `}
-        aria-live={isUser ? undefined : 'polite'}
-      >
-        <p className="text-left leading-relaxed whitespace-pre-wrap break-words">
-          {(isUser ? text : displayedText) || '...'}
-        </p>
-
+      <div className="flex flex-col max-w-full sm:max-w-[80%] text-left">
+        
+        {/* ✅ ATTACHMENTS — квадратные превью над bubble */}
         {attachments && attachments.length > 0 && (
-          <ul className="space-y-2 mt-2">
+          <div className="flex flex-col gap-2 mb-2">
             {attachments.map((file, idx) => (
-              <li
-                key={`${file.name}-${idx}`}
-                className="flex items-start gap-2 text-xs text-[var(--text-primary)]"
-              >
-                {file.base64.startsWith('data:image/') ? (
-                  <img
-                    src={file.base64}
-                    alt={file.name}
-                    className="max-w-full sm:max-w-xs rounded-lg border border-gray-300"
-                  />
-                ) : (
-                  <>
+              file.base64.startsWith('data:image/') ? (
+                <img
+                  key={`${file.name}-${idx}`}
+                  src={file.base64}
+                  alt={file.name}
+                  loading="lazy"
+                  className="
+                    w-20 h-20
+                    sm:w-24 sm:h-24
+                    rounded-lg
+                    object-cover
+                    border border-gray-300
+                    shadow-sm
+                  "
+                />
+              ) : null
+            ))}
+          </div>
+        )}
+
+        {/* ✅ TEXT BUBBLE */}
+        <div
+          className={`text-sm whitespace-pre-wrap px-4 py-2 rounded-xl text-[var(--text-primary)] shadow-none
+            ${
+              isUser
+                ? 'bg-[var(--vanilla)] border border-gray-300 border-opacity-20'
+                : 'bg-transparent border-none'
+            }
+          `}
+          aria-live={isUser ? undefined : 'polite'}
+        >
+          <p className="text-left leading-relaxed whitespace-pre-wrap break-words">
+            {(isUser ? text : displayedText) || '...'}
+          </p>
+
+          {/* ✅ Non-image attachments остаются внутри bubble */}
+          {attachments && attachments.length > 0 && (
+            <ul className="space-y-2 mt-2">
+              {attachments.map((file, idx) => (
+                !file.base64.startsWith('data:image/') && (
+                  <li
+                    key={`${file.name}-link-${idx}`}
+                    className="flex items-start gap-2 text-xs text-[var(--text-primary)]"
+                  >
                     <FileText size={14} />
                     <a
                       href={file.base64}
@@ -138,17 +155,20 @@ export default function ChatBubble({
                     >
                       {file.name}
                     </a>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+                  </li>
+                )
+              ))}
+            </ul>
+          )}
+        </div>
 
+        {/* ✅ CONTROLS */}
         {!isUser && (
           <div className="flex gap-2 mt-1 text-[var(--text-secondary)] text-xs items-center">
             {status === 'pending' && <span className="animate-pulse">...</span>}
-            {status === 'error' && <span className="text-[var(--danger)]">Error</span>}
+            {status === 'error' && (
+              <span className="text-[var(--danger)]">Error</span>
+            )}
 
             <TooltipProvider>
               <Tooltip>

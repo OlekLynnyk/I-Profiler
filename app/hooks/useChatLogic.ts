@@ -5,10 +5,11 @@ import { supabase } from '@/lib/supabase/client';
 import { useUserPlan } from '@/app/hooks/useUserPlan';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/app/context/AuthProvider';
+import { detectUserLanguage } from '@/scripts/detectUserLanguage';
 
 export type ChatMessage = {
   id: string;
-  role: 'user' | 'ai';
+  role: 'user' | 'assistant';
   content: string;
   timestamp: number;
 };
@@ -30,7 +31,14 @@ export interface UseChatLogicResult {
   retryGeneration: () => void;
   messageStatuses: Record<string, Status>;
   messageRatings: Record<string, Rating>;
-  historyLoaded: boolean; // ✅ новый флаг
+  historyLoaded: boolean;
+  currentProfileId: string | null;
+  currentProfileName: string | null;
+  setCurrentProfileId: (id: string | null) => void;
+  setCurrentProfileName: (name: string | null) => void;
+  createNewProfileId: () => Promise<string>;
+  profilingMode: boolean;
+  setProfilingMode: (value: boolean) => void;
 }
 
 export function useChatLogic(): UseChatLogicResult {
@@ -45,13 +53,31 @@ export function useChatLogic(): UseChatLogicResult {
   const [lastInput, setLastInput] = useState('');
   const [messageStatuses, setMessageStatuses] = useState<Record<string, Status>>({});
   const [messageRatings, setMessageRatings] = useState<Record<string, Rating>>({});
-  const [historyLoaded, setHistoryLoaded] = useState(false); // ✅ новый флаг
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+  const [currentProfileName, setCurrentProfileName] = useState<string | null>(null);
+  const [profilingMode, setProfilingMode] = useState<boolean>(false);
 
   const { hasReachedLimit, refetch } = useUserPlan(refreshToken);
 
-  const getStorageKey = () => {
-    return userId ? `chat_messages_${userId}` : null;
-  };
+  useEffect(() => {
+    if (!userId) return;
+
+    const savedProfileId = localStorage.getItem(`profile_id_${userId}`);
+    if (savedProfileId) {
+      setCurrentProfileId(savedProfileId);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId && currentProfileId) {
+      localStorage.setItem(`profile_id_${userId}`, currentProfileId);
+    }
+  }, [currentProfileId, userId]);
+
+  const getStorageKey = () =>
+    userId && currentProfileId ? `chat_messages_${userId}_${currentProfileId}` : null;
 
   const applyFilteredMessages = (msgs: ChatMessage[]) => {
     const now = Date.now();
@@ -65,9 +91,8 @@ export function useChatLogic(): UseChatLogicResult {
     setMessages(fresh);
   };
 
-  // ✅ Загрузка истории из Supabase
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !currentProfileId) return;
 
     (async () => {
       const since = Date.now() - 12 * 60 * 60 * 1000;
@@ -76,48 +101,48 @@ export function useChatLogic(): UseChatLogicResult {
         .from('chat_messages')
         .select('*')
         .eq('user_id', userId)
+        .eq('profile_id', currentProfileId)
         .gt('timestamp', since)
         .order('timestamp', { ascending: true });
 
       if (error) {
         console.error(error);
-        setHistoryLoaded(true); // ✅ считаем историю загруженной даже при ошибке
+        setHistoryLoaded(true);
         return;
       }
 
       if (data) {
         const restored = data.map((row) => ({
           id: row.id,
-          role: row.role,
+          role: row.role === 'ai' ? 'assistant' : row.role,
           content: row.content,
           timestamp: row.timestamp,
         })) as ChatMessage[];
 
         applyFilteredMessages(restored);
-
-        const key = getStorageKey();
-        if (key) {
-          localStorage.setItem(key, JSON.stringify(restored));
-        }
       }
 
-      setHistoryLoaded(true); // ✅ выставляем флаг после окончания загрузки
+      setHistoryLoaded(true);
     })();
-  }, [userId, refreshToken]);
+  }, [userId, currentProfileId, refreshToken]);
 
-  // ✅ Сохраняем историю в localStorage
-  useEffect(() => {
-    const key = getStorageKey();
-    if (!key) return;
-
-    localStorage.setItem(key, JSON.stringify(messages));
-  }, [messages, userId]);
+  const createNewProfileId = async (): Promise<string> => {
+    if (currentProfileId) {
+      await clearMessages();
+    }
+    const newId = uuidv4();
+    setCurrentProfileId(newId);
+    setCurrentProfileName(null);
+    setMessages([]);
+    setProfilingMode(false);
+    return newId;
+  };
 
   const handleGenerate = async (
     inputValue: string,
     attachments?: { name: string; base64: string }[]
   ) => {
-    if (!inputValue.trim() && !attachments?.length) return;
+    if (!inputValue.trim() && !(attachments && attachments.length > 0)) return;
 
     if (hasReachedLimit) {
       setRefreshToken((prev) => prev + 1);
@@ -125,6 +150,21 @@ export function useChatLogic(): UseChatLogicResult {
     }
 
     if (isGenerating) return;
+
+    if (profilingMode && historyLoaded && messages.length > 0) {
+      setErrorMessage("Очистите историю перед началом нового профайлинга.");
+      return;
+    }
+
+    const traceId = uuidv4();
+
+    let activeProfileId = currentProfileId;
+
+    if (profilingMode) {
+      activeProfileId = await createNewProfileId();
+    } else if (!activeProfileId) {
+      activeProfileId = await createNewProfileId();
+    }
 
     setIsGenerating(true);
     setErrorMessage('');
@@ -143,6 +183,8 @@ export function useChatLogic(): UseChatLogicResult {
         {
           id: userMessage.id,
           user_id: userId,
+          profile_id: activeProfileId,
+          profile_name: currentProfileName,
           role: userMessage.role,
           content: userMessage.content,
           timestamp: userMessage.timestamp,
@@ -161,7 +203,7 @@ export function useChatLogic(): UseChatLogicResult {
       const token = sessionData?.session?.access_token;
 
       if (!token) {
-        setErrorMessage('No access token found. Please log in again.');
+        setErrorMessage(`No access token found. Please log in again. (Trace ID: ${traceId})`);
         setMessageStatuses((prev) => ({
           ...prev,
           [userMessage.id]: 'error',
@@ -170,15 +212,17 @@ export function useChatLogic(): UseChatLogicResult {
         return;
       }
 
-      const res = await fetch('/api/user/log-generation', {
+      const resLog = await fetch('/api/user/log-generation', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const result = await res.json();
+      const logResult = await resLog.json();
 
-      if (!res.ok) {
-        setErrorMessage(result.error || 'Error logging generation');
+      if (!resLog.ok) {
+        setErrorMessage(
+          `${logResult.error || 'Error logging generation'} (Trace ID: ${traceId})`
+        );
         setGenerationError({ index: newMessages.length - 1 });
         setMessageStatuses((prev) => ({
           ...prev,
@@ -188,39 +232,84 @@ export function useChatLogic(): UseChatLogicResult {
         return;
       }
 
-      setTimeout(async () => {
-        const aiMessage: ChatMessage = {
-          id: uuidv4(),
-          role: 'ai',
-          content: 'Here is your generated result.',
-          timestamp: Date.now(),
-        };
+      // ✅ Детектим язык прямо на фронте
+      const detectedLang = detectUserLanguage(inputValue || "");
+      const userLanguage = detectedLang || "en";
 
-        await supabase.from('chat_messages').insert([
-          {
-            id: aiMessage.id,
-            user_id: userId,
-            role: aiMessage.role,
-            content: aiMessage.content,
-            timestamp: aiMessage.timestamp,
-          },
-        ]);
+      const body: any = {
+        profileId: activeProfileId,
+        profiling: profilingMode,
+        userLanguage,
+      };
 
-        setMessageStatuses((prev) => ({
-          ...prev,
-          [aiMessage.id]: 'done',
-        }));
+      if (inputValue.trim()) {
+        body.prompt = inputValue.trim();
+      }
 
-        const updatedMessages = [...messages, userMessage, aiMessage];
-        applyFilteredMessages(updatedMessages);
-        setIsGenerating(false);
-        setRefreshToken((prev) => prev + 1);
+      if (attachments && attachments.length > 0) {
+        body.imageBase64 = attachments[0].base64.split(',')[1];
+      }
 
-        await refetch();
-      }, 1000);
+      const aiResponse = await fetch('/api/ai/grok-3', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const aiData = await aiResponse.json();
+
+      if (!aiResponse.ok) {
+        throw new Error(aiData.error || 'AI generation failed');
+      }
+
+      const aiText = aiData.result || 'No response from AI';
+
+      const aiMessage: ChatMessage = {
+        id: uuidv4(),
+        role: 'assistant',
+        content: aiText,
+        timestamp: Date.now(),
+      };
+
+      await supabase.from('chat_messages').insert([
+        {
+          id: aiMessage.id,
+          user_id: userId,
+          profile_id: activeProfileId,
+          profile_name: currentProfileName,
+          role: aiMessage.role,
+          content: aiMessage.content,
+          timestamp: aiMessage.timestamp,
+        },
+      ]);
+
+      setMessageStatuses((prev) => ({
+        ...prev,
+        [aiMessage.id]: 'done',
+      }));
+
+      const updatedMessages = [...messages, userMessage, aiMessage];
+      applyFilteredMessages(updatedMessages);
+
+      setIsGenerating(false);
+      setRefreshToken((prev) => prev + 1);
+      await refetch();
+
     } catch (error) {
-      console.error('Generation error:', error);
-      setErrorMessage('Something went wrong while generating a response.');
+      console.error(
+        JSON.stringify({
+          level: "error",
+          traceId,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : null,
+          context: "handleGenerate",
+          timestamp: new Date().toISOString(),
+        })
+      );
+
+      setErrorMessage(
+        `An unexpected error occurred. Please try again. (Trace ID: ${traceId})`
+      );
       setGenerationError({ index: messages.length - 1 });
       setMessageStatuses((prev) => ({
         ...prev,
@@ -254,22 +343,23 @@ export function useChatLogic(): UseChatLogicResult {
         }),
       });
     } catch (err) {
-      console.error('Failed to send rating', err);
+      console.error(err);
     }
   };
 
-  const clearMessages: () => void = async () => {
+  const clearMessages = async () => {
     setMessages([]);
     const key = getStorageKey();
     if (key) {
       localStorage.removeItem(key);
     }
 
-    if (userId) {
+    if (userId && currentProfileId) {
       await supabase
         .from('chat_messages')
         .delete()
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('profile_id', currentProfileId);
     }
   };
 
@@ -284,6 +374,13 @@ export function useChatLogic(): UseChatLogicResult {
     retryGeneration,
     messageStatuses,
     messageRatings,
-    historyLoaded, // ✅ возвращаем новый флаг
+    historyLoaded,
+    currentProfileId,
+    currentProfileName,
+    setCurrentProfileId,
+    setCurrentProfileName,
+    createNewProfileId,
+    profilingMode,
+    setProfilingMode,
   };
 }

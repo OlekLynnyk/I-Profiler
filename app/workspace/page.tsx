@@ -8,13 +8,16 @@ import HeaderBar from '@/app/components/HeaderBar';
 import ChatBubble from '@/app/components/ChatBubble';
 import { ErrorBoundary } from '@/app/components/ErrorBoundary';
 import { useUserPlan } from '@/app/hooks/useUserPlan';
-import { Plus, SendHorizonal, X, Loader, ChevronDown } from 'lucide-react';
+import { Plus, SendHorizonal, X, Loader, ChevronDown, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useChatLogic } from '@/app/hooks/useChatLogic';
 import React from 'react';
 import { useChatInputState } from '@/app/hooks/useChatInputState';
 import { useDragOverlay } from '@/app/hooks/useDragOverlay';
 import { useScrollObserver } from '@/app/hooks/useScrollObserver';
+import SaveProfileModal from '@/app/components/SaveProfileModal';
+import { useSavedProfiles } from '@/app/hooks/useSavedProfiles';
+import { FaLinkedin } from 'react-icons/fa';
 
 const LimitModal = dynamic(
   () => import('@/app/components/LimitModal'),
@@ -49,6 +52,8 @@ export default function WorkspacePage() {
     messageStatuses,
     messageRatings,
     historyLoaded,
+    profilingMode,
+    setProfilingMode,
   } = useChatLogic();
 
   const [refreshToken, setRefreshToken] = useState(0);
@@ -61,12 +66,6 @@ export default function WorkspacePage() {
   } = useUserPlan(refreshToken);
 
   const [showLimitModal, setShowLimitModal] = useState(false);
-
-  useEffect(() => {
-    if (hasReachedMonthlyLimit) {
-      setShowLimitModal(true);
-    }
-  }, [hasReachedMonthlyLimit]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isHelperOpen, setIsHelperOpen] = useState(false);
@@ -92,6 +91,15 @@ export default function WorkspacePage() {
   const { isDragging, overlay, setIsDragging } = useDragOverlay();
 
   const { isAtBottom } = useScrollObserver(bottomRef, scrollRef, historyLoaded);
+
+  const { saveProfile } = useSavedProfiles();
+
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [aiResponseToSave, setAiResponseToSave] = useState<string>('');
+  const [isNewProfile, setIsNewProfile] = useState(true);
+
+  const [isImageActive, setIsImageActive] = useState(false);
+  const [showMoreDropdown, setShowMoreDropdown] = useState(false);
 
   const scrollToBottom = () => {
     scrollRef.current?.scrollTo({
@@ -126,10 +134,18 @@ export default function WorkspacePage() {
       if (showConfirm && confirmRef.current && !confirmRef.current.contains(e.target as Node)) {
         setShowConfirm(false);
       }
+      const dropdown = document.querySelector('[aria-label="More Button"]')?.parentElement;
+      if (
+        showMoreDropdown &&
+        dropdown &&
+        !dropdown.contains(e.target as Node)
+      ) {
+        setShowMoreDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showConfirm]);
+  }, [showConfirm, showMoreDropdown]);
 
   const handleLogoutConfirm = () => {
     if (window.confirm('Are you sure you want to return to the home page?')) router.push('/');
@@ -142,10 +158,23 @@ export default function WorkspacePage() {
     }
   };
 
+  const handleSaveClick = () => {
+    const lastAiMsg = [...messages].reverse().find((msg) => msg.role === 'assistant');
+    if (lastAiMsg) {
+      setAiResponseToSave(lastAiMsg.content);
+      setIsNewProfile(true);
+      setShowSaveModal(true);
+    } else {
+      alert('No AI response found to save.');
+    }
+  };
+
   const submit = async () => {
     const hasInput = inputValue.trim() !== '';
     const hasFiles = attachedFiles.length > 0;
     if (!hasInput && !hasFiles) return;
+
+    resetInput();
 
     try {
       const attachments = await Promise.all(
@@ -162,7 +191,6 @@ export default function WorkspacePage() {
 
       await handleGenerate(inputValue.trim(), attachments);
       refetch().catch(console.error);
-      resetInput();
       setAttachmentError('');
     } catch (err: any) {
       console.error(err);
@@ -191,7 +219,7 @@ export default function WorkspacePage() {
     >
       {isHelperOpen && (
         <ErrorBoundary>
-          <SidebarHelper onClose={() => setIsHelperOpen(false)} />
+          <SidebarHelper />
         </ErrorBoundary>
       )}
       {isSidebarOpen && (
@@ -208,6 +236,8 @@ export default function WorkspacePage() {
         onOpenSidebar={() => setIsSidebarOpen(true)}
         onOpenHelper={() => setIsHelperOpen(true)}
         onLogout={handleLogoutConfirm}
+        onSaveProfiling={handleSaveClick}
+        disableSaveProfiling={isGenerating || messages.length === 0}
       />
 
       <div className="flex-1 flex flex-col items-center pb-[160px]">
@@ -216,20 +246,44 @@ export default function WorkspacePage() {
           ref={scrollRef}
         >
           <div className="flex flex-col items-start justify-start py-4">
-            {errorMessage && (
-              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-lg text-sm">
-                {errorMessage}
+            {errorMessage && !generationError && (
+              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-lg text-sm flex justify-between w-full">
+                <span>{errorMessage}</span>
+                <button
+                  onClick={() => {
+                    setAttachmentError('');
+                    setInputValue('');
+                  }}
+                  className="text-red-700 hover:underline text-xs"
+                >
+                  Close
+                </button>
               </div>
             )}
-
+               
             {messages.length === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="text-sm text-[var(--text-secondary)] italic text-center w-full py-4"
+                className="flex flex-col items-center justify-center text-center w-full py-12 px-4"
               >
-                Hi, {userName} — your next discovery is just one click away.
+                {/* Лого */}
+                <img
+                  src="/images/logo.png"
+                  alt="Logo"
+                  className="w-8 h-8 mb-3"
+                />
+
+                {/* Основной текст */}
+               <p className="text-lg font-medium text-[var(--text-primary)]">
+                  The Next Discovery is just One Click Away.
+                </p>
+
+                {/* Подпись */}
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                  By {userName}
+                </p>
               </motion.div>
             )}
 
@@ -300,14 +354,14 @@ export default function WorkspacePage() {
                       className="absolute top-0 right-0 bg-black bg-opacity-60 rounded-full p-1 text-white hover:bg-opacity-80"
                       aria-label="Remove attached file"
                     >
-                      <X size={16} />
+                      <X size={20} />
                     </button>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -316,26 +370,125 @@ export default function WorkspacePage() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything"
                 disabled={isDragging}
-                className="w-full px-4 py-3 text-[clamp(0.875rem,1vw,1rem)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
+                className="w-full px-4 py-3 text-[clamp(0.875rem,1vw,1rem)] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
               />
 
-              <div className="flex justify-between w-full px-1">
-                <label className="cursor-pointer w-10 h-10 flex items-center justify-center bg-[var(--surface-secondary)] rounded-full shadow-sm hover:bg-[var(--surface)] transition">
-                  <Plus size={16} className="text-[var(--text-secondary)]" />
-                  <input type="file" className="hidden" multiple onChange={handleFileChange} />
-                </label>
+              <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-1">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
+                    <Plus size={16} className="text-[var(--text-primary)]" />
+                    <input type="file" className="hidden" multiple onChange={handleFileChange} />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsImageActive(!isImageActive);
+                      setProfilingMode(!profilingMode);
+                    }}
+                    className={`
+                      flex items-center gap-1 h-9 px-3
+                      rounded-full shadow-sm transition
+                      text-xs font-medium
+                      ${isImageActive
+                        ? 'bg-[#C084FC] text-white hover:bg-[#a05adb]'
+                        : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)]'
+                      }
+                    `}
+                    aria-label="Toggle Image Mode"
+                  >
+                    <ImageIcon size={14} />
+                    Image
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => alert('Currently not available.')}
+                    className="
+                      flex items-center gap-1 h-9 px-3
+                      rounded-full shadow-sm transition
+                      bg-[var(--button-bg)] text-[var(--text-primary)]
+                      hover:bg-[var(--button-hover-bg)]
+                      text-xs font-medium
+                    "
+                    aria-label="LinkedIn Button"
+                  >
+                    <FaLinkedin className="w-3.5 h-3.5" />
+                    LinkedIn
+                  </button>
+
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreDropdown(!showMoreDropdown)}
+                      aria-label="More Button"
+                      className="
+                        flex items-center gap-1 h-9 px-3
+                        rounded-full shadow-sm transition
+                        bg-[var(--button-bg)] text-[var(--text-primary)]
+                        hover:bg-[var(--button-hover-bg)]
+                        text-xs font-medium
+                      "
+                    >
+                      More
+                      <ChevronDown size={14} className={`transition-transform duration-200 ${showMoreDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showMoreDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.2 }}
+                        className="
+                          absolute bottom-12 left-0 w-40 rounded-lg shadow-lg
+                          bg-[var(--card-bg)] text-[var(--text-primary)]
+                          border border-[var(--card-border)]
+                          z-50
+                        "
+                      >
+                        <button
+                          className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
+                          onClick={() => alert('Option 1 clicked')}
+                        >
+                          Option 1
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
+                          onClick={() => alert('Option 2 clicked')}
+                        >
+                          Option 2
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
+                          onClick={() => alert('Option 3 clicked')}
+                        >
+                          Option 3
+                        </button>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
 
                 <button
                   onClick={submit}
                   disabled={limitReached || (!inputValue.trim() && attachedFiles.length === 0) || isGenerating}
-                  className={`p-3 rounded-full bg-[var(--surface-secondary)] shadow-md text-[var(--text-primary)] hover:bg-[var(--surface)] transition ${
-                    limitReached || (!inputValue.trim() && attachedFiles.length === 0) || isGenerating
+                  className={`
+                    w-9 h-9 flex items-center justify-center
+                    rounded-full
+                    bg-[var(--button-bg)]
+                    shadow-md
+                    text-[var(--text-primary)]
+                    hover:bg-[var(--button-hover-bg)]
+                    transition
+                    ${limitReached || (!inputValue.trim() && attachedFiles.length === 0) || isGenerating
                       ? 'cursor-not-allowed opacity-50'
                       : ''
-                  }`}
+                    }
+                  `}
                   aria-label="Start Generation"
                 >
-                  {isGenerating ? <Loader size={18} className="animate-spin" /> : <SendHorizonal size={18} />}
+                  {isGenerating ? <Loader size={20} className="animate-spin" /> : <SendHorizonal size={20} />}
                 </button>
               </div>
 
@@ -410,6 +563,34 @@ export default function WorkspacePage() {
       <ErrorBoundary>
         <LimitModal show={showLimitModal} onClose={() => setShowLimitModal(false)} />
       </ErrorBoundary>
+
+      <SaveProfileModal
+        open={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        aiResponse={aiResponseToSave}
+        isNew={isNewProfile}
+        onSave={async (name, aiResponse, comments) => {
+          const userId = session?.user?.id;
+          if (!userId) {
+            alert('User not logged in');
+            return;
+          }
+
+          await saveProfile({
+            user_id: userId,
+            profile_name: name,
+            chat_json: {
+              ai_response: aiResponse || '',
+              user_comments: comments,
+            },
+            saved_at: Date.now(),
+          });
+
+          setShowSaveModal(false);
+          refetch?.();
+        }}
+        defaultProfileName={`Profiling #${Date.now()}`}
+      />
 
       {overlay}
     </div>
