@@ -53,3 +53,4 @@ export async function getPackageFromServer(supabase: SupabaseClient): Promise<Pa
 
   return data.package_type;
 }
+ 

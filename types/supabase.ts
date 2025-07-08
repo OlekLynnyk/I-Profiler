@@ -134,6 +134,30 @@ export type Database = {
           },
         ]
       }
+      saved_chats: {
+        Row: {
+          id: string
+          user_id: string
+          profile_name: string | null
+          saved_at: number | null
+          chat_json: Json | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          profile_name?: string | null
+          saved_at?: number | null
+          chat_json?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          profile_name?: string | null
+          saved_at?: number | null
+          chat_json?: Json | null
+        }
+        Relationships: []
+      }
       user_limits: {
         Row: {
           active: boolean
