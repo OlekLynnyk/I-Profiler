@@ -16,7 +16,11 @@ export function usePackageLimits() {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const supabase = createBrowserSupabaseClient();
+        const supabase = createBrowserSupabaseClient({
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        });
+
         const pkg: PackageType = await getPackageFromServer(supabase);
 
         if (isValidPackageType(pkg)) {

@@ -14,7 +14,11 @@ export function useUserPlan(refreshToken?: number) {
   const [limitResetAt, setLimitResetAt] = useState<Date | null>(null);
 
   const fetchPlan = useCallback(async () => {
-    const supabase = createBrowserSupabaseClient<Database>();
+    const supabase = createBrowserSupabaseClient<Database>({
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    });
+
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
     if (!userId) return;
