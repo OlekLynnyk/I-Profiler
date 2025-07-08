@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServerClientForApi } from "@/lib/supabase/server";
 import { parseExcel } from "@/scripts/downloadExcel";
 import { randomUUID } from "crypto";
 import { detectUserLanguage } from "@/scripts/detectUserLanguage";
@@ -76,10 +76,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = await createServerClientForApi();
 
     let messages: any[] = [];
 

@@ -3,12 +3,18 @@ import { createServerClientForApi } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
+  const token = req.headers.get("authorization")?.replace("Bearer ", "").trim();
+
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized: Missing access token" }, { status: 401 });
+  }
+
   const supabase = await createServerClientForApi();
 
   const {
     data: { user },
     error: authError
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser(token);
 
   if (authError || !user) {
     console.error("❌ Supabase auth error:", authError);

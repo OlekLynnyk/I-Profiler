@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClientForApi } from '@/lib/supabase/server';
 import Stripe from 'stripe';
 import type { Database } from '@/types/supabase';
 
@@ -26,17 +26,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized: Missing access token' }, { status: 401 });
   }
 
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    }
-  );
+  // ✅ заменено на server-side Supabase client
+  const supabase = await createServerClientForApi();
 
   const { priceId } = await req.json().catch(() => ({}));
   if (!priceId || typeof priceId !== 'string') {
@@ -46,7 +37,7 @@ export async function POST(req: NextRequest) {
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser(token);
 
   if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

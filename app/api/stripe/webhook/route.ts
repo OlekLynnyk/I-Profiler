@@ -1,20 +1,18 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { createClient } from "@supabase/supabase-js";
+import { createServerClientForApi } from "@/lib/supabase/server";
 import type { Database } from "@/types/supabase";
 import { isValidPackageType } from "@/types/plan";
 import { updateUserLimits } from "@/lib/updateUserLimits";
 import Stripe from "stripe";
 
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
+  // ✅ заменили создание supabase client на server-side
+  const supabase = await createServerClientForApi();
+
   const rawBody = await req.text();
   const sig = (await headers()).get("stripe-signature");
 
@@ -33,11 +31,11 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, supabase);
         break;
       case "customer.subscription.updated":
       case "customer.subscription.deleted":
-        await handleSubscriptionChange(event.data.object as Stripe.Subscription);
+        await handleSubscriptionChange(event.data.object as Stripe.Subscription, supabase);
         break;
       default:
         console.log(`ℹ️ Unhandled event type: ${event.type}`);
@@ -50,7 +48,10 @@ export async function POST(req: Request) {
   return NextResponse.json({ message: "✅ OK" });
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+async function handleCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+  supabase: Awaited<ReturnType<typeof createServerClientForApi>>
+) {
   console.log("✅ Webhook received for checkout.session.completed");
 
   const userId = session.metadata?.user_id;
@@ -62,11 +63,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  await updateUserSubscription(userId, subscription);
-  await initializeCurrentPeriodStartIfMissing(userId);
+  await updateUserSubscription(userId, subscription, supabase);
+  await initializeCurrentPeriodStartIfMissing(userId, supabase);
 }
 
-async function handleSubscriptionChange(subscription: Stripe.Subscription) {
+async function handleSubscriptionChange(
+  subscription: Stripe.Subscription,
+  supabase: Awaited<ReturnType<typeof createServerClientForApi>>
+) {
   const customerId = subscription.customer as string;
 
   const { data, error } = await supabase
@@ -80,10 +84,14 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     return;
   }
 
-  await updateUserSubscription(data.user_id, subscription);
+  await updateUserSubscription(data.user_id, subscription, supabase);
 }
 
-async function updateUserSubscription(userId: string, subscription: Stripe.Subscription) {
+async function updateUserSubscription(
+  userId: string,
+  subscription: Stripe.Subscription,
+  supabase: Awaited<ReturnType<typeof createServerClientForApi>>
+) {
   const priceId = subscription.items.data[0]?.price.id;
   if (!priceId) {
     console.warn("⚠️ Subscription has no priceId");
@@ -128,7 +136,10 @@ async function updateUserSubscription(userId: string, subscription: Stripe.Subsc
   }
 }
 
-async function initializeCurrentPeriodStartIfMissing(userId: string) {
+async function initializeCurrentPeriodStartIfMissing(
+  userId: string,
+  supabase: Awaited<ReturnType<typeof createServerClientForApi>>
+) {
   const { data, error } = await supabase
     .from("user_subscription")
     .select("current_period_start")
