@@ -1,0 +1,19 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Injecting env vars into .env.production"
+        - printenv | grep -E 'SUPABASE|XAI|AWS|STRIPE|NEXT_PUBLIC' > .env.production
+        - npm install
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - .next/cache/**/* 
+      - node_modules/**/*
