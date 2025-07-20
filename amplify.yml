@@ -5,6 +5,8 @@ frontend:
       commands:
         - echo "Injecting env vars into .env.production"
         - printenv | grep -E 'SUPABASE|XAI|AWS|STRIPE|NEXT_PUBLIC' > .env.production
+        # ВАЖНО: обновлённый cache buster для сброса окружения
+        - echo "BUILD_CACHE_BUSTER=6221B332-E9B4-458E-98E8-9BD7343FE358" >> .env.production
         - npm install
     build:
       commands:
@@ -15,5 +17,5 @@ frontend:
       - '**/*'
   cache:
     paths:
-      - .next/cache/**/* 
+      - .next/cache/**/*
       - node_modules/**/*
