@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Удаляем serverActions — он необязателен
+  runtime: "nodejs",
+  output: "standalone",
 };
 
 export default nextConfig;
