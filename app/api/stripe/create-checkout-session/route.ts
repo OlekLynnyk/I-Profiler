@@ -20,14 +20,7 @@ const stripe = new Stripe(stripeSecretKey, {
 });
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
-
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized: Missing access token' }, { status: 401 });
-  }
-
-  // ✅ заменено на server-side Supabase client
-  const supabase = await createServerClientForApi();
+  const supabase = await createServerClientForApi(); // ⬅️ Используем правильный серверный клиент с куками
 
   const { priceId } = await req.json().catch(() => ({}));
   if (!priceId || typeof priceId !== 'string') {
@@ -37,7 +30,7 @@ export async function POST(req: NextRequest) {
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser(token);
+  } = await supabase.auth.getUser(); // ⬅️ Без передачи токена напрямую
 
   if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -109,7 +102,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (e: any) {
-    console.error('❌ Stripe checkout session error:', e);
+    console.error('❌ Stripe checkout session error:', {
+      message: e?.message,
+      code: e?.code,
+      raw: e?.raw,
+    });
     return NextResponse.json({ error: 'Stripe checkout session failed' }, { status: 500 });
   }
 }
