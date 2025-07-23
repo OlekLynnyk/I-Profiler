@@ -1,23 +1,20 @@
-version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - echo "Injecting env vars into .env.production"
-        - printenv | grep -E 'SUPABASE|XAI|AWS|STRIPE|NEXT_PUBLIC' > .env.production
-        - echo "BUILD_CACHE_BUSTER=6221B332-E9B4-458E-98E8-9BD7343FE358" >> .env.production
-        - npm install
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: .next
-    files:
-      - '**/*'
-      - ../.next/standalone/**/*
-      - ../.next/static/**/*
-      - server.js
-  cache:
-    paths:
-      - .next/cache/**/*
-      - node_modules/**/*
+import type { NextConfig } from 'next';
+import * as dotenv from 'dotenv';
+import { existsSync } from 'fs';
+
+// Load `.env.production` only if it exists (important for runtime build environments like Amplify)
+const envPath = '.env.production';
+if (existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+  console.log(`[next.config] Loaded environment from ${envPath}`);
+} else {
+  console.warn(`[next.config] Warning: ${envPath} not found — environment variables may be missing`);
+}
+
+const nextConfig: NextConfig = {
+  output: 'standalone',
+  reactStrictMode: true,
+  swcMinify: true,
+};
+
+export default nextConfig;
