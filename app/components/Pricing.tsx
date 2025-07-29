@@ -56,31 +56,46 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     {
       name: 'Freemium',
       price: '€0',
-      description: 'Explore the platform with 10 AI queries per month.',
-      features: ['10 AI queries/month', 'Basic profile analysis', 'Community support'],
+      description: 'Human Risk Analytics with AI Discernment',
+      features: [
+        '10 AI queries',
+        'Basic profile insights',
+        'Templates for structured analysis',
+        'Standard support',
+      ],
       action: onDemoClick,
       highlight: false,
     },
     {
       name: 'Smarter',
-      price: '€249/month',
-      description: 'Enhanced AI features and deeper profiling for individuals & teams.',
-      features: ['1,000 AI queries/month', 'Advanced profiling tools', 'Team dashboard', 'Email support'],
+      price: '€249',
+      description: 'Advanced profiling tools for individuals and teams.',
+      features: [
+        'Everything in Freemium',
+        '200 AI queries',
+        'Enhanced AI toolset',
+        'Professional Profiling Library',
+      ],
       action: () => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm'),
       highlight: true,
     },
     {
       name: 'Business',
-      price: '€899/month',
-      description: 'Full-featured access for organisations.',
-      features: ['10,000 AI queries/month', 'All features from Smarter', 'Priority support', 'Custom options'],
+      price: '€899',
+      description: 'Enterprise-level access and personalised onboarding.',
+      features: [
+        'Everything in Smarter',
+        '1,000 AI queries',
+        'Premium support',
+        'Advisory session or training on request',
+      ],
       action: () => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV'),
       highlight: false,
     },
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-[#1A1E23]">
+    <section className="py-16 md:py-24 bg-transparent">
       <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
         <h2 className="text-3xl md:text-4xl text-[#F5F5F5] mb-10">
           Pricing
@@ -102,6 +117,9 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               </h3>
               <p className="text-2xl md:text-3xl text-[#111827] mb-4">
                 {plan.price}
+                {plan.name !== 'Freemium' && (
+                  <span className="text-xs align-middle"> /4 weeks</span>
+                )}
               </p>
               <p className="text-[#374151] mb-5 text-sm md:text-base">
                 {plan.description}

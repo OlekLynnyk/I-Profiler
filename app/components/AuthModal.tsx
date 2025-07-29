@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
+import { FcGoogle } from 'react-icons/fc';
 
 export default function AuthModal({ onClose }: { onClose: () => void }) {
   const supabase = createClientComponentClient();
@@ -37,9 +38,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          prompt: 'select_account',
-        },
+        queryParams: { prompt: 'select_account' },
       },
     });
 
@@ -88,57 +87,64 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
-      <div ref={modalRef} className="bg-white text-black w-full max-w-md max-h-[90vh] overflow-y-auto p-6 rounded-xl space-y-4">
-        <h2 className="text-xl font-bold text-center">Welcome to I,Profiler</h2>
+      <div
+        ref={modalRef}
+        className="bg-white text-black w-full max-w-md max-h-[90vh] overflow-y-auto p-6 rounded-2xl space-y-5 shadow-xl"
+      >
+        <h2 className="text-base font-medium text-center text-gray-700">Welcome to I,Profiler</h2>
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition"
+          className="w-[85%] mx-auto border border-gray-300 bg-white text-gray-800 font-medium py-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition"
         >
+          <FcGoogle className="text-xl" />
           Continue with Google
         </button>
 
         <div className="text-center text-gray-500 text-sm">or enter your email and password</div>
 
-        <form onSubmit={(e) => { e.preventDefault(); handleAuth(); }} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border p-2 rounded text-black"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border p-2 rounded text-black"
-          />
-
-          <div className="flex items-center gap-2">
+        <div className="w-[85%] mx-auto space-y-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleAuth(); }} className="space-y-4">
             <input
-              type="checkbox"
-              checked={agree}
-              onChange={() => setAgree(!agree)}
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 p-2.5 rounded-xl placeholder-gray-400"
             />
-            <label className="text-sm text-gray-600">
-              I agree to the <a href="/terms" className="underline" target="_blank">Terms of Use</a> and <a href="/privacy" className="underline" target="_blank">Privacy Policy</a>
-            </label>
-          </div>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-gray-300 p-2.5 rounded-xl placeholder-gray-400"
+            />
 
-          {error && <div className="text-red-500 text-sm">{error}</div>}
-          {info && <div className="text-green-600 text-sm">{info}</div>}
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                checked={agree}
+                onChange={() => setAgree(!agree)}
+                className="accent-neutral-600 mt-1"
+              />
+              <label className="text-sm text-gray-600">
+                I agree to the <a href="/terms" className="underline" target="_blank">Terms of Use</a> and <a href="/privacy" className="underline" target="_blank">Privacy Policy</a>
+              </label>
+            </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-          >
-            {isLogin ? 'Login' : 'Create Account'}
-          </button>
-        </form>
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+            {info && <div className="text-green-600 text-sm">{info}</div>}
 
-        <div className="flex justify-between text-sm text-gray-600 pt-2">
+            <button
+              type="submit"
+              className="mx-auto block border border-gray-400 text-gray-700 bg-transparent px-6 py-2 rounded-xl hover:shadow transition mt-2"
+            >
+              {isLogin ? 'Login' : 'Create Account'}
+            </button>
+          </form>
+        </div>
+
+        <div className="w-[85%] mx-auto flex justify-between text-xs sm:text-sm text-gray-600 pt-2">
           <button onClick={() => setIsLogin(!isLogin)} className="underline">
             {isLogin ? 'Create an account' : 'Already have an account? Log in'}
           </button>

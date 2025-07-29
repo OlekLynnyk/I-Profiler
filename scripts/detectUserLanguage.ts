@@ -1,7 +1,9 @@
-export function detectUserLanguage(userPrompt: string | null): string {
+export function detectUserLanguage(
+  userPrompt: string | null,
+  fallback: string = "en"
+): string {
   if (!userPrompt || userPrompt.trim().length < 3) {
-    // Если пользователь не написал ничего или слишком мало текста → fallback
-    return "en";
+    return fallback;
   }
 
   const text = userPrompt.trim();
@@ -9,7 +11,7 @@ export function detectUserLanguage(userPrompt: string | null): string {
   const tests: { [lang: string]: RegExp } = {
     ru: /[а-яё]/i,
     uk: /[ґєії]/i,
-    es: /[ñáéíóúü]/i,         // <-- перемещено выше pl
+    es: /[ñáéíóúü]/i,
     pl: /[ąćęńóśźżł]/i,
     cs: /[ěščřžýáíé]/i,
     sk: /[ľščťžýáíé]/i,
@@ -37,5 +39,5 @@ export function detectUserLanguage(userPrompt: string | null): string {
     return "en";
   }
 
-  return "en";
+  return fallback;
 }

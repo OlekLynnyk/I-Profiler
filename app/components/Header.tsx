@@ -31,7 +31,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
   };
 
   return (
-    <header className="w-full px-4 py-3 flex flex-wrap justify-between items-center gap-3 shadow-[0_6px_12px_rgba(0,0,0,0.15)] bg-[#1A1E23] text-[#E5E5E5] relative overflow-hidden">
+    <header className="w-full px-4 py-3 flex flex-wrap justify-between items-center gap-3 bg-transparent text-[#E5E5E5] relative overflow-hidden">
       <div className="flex flex-wrap items-center gap-4 relative z-10">
         <button
           onClick={confirmAndGoHome}

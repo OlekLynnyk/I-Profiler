@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, type ReactNode, KeyboardEvent } from 'react';
+import React, { useEffect, useRef, useState, type ReactNode, KeyboardEvent } from 'react';
 import { useTheme } from 'next-themes';
 import { useProfile } from '../hooks/useProfile';
 import { PlanProgress } from '@/components/PlanProgress';
@@ -9,6 +9,8 @@ import { useUserPlan } from '../hooks/useUserPlan';
 import { usePlanUsage, PlanUsageProvider } from '../workspace/context/PlanUsageContext';
 import { useStripeCheckout } from '../hooks/useStripeCheckout';
 import { useSidebar } from '@/app/context/SidebarContext';
+
+// Типы
 
 type SidebarProps = {
   packageType: PackageType;
@@ -26,12 +28,12 @@ function cn(...classes: (string | undefined | null | false)[]) {
 }
 
 export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile } = useProfile();
   const [activeBox, setActiveBox] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
-  const { openSidebar } = useSidebar();
-
+  const { openSidebar, closeSidebar } = useSidebar();
   const { handleCheckout } = useStripeCheckout();
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const handleKeyToggle = (e: KeyboardEvent<HTMLDivElement>, boxId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -40,54 +42,57 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
     }
   };
 
-  if (!openSidebar.right) return null;
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        openSidebar.right &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
+        closeSidebar('right');
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openSidebar.right, closeSidebar]);
 
   const boxes: SectionBox[] = [
     {
       id: 'plan-box',
       title: packageType,
       content: (
-        <div
-          className="space-y-2 text-sm text-[var(--text-primary)]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={() => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm')}
-            className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-xl w-full"
+        <PlanUsageProvider>
+          <div
+            className="space-y-2 text-sm text-[var(--text-primary)]"
+            onClick={(e) => e.stopPropagation()}
           >
-            Upgrade to Smarter
-          </button>
-          <button
-            onClick={() => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV')}
-            className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl w-full"
-          >
-            Upgrade to Business
-          </button>
-        </div>
+            <MonthlyUsage refreshToken={refreshToken} />
+            <button
+              onClick={() => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm')}
+              className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-xl w-full"
+            >
+              Upgrade to Smarter
+            </button>
+            <button
+              onClick={() => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV')}
+              className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl w-full"
+            >
+              Upgrade to Business
+            </button>
+          </div>
+        </PlanUsageProvider>
       ),
     },
     {
       id: 'profile-settings',
       title: 'Profile Settings',
       content: (
-        <div
-          className="space-y-2 text-sm text-[var(--text-primary)]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <a
-            href="/settings/profile"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block hover:text-[var(--accent)]"
-          >
+        <div className="space-y-2 text-sm text-[var(--text-primary)]" onClick={(e) => e.stopPropagation()}>
+          <a href="/settings/profile" target="_blank" rel="noopener noreferrer" className="block hover:text-[var(--accent)]">
             Edit Profile
           </a>
-          <a
-            href="/settings/subscription"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block hover:text-[var(--accent)]"
-          >
+          <a href="/settings/subscription" target="_blank" rel="noopener noreferrer" className="block hover:text-[var(--accent)]">
             Manage Subscription
           </a>
         </div>
@@ -97,10 +102,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       id: 'theme-settings',
       title: 'Theme',
       content: (
-        <div
-          className="space-y-2 text-sm text-[var(--text-primary)]"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="space-y-2 text-sm text-[var(--text-primary)]" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setTheme('light')}
             className={cn(
@@ -130,20 +132,20 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
 
   return (
     <aside
+      ref={sidebarRef}
       className={`
-        fixed right-0 top-12 bottom-0
+        fixed right-0 top-12
         w-full max-w-sm md:w-80
         text-[var(--text-primary)]
         z-50
-        p-4 overflow-y-auto
+        p-4
         transition-transform duration-500 ease-in-out
         ${openSidebar.right ? 'translate-x-0' : 'translate-x-full'}
+        max-h-[calc(100vh-160px)]
+        overflow-y-auto
+        scrollbar-thin scrollbar-track-transparent scrollbar-thumb-transparent
       `}
-      style={{
-        backgroundColor: 'var(--background)',
-        boxShadow: 'none',
-        border: 'none',
-      }}
+      style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none' }}
     >
       {boxes.map((box) => {
         const isActive = activeBox === box.id;
@@ -205,22 +207,27 @@ function PlanProgressFetcher({ refreshToken }: { refreshToken: number }) {
 
   return (
     <div>
-      <PlanProgress
-        planName={plan}
-        used={used}
-        total={limits.dailyGenerations}
-      />
+      <PlanProgress planName={plan} used={used} total={limits.dailyGenerations} />
       {hasReachedDailyLimit && (
         <p className="text-xs text-[var(--danger)] mt-1">
           Daily Limit Reached. Resets at{' '}
-          {limitResetAt
-            ? limitResetAt.toLocaleTimeString(undefined, {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            : '00:00'}
+          {limitResetAt?.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+          }) ?? '00:00'}
         </p>
       )}
+    </div>
+  );
+}
+
+function MonthlyUsage({ refreshToken }: { refreshToken: number }) {
+  const { updatedAt } = usePlanUsage();
+  const { limits, usedMonthly } = useUserPlan(updatedAt + refreshToken);
+
+  return (
+    <div className="text-xs bg-[var(--card-bg)] border border-[var(--card-border)] text-center text-[var(--text-primary)] px-3 py-1 rounded-xl w-full">
+      Monthly usage: {usedMonthly}/{limits.monthlyGenerations}
     </div>
   );
 }

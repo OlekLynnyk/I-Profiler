@@ -9,6 +9,7 @@ import { useAuth } from '@/app/context/AuthProvider';
 import Footer from './components/Footer';
 import CubeCanvas from './components/CubeCanvas';
 import AuthModal from './components/AuthModal';
+import BlackCognitiveSand from '@/components/effects/BlackCognitiveSand';
 
 export default function HomePage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -23,26 +24,31 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col font-inter text-[#E5E5E5] relative overflow-hidden bg-[#1A1E23] no-scrollbar">
+      <BlackCognitiveSand />
+
       <Header onLoginClick={() => setIsAuthModalOpen(true)} />
 
       <main className="flex flex-col lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
-        <div className="w-full lg:w-1/2 space-y-2 lg:max-w-[55%] pl-[20px]">
+        <div className="w-full lg:w-[80%] space-y-2 pl-[20px]">
           <div className="min-h-[4rem]">
-            <h1 className="text-5xl md:text-7xl font-bold uppercase leading-tight tracking-tight break-words">
+            <h1 className="text-[40px] md:text-[82px] font-bold uppercase leading-tight tracking-tight break-words">
               <span className="text-white">WE UNLOCK INSIGHTS WITH</span><br />
               <span className="text-white">ADVANCED PROFILING</span><br />
-              <span className="text-[#C084FC]" style={{ fontSize: '28.6px' }}>
-                SEE WHAT OTHERS CANNOT
-              </span>
+              <div className="text-[#C084FC] leading-tight" style={{ fontSize: '28.6px' }}>
+                <div>SEE WHAT OTHERS CANNOT</div>
+                <div>
+                  REDUCE HUMAN{' '}
+                  <span style={{ fontSize: '22.6px' }}>FACTOR</span>{' '}
+                  RISK
+                </div>
+              </div>
             </h1>
           </div>
 
           <div className="space-y-6 text-[0.8rem] md:text-[0.9rem] leading-relaxed max-w-[28.6rem]">
             <p>
-              Since people do not tell us who they are but show it <br />
-              unconsciously, there is a need to interpret their signals.  <br />
-              We do this successfully, helping you make better decisions <br />
-              influence situations, and get as many YES as you need.
+              Since people do not tell us who they are, but show it <br />
+              through their signals, these must be interpreted.
             </p>
 
             {!session && (

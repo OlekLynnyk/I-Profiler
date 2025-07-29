@@ -4,11 +4,20 @@ import type { NextRequest } from 'next/server';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
+
   const supabase = createMiddlewareClient({ req, res });
 
-  await supabase.auth.getSession(); // обязательная строчка!
+  // ⬇️ Инициализируем сессию и обновляем куки, если access_token протух
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
-  return res;
+  if (error) {
+    console.warn('❌ Supabase middleware session error:', error.message);
+  }
+
+  return res; // ⬅️ важно вернуть именно тот `res`, в который Supabase мог записать Set-Cookie
 }
 
 export const config = {

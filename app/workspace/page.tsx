@@ -273,8 +273,8 @@ export default function WorkspacePage() {
                 />
 
                 {/* Основной текст */}
-               <p className="text-lg font-medium text-[var(--text-primary)]">
-                  The Next Discovery is just One Click Away.
+               <p className="text-[14.8px] font-medium text-[var(--text-primary)]">
+                  The next discovery is just one click away
                 </p>
 
                 {/* Подпись */}
@@ -334,6 +334,7 @@ export default function WorkspacePage() {
 
         <div className="fixed bottom-3 w-full px-3 sm:px-4 md:px-6">
           <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-4 shadow-2xl">
+            
             {attachedFiles.length > 0 && (
               <div className="flex gap-2 mb-2 flex-wrap">
                 {attachedFiles.map((file, idx) => (

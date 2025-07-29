@@ -48,15 +48,13 @@ export function useUserPlan(refreshToken?: number) {
     fetchPlan();
   }, [fetchPlan, refreshToken]);
 
-  const hasReachedDailyLimit =
-    dailyLimit > 0 && usedDaily >= dailyLimit;
-
-  const hasReachedMonthlyLimit =
-    monthlyLimit > 0 && usedMonthly >= monthlyLimit;
+  const hasReachedDailyLimit = dailyLimit > 0 && usedDaily >= dailyLimit;
+  const hasReachedMonthlyLimit = monthlyLimit > 0 && usedMonthly >= monthlyLimit;
 
   return {
     plan,
     used: usedDaily,
+    usedMonthly, // 🔧 Добавлено
     limits: {
       dailyGenerations: dailyLimit,
       monthlyGenerations: monthlyLimit,

@@ -4,7 +4,7 @@ import { FaLinkedin } from 'react-icons/fa';
 
 export default function Footer() {
   return (
-    <footer className="py-12 px-6 mt-24 relative overflow-hidden bg-[#1A1E23]">
+    <footer className="py-12 px-6 mt-24 relative overflow-hidden bg-transparent">
       {/* Блок для фонового изображения */}
       <div
         className="absolute inset-0 w-full h-full bg-center bg-no-repeat bg-contain opacity-5 pointer-events-none"

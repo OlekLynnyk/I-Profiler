@@ -33,7 +33,6 @@ const Cube = () => {
         const color = isSpecial ? '#F6F5ED' : 'white';
         const pos: [number, number, number] = [x, y, z];
 
-        // Чёрный корпус
         tiles.push(
           <Instance
             key={`box-${x}-${y}-${z}`}
@@ -87,10 +86,11 @@ const Cube = () => {
 
 export default function CubeCanvas() {
   return (
-    <div className="w-full h-full relative overflow-hidden bg-[#1A1E23]">
+    <div className="w-full h-full relative overflow-hidden bg-transparent">
       <Canvas
         className="w-full h-full relative z-10"
         camera={{ position: [8, 8, 8] }}
+        gl={{ alpha: true }}
         style={{ background: 'transparent' }}
       >
         <ambientLight intensity={0.6} />

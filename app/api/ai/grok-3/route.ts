@@ -115,6 +115,10 @@ export async function POST(req: NextRequest) {
         allFormulaText,
         `--- END OF FORMULA ---`,
         ``,
+        `NOTE:`,
+        `- The formula above is written in Russian.`,
+        `- However, always reply in ${userLanguage}, regardless of the formula language.`,
+         ``,
         `--- START OF INSTRUCTIONS ---`,
         standardPrompt,
         `--- END OF INSTRUCTIONS ---`,
@@ -200,9 +204,8 @@ export async function POST(req: NextRequest) {
       }
 
       // ✅ Детектим язык
-      const detectedLang = detectUserLanguage(prompt || "");
-      const userLanguage =
-        userLangFromRequest || detectedLang || "en";
+      const userLanguage = userLangFromRequest
+       || (prompt?.trim() ? detectUserLanguage(prompt, "en") : "en");
 
       messages.unshift({
         role: "system",
@@ -240,7 +243,7 @@ INSTRUCTION:
         content: userContent,
       });
     }
-
+       
     const grokResponse = await fetch(
       "https://api.x.ai/v1/chat/completions",
       {

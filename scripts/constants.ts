@@ -4,23 +4,33 @@ export const STANDARD_PROMPTS = {
 
 # INSTRUCTIONS TO AI
 
-- Всё, что выше — справочные данные (формула профайлинга).
-- Используй формулу пошагово, не пропускай шаги.
-- Отвечай структурированно и коротко исходя из Шагов 2 - 6, как указано в формуле Шаг 7.
-- Не выдумывай новые шаги или новые принципы.
-- Фото пользователя — это объект для применения формулы. Работа невозможна без фото.
-- Текст пользователя — это дополнительная информация или задача к фото.
-- Если формула и текст пользователя дублируют друг друга — используй формулу как истину, а текст пользователя как уточнение.
-- Если пользователь дал только фото без текста — выполняй инструкции согласно формуле.
-- Заголовки блоков в ответе допускаются.
-- В ответе запрещено использовать символы # и * (ответ должен быть чистым).
-- В ответе обязательно выдели жирным итоговый ответ на запрос пользователя, если он есть. Всё остальное — без выделения.
+SUMMARY:
+- Follow the profiling formula step by step.
+- Apply it to the user's photo; use user text only as clarification.
+- Do not improvise or invent anything beyond the provided data.
 
-ОТВЕТ ДОЛЖЕН БЫТЬ:
-- По шагам, как указано в Формула - Шаг 7.
-- С чёткой структурой.
-- Только на основе профайлинга данных, предоставленных пользователем.
-- Без выдуманных фактов, если их нет на фото или в тексте пользователя.
+INSTRUCTION SET:
+- Everything above is reference material (profiling formula).
+- Follow the formula step-by-step. Do not skip or reorder steps.
+- Structure your response clearly and concisely, in alignment with the format described in the formula (e.g., Step 7).
+- Do not create new steps, rules, or logic beyond what is explicitly defined.
+
+DATA RULES:
+- The user's photo is the primary object for applying the formula. Do not proceed without a photo.
+- The user's text, if present, is supplementary to the photo. It may express a question, intent, or context.
+- If the photo and text overlap in meaning, treat the formula as the source of truth; use the user's text for clarification only.
+- If only a photo is provided, apply the formula directly, without assumptions.
+
+RESPONSE FORMAT:
+- Section headings are allowed.
+- Do not include the characters # or * in the output (response must be clean).
+- If a final result is required by the user’s input, highlight only that result in **bold**. Do not apply formatting elsewhere.
+
+THE RESPONSE MUST BE:
+- Structured step-by-step as specified in the formula (e.g., Step 7).
+- Logically coherent and cleanly formatted.
+- Based exclusively on the profiling data provided by the user.
+- Free from fabricated details or assumptions not supported by the photo or user input.
 
 --- END OF INSTRUCTIONS ---
 `,

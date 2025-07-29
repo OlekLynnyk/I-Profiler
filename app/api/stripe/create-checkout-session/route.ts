@@ -20,20 +20,25 @@ const stripe = new Stripe(stripeSecretKey, {
 });
 
 export async function POST(req: NextRequest) {
-  const supabase = await createServerClientForApi(); // ⬅️ Используем правильный серверный клиент с куками
+  const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
+
+  if (!token) {
+    return NextResponse.json({ error: 'Missing access token' }, { status: 401 });
+  }
+
+  const supabase = await createServerClientForApi();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const { priceId } = await req.json().catch(() => ({}));
   if (!priceId || typeof priceId !== 'string') {
     return NextResponse.json({ error: 'Missing or invalid priceId' }, { status: 400 });
-  }
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser(); // ⬅️ Без передачи токена напрямую
-
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const {
