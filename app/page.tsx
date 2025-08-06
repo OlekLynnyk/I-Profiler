@@ -67,15 +67,15 @@ export default function HomePage() {
         </div>
       </main>
 
-      <section className="mt-8 relative z-10">
+      <section className="mt-10 relative z-10">
         <HowItWorks />
       </section>
 
-      <section id="pricing" className="mt-4 relative z-10">
+      <section id="pricing" className="mt-0 relative z-10">
         <Pricing onDemoClick={() => setIsAuthModalOpen(true)} />
       </section>
 
-      <section id="about" className="mt-4 mb-10 relative z-10">
+      <section id="about" className="mt-12 mb-10 relative z-10">
         <div className="text-center space-y-6">
           <h2 className="text-3xl md:text-4xl font-montserrat font-weight-600 text-[#F5F5F5]">
             About

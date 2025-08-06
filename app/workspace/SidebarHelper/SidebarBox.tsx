@@ -10,10 +10,12 @@ interface SidebarBoxProps {
 
 export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === 'Escape') {
+    if ((e.key === 'Enter' || e.key === 'Escape') && !box.locked) {
       onToggle();
     }
   };
+
+  const disabled = box.locked;
 
   return (
     <div
@@ -21,11 +23,17 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
       tabIndex={0}
       aria-expanded={isActive}
       aria-label={`Toggle ${box.title}`}
-      onClick={onToggle}
+      onClick={() => !disabled && onToggle()}
       onKeyDown={handleKeyDown}
-      className={`transition-all duration-300 cursor-pointer mb-4 rounded-xl border 
-        ${isActive ? 'border-[var(--accent)]' : 'border-[var(--card-border)]'} 
-        bg-transparent hover:bg-[var(--surface)] focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]`}
+      title={disabled ? 'Available on Smarter & Business plans' : ''}
+      className={`
+        transition-all duration-300 mb-4 rounded-xl border
+        ${isActive ? 'border-[var(--accent)]' : 'border-[var(--card-border)]'}
+        bg-[var(--card-bg)]
+        focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]
+        ${disabled ? 'opacity-50' : 'cursor-default'}
+        ${!disabled ? 'cursor-pointer' : ''}
+      `}
     >
       {/* header */}
       <div className="px-4 py-3 flex justify-between items-center">
@@ -40,7 +48,6 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
       {/* content */}
       {isActive && (
         <div className="px-4 pb-4 text-sm text-[var(--text-primary)]">
-          {/* убираем лишние подписи */}
           {box.renderContent && (
             <div className="mt-2">
               {box.renderContent}

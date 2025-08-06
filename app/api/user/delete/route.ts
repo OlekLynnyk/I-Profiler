@@ -47,6 +47,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to delete profile' }, { status: 500 });
   }
 
+  // ✅ деактивируем подписку пользователя
+  const { error: subscriptionError } = await supabaseAdminClient
+    .from('user_subscription')
+    .update({
+      active: false,
+      status: 'cancelled',
+    })
+    .eq('user_id', user.id);
+
+  if (subscriptionError) {
+    console.warn('⚠️ Failed to update subscription during delete:', subscriptionError);
+    // продолжаем, не блокируем
+  }
+
   // ✅ Отправляем письмо пользователю
   try {
     await sendAccountDeletionEmail({
@@ -90,7 +104,6 @@ async function sendAccountDeletionEmail({
     `Simulate sending email to ${email} — Account deleted with retention 90 days.`
   );
 
-  // Пример payload для email:
   const message = `
     Hi ${fullName || 'there'},
     
@@ -100,17 +113,6 @@ async function sendAccountDeletionEmail({
     
     If this was a mistake, please contact our support team.
   `;
-
-  // пример с Resend
-  /*
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  await resend.emails.send({
-    from: 'support@yourdomain.com',
-    to: email,
-    subject: 'Your account was deleted',
-    text: message,
-  });
-  */
 
   return;
 }

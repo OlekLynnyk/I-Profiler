@@ -5,36 +5,68 @@ import React from 'react';
 
 export default function HowItWorks() {
   return (
-    <section className="bg-transparent py-32 text-white relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col lg:flex-row items-center justify-between gap-12">
-
-        {/* Телефон — адаптивный и высокий */}
-        <div className="w-full max-w-[300px] h-[400px] md:h-[580px] lg:h-[640px] relative flex-shrink-0">
-          <div className="relative w-full h-full aspect-[260/520]">
-            <Image
-              src="/images/phone-mockup.webp"
-              alt="Phone frame"
-              fill
-              className="object-contain"
-            />
-          </div>
-        </div>
-
-        {/* Блок с текстом */}
-        <div className="w-full lg:w-1/2 flex justify-center">
-          <div className="bg-[#1A1E23]/80 backdrop-blur-md rounded-2xl border border-[#2F2F2F] px-8 py-10 space-y-6 shadow-xl max-w-md w-full flex flex-col justify-center">
-            <h2 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-white">
-              Their words.<br />Their world.<br />Your clarity.
-            </h2>
-            <div className="text-base md:text-lg space-y-4 text-gray-300">
-              <p>Understand what drives them</p>
-              <p>See the unconscious command</p>
-              <p>Speak their internal language</p>
-              <p>Win trust in one message</p>
+    <section className="bg-transparent text-white relative overflow-hidden min-h-[800px]">
+      <div className="w-full relative px-4 flex flex-col items-center lg:block">
+        {/* Левый телефон */}
+        <div className="relative w-[300px] md:w-[400px] lg:w-[600px] h-[600px] lg:h-[800px] mb-10 lg:mb-0 lg:ml-[-26px]">
+          <div className="absolute z-0 top-0 left-0 w-full h-full flex items-center justify-center">
+            <div className="w-[230px] h-[500px] overflow-hidden rounded-[28px] relative">
+              <Image
+                src="/images/phone-left-screen.webp"
+                alt="Phone screen left"
+                width={230}
+                height={500}
+                className="object-cover w-full h-full"
+              />
             </div>
           </div>
+          <Image
+            src="/images/phone-mockup.webp"
+            alt="Phone frame left"
+            fill
+            className="object-contain z-10"
+            priority
+          />
         </div>
 
+        {/* Правый телефон */}
+        <div className="relative w-[300px] md:w-[400px] lg:w-[600px] h-[600px] lg:h-[800px] mb-10 lg:mb-0 lg:absolute lg:top-0 lg:left-[270px]">
+          <div className="absolute z-0 top-0 left-0 w-full h-full flex items-center justify-center">
+            <div className="w-[230px] h-[510px] overflow-hidden rounded-[28px] relative -translate-y-[8px] translate-x-[2px]">
+              <Image
+                src="/images/phone-right-screen.webp"
+                alt="Phone screen right"
+                width={230}
+                height={510}
+                className="object-cover w-full h-full object-center"
+              />
+            </div>
+          </div>
+          <Image
+            src="/images/phone-mockup.webp"
+            alt="Phone frame right"
+            fill
+            className="object-contain z-10"
+            priority
+          />
+        </div>
+
+        {/* Текстовый блок */}
+        <div className="w-full max-w-[400px] text-center lg:text-left px-2 lg:px-6 flex flex-col justify-center space-y-4 z-10 mt-6 lg:mt-0 lg:absolute lg:top-0 lg:left-[850px] h-[auto] lg:h-[800px]">
+          <div className="space-y-2">
+            <h3 className="text-white text-[36px] sm:text-[42px] lg:text-[50px] leading-tight font-bold">
+              Their words<br />
+              Their world<br />
+              Your clarity
+            </h3>
+            <ul className="mt-4 text-sm sm:text-base text-[#CCCCCC] space-y-2 font-inter">
+              <li>Understand what drives them</li>
+              <li>See the unconscious command</li>
+              <li>Speak their internal language</li>
+              <li>Win trust in one message</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
   );

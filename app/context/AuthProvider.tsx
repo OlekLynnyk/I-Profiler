@@ -12,6 +12,7 @@ import {
   User,
 } from '@supabase/supabase-js';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+import { logWarn } from '@/lib/logger'; // ← импортируем логгер
 
 const supabase = createPagesBrowserClient();
 
@@ -19,12 +20,14 @@ const AuthContext = createContext<{
   session: Session | null;
   user: User | null;
   isLoading: boolean;
+  initialized: boolean;
   signOut: () => Promise<void>;
   supabase: typeof supabase;
 }>({
   session: null,
   user: null,
   isLoading: true,
+  initialized: false,
   signOut: async () => {},
   supabase,
 });
@@ -33,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -40,17 +44,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
 
-      // ✅ Путь обновлён: /api/user/init
       if (data.session?.access_token) {
         try {
-          await fetch('/api/user/init', {
+          const res = await fetch('/api/user/init', {
             method: 'POST',
             headers: {
               Authorization: `Bearer ${data.session.access_token}`,
             },
           });
+
+          if (res.ok) {
+            const json = await res.json();
+            setInitialized(json.initialized ?? false);
+          }
         } catch (e) {
-          console.warn('❌ Failed to init user:', e);
+          logWarn('User init failed in AuthProvider', e); // ← централизованное логгирование
         }
       }
 
@@ -81,6 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         user,
         isLoading,
+        initialized,
         signOut,
         supabase,
       }}

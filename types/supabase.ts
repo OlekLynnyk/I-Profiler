@@ -250,6 +250,37 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      } 
+          billing_logs: {
+        Row: {
+          id: number
+          user_id: string | null
+          event_type: string | null
+          customer_id: string | null
+          subscription_id: string | null
+          raw_data: Json | null
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          user_id?: string | null
+          event_type?: string | null
+          customer_id?: string | null
+          subscription_id?: string | null
+          raw_data?: Json | null
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          user_id?: string | null
+          event_type?: string | null
+          customer_id?: string | null
+          subscription_id?: string | null
+          raw_data?: Json | null
+          error_message?: string | null
+          created_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

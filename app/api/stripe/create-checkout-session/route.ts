@@ -41,6 +41,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing or invalid priceId' }, { status: 400 });
   }
 
+  // 🔒 Проверка активной подписки в Supabase
+  const { data: subData, error: subCheckError } = await supabase
+    .from('user_subscription')
+    .select('status, plan')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (subCheckError) {
+    console.error('❌ Failed to check user_subscription:', subCheckError);
+    return NextResponse.json({ error: 'Subscription check failed' }, { status: 500 });
+  }
+
+  // Разрешаем Freemium-пользователям покупать платный тариф,
+  // блокируем, если есть активная платная подписка
+  const isFreemium = subData?.plan === 'Freemium';
+  const isActivePaid = subData?.status === 'active' && !isFreemium;
+
+  if (isActivePaid) {
+    return NextResponse.json({ error: 'У вас уже есть активная платная подписка' }, { status: 400 });
+  }
+
   const {
     data: subRecord,
     error: subError,
@@ -67,12 +88,23 @@ export async function POST(req: NextRequest) {
 
   if (!customerId) {
     try {
-      const customer = await stripe.customers.create({
+      const existingCustomers = await stripe.customers.list({
         email: user.email ?? undefined,
-        metadata: { user_id: user.id },
+        limit: 1,
       });
 
-      customerId = customer.id;
+      const existingCustomer = existingCustomers.data?.[0];
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        const customer = await stripe.customers.create({
+          email: user.email ?? undefined,
+          metadata: { user_id: user.id },
+        });
+
+        customerId = customer.id;
+      }
 
       const { error: upsertError } = await supabase
         .from('user_subscription')
@@ -90,8 +122,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
       }
     } catch (e: any) {
-      console.error('❌ Stripe customer creation error:', e);
-      return NextResponse.json({ error: 'Stripe customer creation failed' }, { status: 500 });
+      console.error('❌ Stripe customer handling error:', e);
+      return NextResponse.json({ error: 'Stripe customer handling failed' }, { status: 500 });
     }
   }
 

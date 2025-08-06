@@ -18,6 +18,8 @@ import { useScrollObserver } from '@/app/hooks/useScrollObserver';
 import SaveProfileModal from '@/app/components/SaveProfileModal';
 import { useSavedProfiles } from '@/app/hooks/useSavedProfiles';
 import { FaLinkedin } from 'react-icons/fa';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+import SessionBridge from '@/app/components/SessionBridge';
 
 const LimitModal = dynamic(
   () => import('@/app/components/LimitModal'),
@@ -100,6 +102,8 @@ export default function WorkspacePage() {
 
   const [isImageActive, setIsImageActive] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
+  const [isChatActive, setIsChatActive] = useState(false);
+  const [chatMode, setChatMode] = useState<'none' | 'image' | 'chat'>('none');
 
   const scrollToBottom = () => {
     scrollRef.current?.scrollTo({
@@ -172,7 +176,10 @@ export default function WorkspacePage() {
   const submit = async () => {
     const hasInput = inputValue.trim() !== '';
     const hasFiles = attachedFiles.length > 0;
-    if (!hasInput && !hasFiles) return;
+    if (chatMode === 'none') {
+     alert('Please select how you want to interact: Chat or Profiling.');
+     return;
+    }
 
     resetInput();
 
@@ -199,19 +206,32 @@ export default function WorkspacePage() {
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer.files.length) {
-      const event = { target: { files: e.dataTransfer.files } } as unknown as React.ChangeEvent<HTMLInputElement>;
-      handleFileChange(event);
-      setIsDragging(false);
-    }
-  };
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (e.dataTransfer.files.length) {
+    const event = {
+      target: { files: e.dataTransfer.files }
+    } as unknown as React.ChangeEvent<HTMLInputElement>;
+
+    handleFileChange(event);
+    setIsDragging(false);
+
+    // Автоматическая активация режима Image
+    setIsImageActive(true);
+    setIsChatActive(false);
+    setChatMode('image');
+    setProfilingMode(true);
+   }
+ };
 
   if (isLoading) return <div className="p-8 text-[var(--text-secondary)]">🔄 Loading session...</div>;
   if (!session) return <div className="p-8 text-[var(--text-secondary)]">❌ No access</div>;
 
   return (
+  <>
+    <SessionBridge />
+
     <div
       className="flex h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-500 relative overflow-hidden"
       onDrop={handleDrop}
@@ -237,7 +257,7 @@ export default function WorkspacePage() {
         disableSaveProfiling={isGenerating || messages.length === 0}
       />
 
-      <div className="flex-1 flex flex-col items-center pb-[160px]">
+      <div className="flex-1 flex flex-col justify-center items-center pb-[160px]">
         <div
           className="w-full max-w-3xl flex-1 overflow-y-auto pt-[72px] px-4 sm:px-6 md:px-8 no-scrollbar"
           ref={scrollRef}
@@ -263,22 +283,22 @@ export default function WorkspacePage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="flex flex-col items-center justify-center text-center w-full py-12 px-4"
+                className="flex flex-col items-center justify-center text-center w-full py-12 px-4 mt-28"
               >
                 {/* Лого */}
                 <img
                   src="/images/logo.png"
                   alt="Logo"
-                  className="w-8 h-8 mb-3"
+                  className="w-10 h-10 mb-1"
                 />
 
                 {/* Основной текст */}
-               <p className="text-[14.8px] font-medium text-[var(--text-primary)]">
-                  The next discovery is just one click away
+               <p className="text-[20px] font-semibold text-center text-gray-700 dark:text-[var(--text-primary)]">
+                  Advanced AI Discernment
                 </p>
 
                 {/* Подпись */}
-                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
                   By {userName}
                 </p>
               </motion.div>
@@ -325,15 +345,15 @@ export default function WorkspacePage() {
             )}
 
             {isGenerating && (
-              <div className="w-full text-left py-1 text-[var(--text-secondary)] animate-pulse">
-                ...
+              <div className="w-full text-left py-1 text-sm text-[var(--text-secondary)] animate-pulse">
+                Analysing...
               </div>
             )}
           </div>
         </div>
 
         <div className="fixed bottom-3 w-full px-3 sm:px-4 md:px-6">
-          <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-4 shadow-2xl">
+          <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl">
             
             {attachedFiles.length > 0 && (
               <div className="flex gap-2 mb-2 flex-wrap">
@@ -359,7 +379,7 @@ export default function WorkspacePage() {
               </div>
             )}
 
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -368,24 +388,35 @@ export default function WorkspacePage() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything"
                 disabled={isDragging}
-                className="w-full px-4 py-3 text-[clamp(0.875rem,1vw,1rem)] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
+                className="w-full px-4 py-2 text-[clamp(0.875rem,1vw,1rem)] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
               />
 
-              <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-1">
+              <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
                 <div className="flex flex-wrap gap-2 items-center">
                   <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
                     <Plus size={16} className="text-[var(--text-primary)]" />
-                    <input type="file" className="hidden" multiple onChange={handleFileChange} />
+                    <input type="file" className="hidden" multiple onChange={(e) => {
+                      handleFileChange(e);
+                      if (e.target.files && e.target.files.length > 0) {
+                        setIsImageActive(true);
+                        setIsChatActive(false);
+                        setChatMode('image');
+                        setProfilingMode(true);
+                      }
+                    }} />
                   </label>
 
                   <button
                     type="button"
                     onClick={() => {
-                      setIsImageActive(!isImageActive);
-                      setProfilingMode(!profilingMode);
+                      const next = !isImageActive;
+                      setIsImageActive(next);
+                      setChatMode(next ? 'image' : 'none');
+                      setIsChatActive(false);
+                      setProfilingMode(next);
                     }}
                     className={`
-                      flex items-center gap-1 h-9 px-3
+                      flex items-center gap-1 h-8 px-3
                       rounded-full shadow-sm transition
                       text-xs font-medium
                       ${isImageActive
@@ -403,7 +434,7 @@ export default function WorkspacePage() {
                     type="button"
                     onClick={() => alert('Currently not available.')}
                     className="
-                      flex items-center gap-1 h-9 px-3
+                      flex items-center gap-1 h-8 px-3
                       rounded-full shadow-sm transition
                       bg-[var(--button-bg)] text-[var(--text-primary)]
                       hover:bg-[var(--button-hover-bg)]
@@ -414,6 +445,28 @@ export default function WorkspacePage() {
                     <FaLinkedin className="w-3.5 h-3.5" />
                     LinkedIn
                   </button>
+                   
+                   <button
+                     type="button"
+                     onClick={() => {
+                       const next = !isChatActive;
+                       setIsChatActive(next);
+                       setChatMode(next ? 'chat' : 'none');
+                       setIsImageActive(false);
+                     }}
+                     className={`
+                      flex items-center gap-1 h-8 px-3
+                      rounded-full shadow-sm transition
+                      text-xs font-medium
+                      ${isChatActive
+                        ? 'bg-[#C084FC] text-white hover:bg-[#a05adb]'
+                        : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)]'
+                      }
+                    `}
+                    aria-label="Toggle Chat Mode"
+                  >
+                    💬 Chat
+                  </button>
 
                   <div className="relative">
                     <button
@@ -421,7 +474,7 @@ export default function WorkspacePage() {
                       onClick={() => setShowMoreDropdown(!showMoreDropdown)}
                       aria-label="More Button"
                       className="
-                        flex items-center gap-1 h-9 px-3
+                        flex items-center gap-1 h-8 px-3
                         rounded-full shadow-sm transition
                         bg-[var(--button-bg)] text-[var(--text-primary)]
                         hover:bg-[var(--button-hover-bg)]
@@ -495,7 +548,7 @@ export default function WorkspacePage() {
             </div>
           </div>
 
-          <div className="mt-4 text-center text-xs text-[var(--text-secondary)]">
+          <div className="mt-2 text-center text-xs text-[var(--text-secondary)]">
             I,Profiler can make mistakes. Check important info. See{' '}
             <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--text-primary)]">
               Terms of Use
@@ -590,7 +643,8 @@ export default function WorkspacePage() {
         defaultProfileName={`Profiling #${Date.now()}`}
       />
 
-      {overlay}
+        {overlay}
     </div>
+  </>
   );
 }

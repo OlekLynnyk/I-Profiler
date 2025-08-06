@@ -36,7 +36,8 @@ export default function HeaderBar({
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-30 min-h-12 py-2 px-2 sm:px-4 flex items-center justify-between flex-wrap gap-2 bg-[var(--background)]/80 backdrop-blur"
+  className="fixed top-0 left-0 right-0 z-30 h-12 px-2 sm:px-4 flex items-center justify-between flex-wrap gap-2 bg-[var(--background)]/80 backdrop-blur"
+
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       {/* Left buttons */}
@@ -61,10 +62,10 @@ export default function HeaderBar({
         tabIndex={0}
         aria-label="Go to home"
         onKeyDown={handleKeyDown}
-        className="text-xs sm:text-base font-montserrat font-semibold text-[var(--text-primary)] cursor-pointer focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]"
+        className="text-sm sm:text-sm font-inter font-semibold text-[var(--text-primary)] cursor-pointer focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]"
         onClick={onLogout}
       >
-        I,Profiler
+        Home
       </div>
 
       {/* Right controls */}

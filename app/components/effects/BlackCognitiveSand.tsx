@@ -1,19 +1,20 @@
 import { useEffect, useRef } from "react";
 
 const LAYER_COUNT = 3;
-const PARTICLES_PER_LAYER = [800, 600, 400];
+const PARTICLES_PER_LAYER = [1600, 1200, 800]; // увеличено
 const BASE_COLOR = "rgba(255,255,255,0.015)";
 const FPS_INTERVAL = 1000 / 30;
+const PREWARM_STEPS = 200;
 
 export default function BlackCognitiveSand() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particles = useRef<Float32Array[]>([]);
-  const windOffset = useRef(0);
+  const windOffset = useRef(200);
   const isVisible = useRef(true);
   const animRef = useRef<number>(0);
   const lastFrameTime = useRef<number>(0);
 
-  const windCache = Array.from({ length: 628 }, (_, i) => Math.sin(i / 100) * 0.1); // 2π * 100
+  const windCache = Array.from({ length: 628 }, (_, i) => Math.sin(i / 100) * 0.1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -44,6 +45,33 @@ export default function BlackCognitiveSand() {
       particles.current.push(arr);
     }
 
+    // Prewarm loop
+    for (let step = 0; step < PREWARM_STEPS; step++) {
+      const wind = windCache[Math.floor((windOffset.current + step) % windCache.length)];
+      particles.current.forEach((layer) => {
+        for (let i = 0; i < layer.length; i += 4) {
+          let x = layer[i];
+          let y = layer[i + 1];
+          let vx = layer[i + 2] + wind;
+          let vy = layer[i + 3];
+
+          x += vx;
+          y += vy;
+
+          if (x < 0) x = width;
+          if (x > width) x = 0;
+          if (y < 0) y = height;
+          if (y > height) y = 0;
+
+          layer[i] = x;
+          layer[i + 1] = y;
+          layer[i + 2] = vx * 0.97;
+          layer[i + 3] = vy * 0.97;
+        }
+      });
+      windOffset.current += 1;
+    }
+
     const animate = (time: number) => {
       animRef.current = requestAnimationFrame(animate);
       if (!isVisible.current) return;
@@ -58,8 +86,8 @@ export default function BlackCognitiveSand() {
       ctx.globalAlpha = 1.0;
       ctx.fillStyle = BASE_COLOR;
 
-      windOffset.current += 1;
       const wind = windCache[Math.floor(windOffset.current) % windCache.length];
+      windOffset.current += 1;
 
       particles.current.forEach((layer, idx) => {
         const size = 0.3 + idx * 0.2;

@@ -53,8 +53,8 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, [openSidebar.right, closeSidebar]);
 
   const boxes: SectionBox[] = [

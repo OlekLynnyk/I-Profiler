@@ -89,7 +89,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
       <div
         ref={modalRef}
-        className="bg-white text-black w-full max-w-md max-h-[90vh] overflow-y-auto p-6 rounded-2xl space-y-5 shadow-xl"
+        className="bg-white text-black w-full max-w-md max-h-[90vh] overflow-y-auto p-5 rounded-2xl space-y-4 shadow-xl"
       >
         <h2 className="text-base font-medium text-center text-gray-700">Welcome to I,Profiler</h2>
 

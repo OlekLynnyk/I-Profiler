@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { logError } from '@/lib/logger'; // ← логгер ошибок
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -19,7 +20,8 @@ export class ErrorBoundary extends React.Component<
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(_: any) {
+  static getDerivedStateFromError(error: any) {
+    logError('Unhandled UI error in ErrorBoundary', error); // ← логируем
     return { hasError: true };
   }
 

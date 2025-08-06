@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { sidebarBoxes } from './sidebar-helper.data';
+import { getSidebarBoxes } from './sidebar-helper.data';
 import { BoxData } from './types';
 import SidebarBox from './SidebarBox';
 import { useSidebar } from '@/app/context/SidebarContext';
@@ -10,6 +10,8 @@ export default function SidebarHelper() {
   const [activeBox, setActiveBox] = useState<string | null>(null);
   const { openSidebar, closeSidebar } = useSidebar();
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  const sidebarBoxes = getSidebarBoxes();
 
   // Закрытие при клике вне
   useEffect(() => {
@@ -23,8 +25,8 @@ export default function SidebarHelper() {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, [openSidebar.left, closeSidebar]);
 
   return (
@@ -39,7 +41,7 @@ export default function SidebarHelper() {
         ${openSidebar.left ? 'left-0' : '-left-full'}
         max-h-[calc(100vh-160px)]
         overflow-y-auto
-        scrollbar-thin scrollbar-thumb-transparent scrollbar-track-transparent
+        no-scrollbar
       `}
       style={{
         backgroundColor: 'transparent',

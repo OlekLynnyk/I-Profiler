@@ -72,7 +72,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       description: 'Advanced profiling tools for individuals and teams.',
       features: [
         'Everything in Freemium',
-        '200 AI queries',
+        '250 AI queries',
         'Enhanced AI toolset',
         'Professional Profiling Library',
       ],
@@ -95,7 +95,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-transparent">
+    <section className="pt-4 md:pt-6 pb-16 md:pb-24 bg-transparent">
       <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
         <h2 className="text-3xl md:text-4xl text-[#F5F5F5] mb-10">
           Pricing

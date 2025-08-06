@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createServerClientForApi } from "@/lib/supabase/server";
-import type { Database } from "@/types/supabase";
 import { isValidPackageType } from "@/types/plan";
 import { updateUserLimits } from "@/lib/updateUserLimits";
 import Stripe from "stripe";
@@ -10,9 +9,7 @@ import Stripe from "stripe";
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
-  // ✅ заменили создание supabase client на server-side
   const supabase = await createServerClientForApi();
-
   const rawBody = await req.text();
   const sig = (await headers()).get("stripe-signature");
 
@@ -25,13 +22,33 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
   } catch (err) {
     console.error("❌ Webhook verification failed:", (err as Error).message);
+
+    await logBillingEvent({
+      supabase,
+      eventType: 'webhook.error',
+      payload: { rawBody },
+      status: 'error',
+      errorMessage: (err as Error).message,
+    });
+
     return NextResponse.json({ error: (err as Error).message }, { status: 400 });
   }
 
   try {
+    await logBillingEvent({
+      supabase,
+      eventType: event.type,
+      customerId: extractCustomerId(event),
+      payload: event.data.object,
+      status: 'success',
+    });
+
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, supabase);
+        break;
+      case "checkout.session.expired":
+        await handleCheckoutExpired(event.data.object as Stripe.Checkout.Session, supabase);
         break;
       case "customer.subscription.updated":
       case "customer.subscription.deleted":
@@ -42,6 +59,16 @@ export async function POST(req: Request) {
     }
   } catch (err) {
     console.error("❌ Error handling webhook:", err);
+
+    await logBillingEvent({
+      supabase,
+      eventType: event?.type ?? 'unknown',
+      payload: event?.data?.object,
+      status: 'error',
+      errorMessage: (err as Error).message,
+      customerId: extractCustomerId(event),
+    });
+
     return NextResponse.json({ error: "Webhook handling failed" }, { status: 500 });
   }
 
@@ -67,6 +94,30 @@ async function handleCheckoutCompleted(
   await initializeCurrentPeriodStartIfMissing(userId, supabase);
 }
 
+async function handleCheckoutExpired(
+  session: Stripe.Checkout.Session,
+  supabase: Awaited<ReturnType<typeof createServerClientForApi>>
+) {
+  console.log("ℹ️ Webhook received for checkout.session.expired");
+
+  const userId = session.metadata?.user_id;
+  if (!userId) {
+    console.warn("⚠️ checkout.session.expired: user_id отсутствует в metadata");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("user_subscription")
+    .update({ stripe_customer_id: null })
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("❌ Не удалось очистить stripe_customer_id:", error);
+  } else {
+    console.log(`ℹ️ stripe_customer_id очищен для user_id=${userId}`);
+  }
+}
+
 async function handleSubscriptionChange(
   subscription: Stripe.Subscription,
   supabase: Awaited<ReturnType<typeof createServerClientForApi>>
@@ -85,6 +136,25 @@ async function handleSubscriptionChange(
   }
 
   await updateUserSubscription(data.user_id, subscription, supabase);
+
+  const isInactive = !['active', 'trialing'].includes(subscription.status);
+  if (isInactive) {
+    console.log(`ℹ️ Подписка стала неактивной. Назначаем Freemium для user_id=${data.user_id}`);
+
+    await supabase
+      .from("user_subscription")
+      .update({
+        status: 'canceled',
+        package_type: 'Freemium',
+        plan: 'Freemium',
+        stripe_subscription_id: null,
+        stripe_price_id: 'freemium',
+        subscription_ends_at: null,
+      })
+      .eq("user_id", data.user_id);
+
+    await updateUserLimits(supabase, data.user_id, 'Freemium');
+  }
 }
 
 async function updateUserSubscription(
@@ -176,6 +246,36 @@ function normalizeStatus(status: string): "active" | "canceled" | "incomplete" {
       return "incomplete";
     default:
       return "canceled";
+  }
+}
+
+function extractCustomerId(event: Stripe.Event): string | undefined {
+  const object = event.data?.object as any;
+  return object?.customer ?? object?.customer_id ?? undefined;
+}
+
+async function logBillingEvent(params: {
+  supabase: Awaited<ReturnType<typeof createServerClientForApi>>,
+  eventType: string,
+  customerId?: string,
+  userId?: string,
+  payload: any,
+  status: 'success' | 'error',
+  errorMessage?: string,
+}) {
+  const { supabase, eventType, customerId, userId, payload, status, errorMessage } = params;
+
+  const { error } = await supabase.from('billing_logs').insert({
+    event_type: eventType,
+    stripe_customer_id: customerId ?? null,
+    user_id: userId ?? null,
+    payload,
+    status,
+    error_message: errorMessage ?? null,
+  });
+
+  if (error) {
+    console.error('❌ Failed to insert billing_logs:', error);
   }
 }
 

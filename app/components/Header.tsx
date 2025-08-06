@@ -35,8 +35,9 @@ export default function Header({ onLoginClick }: HeaderProps) {
       <div className="flex flex-wrap items-center gap-4 relative z-10">
         <button
           onClick={confirmAndGoHome}
-          className="text-lg font-montserrat font-weight-600 text-[#F5F5F5] hover:opacity-75 transition-all"
+          className="text-lg font-montserrat font-weight-600 text-[#F5F5F5] hover:opacity-75 transition-all flex items-center gap-2"
         >
+          <img src="/images/octopus-logo.png" alt="Logo" className="w-6 h-6" />
           I,Profiler
         </button>
 
