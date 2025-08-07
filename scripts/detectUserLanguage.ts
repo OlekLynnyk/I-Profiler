@@ -1,7 +1,4 @@
-export function detectUserLanguage(
-  userPrompt: string | null,
-  fallback: string = "en"
-): string {
+export function detectUserLanguage(userPrompt: string | null, fallback: string = 'en'): string {
   if (!userPrompt || userPrompt.trim().length < 3) {
     return fallback;
   }
@@ -36,7 +33,7 @@ export function detectUserLanguage(
   }
 
   if (/[a-z]/i.test(text)) {
-    return "en";
+    return 'en';
   }
 
   return fallback;

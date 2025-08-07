@@ -47,9 +47,9 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Premium user with subscription
-    const subscription = await stripe.subscriptions.retrieve(
+    const subscription = (await stripe.subscriptions.retrieve(
       subRecord.stripe_subscription_id
-    ) as Stripe.Subscription;
+    )) as Stripe.Subscription;
 
     const plan = subscription.items.data[0]?.price.nickname || 'Unknown';
     const status = subscription.status;
@@ -66,7 +66,8 @@ export async function POST(req: NextRequest) {
 
     const cancelAtPeriodEnd = !!subscription.cancel_at_period_end;
 
-    const paymentMethodId = (subscription.default_payment_method || subscription.default_source) as string;
+    const paymentMethodId = (subscription.default_payment_method ||
+      subscription.default_source) as string;
     let paymentMethod = 'N/A';
 
     if (paymentMethodId) {

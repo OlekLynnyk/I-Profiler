@@ -36,8 +36,7 @@ export default function HeaderBar({
 
   return (
     <div
-  className="fixed top-0 left-0 right-0 z-30 h-12 px-2 sm:px-4 flex items-center justify-between flex-wrap gap-2 bg-[var(--background)]/80 backdrop-blur"
-
+      className="fixed top-0 left-0 right-0 z-30 h-12 px-2 sm:px-4 flex items-center justify-between flex-wrap gap-2 bg-[var(--background)]/80 backdrop-blur"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       {/* Left buttons */}
@@ -49,9 +48,7 @@ export default function HeaderBar({
           Resources Hub
         </button>
 
-        <button
-          className="flex items-center gap-1 text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)] opacity-50 pointer-events-none"
-        >
+        <button className="flex items-center gap-1 text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)] opacity-50 pointer-events-none">
           <span className="text-[var(--text-primary)]">More</span>
         </button>
       </div>

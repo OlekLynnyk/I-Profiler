@@ -11,9 +11,7 @@ export async function sendAccountDeletionEmail({
   fullName: string;
 }) {
   if (process.env.USE_EMAIL_MOCK === 'true') {
-    console.log(
-      `[MOCK] Would send account deletion email to ${email} for user ${fullName}`
-    );
+    console.log(`[MOCK] Would send account deletion email to ${email} for user ${fullName}`);
     return;
   }
 

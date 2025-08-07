@@ -1,13 +1,16 @@
 export const PACKAGE_TYPES = ['Freemium', 'Smarter', 'Business'] as const;
-export type ValidPackageType = typeof PACKAGE_TYPES[number];
+export type ValidPackageType = (typeof PACKAGE_TYPES)[number];
 export type PackageType = ValidPackageType | string;
 
-export const PACKAGE_LIMITS: Record<ValidPackageType, {
-  requestsPerMonth: number;
-  dailyGenerations: number;
-  allowExport: boolean;
-  allowCustomBranding: boolean;
-}> = {
+export const PACKAGE_LIMITS: Record<
+  ValidPackageType,
+  {
+    requestsPerMonth: number;
+    dailyGenerations: number;
+    allowExport: boolean;
+    allowCustomBranding: boolean;
+  }
+> = {
   Freemium: {
     requestsPerMonth: 10,
     dailyGenerations: 5,

@@ -48,10 +48,7 @@ export function useSavedProfiles() {
 
     return (data || []).map((item) => ({
       ...item,
-      chat_json:
-        typeof item.chat_json === 'string'
-          ? JSON.parse(item.chat_json)
-          : item.chat_json,
+      chat_json: typeof item.chat_json === 'string' ? JSON.parse(item.chat_json) : item.chat_json,
     })) as SavedProfile[];
   };
 
@@ -59,9 +56,7 @@ export function useSavedProfiles() {
     setIsLoading(true);
     setError(null);
 
-    const { error } = await supabase
-      .from('saved_chats')
-      .insert([profile]);
+    const { error } = await supabase.from('saved_chats').insert([profile]);
 
     setIsLoading(false);
 
@@ -76,10 +71,7 @@ export function useSavedProfiles() {
     setIsLoading(true);
     setError(null);
 
-    const { error } = await supabase
-      .from('saved_chats')
-      .update(data)
-      .eq('id', profileId);
+    const { error } = await supabase.from('saved_chats').update(data).eq('id', profileId);
 
     setIsLoading(false);
 
@@ -94,10 +86,7 @@ export function useSavedProfiles() {
     setIsLoading(true);
     setError(null);
 
-    const { error } = await supabase
-      .from('saved_chats')
-      .delete()
-      .eq('id', profileId);
+    const { error } = await supabase.from('saved_chats').delete().eq('id', profileId);
 
     setIsLoading(false);
 

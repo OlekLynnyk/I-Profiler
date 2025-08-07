@@ -126,8 +126,7 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  if (loading)
-    return <div className="p-8 text-gray-600 text-sm">Loading...</div>;
+  if (loading) return <div className="p-8 text-gray-600 text-sm">Loading...</div>;
 
   return (
     <div
@@ -138,9 +137,7 @@ export default function ProfileSettingsPage() {
         <div className="bg-white rounded-xl shadow-md p-4 md:p-8 w-full">
           <div className="flex items-center mb-8 space-x-4">
             <UserCircleIcon className="h-10 w-10 text-gray-300" />
-            <h1 className="text-lg md:text-xl font-bold text-gray-900">
-              Edit Profile
-            </h1>
+            <h1 className="text-lg md:text-xl font-bold text-gray-900">Edit Profile</h1>
           </div>
 
           <div className="space-y-4 text-sm text-gray-800">
@@ -149,8 +146,7 @@ export default function ProfileSettingsPage() {
               {!editingName ? (
                 <>
                   <span>
-                    <span className="font-medium text-gray-700">Name:</span>{' '}
-                    {name || '-'}
+                    <span className="font-medium text-gray-700">Name:</span> {name || '-'}
                   </span>
                   <button
                     onClick={() => setEditingName(true)}
@@ -190,15 +186,12 @@ export default function ProfileSettingsPage() {
 
             {/* Email */}
             <div>
-              <span className="font-medium text-gray-700">Email:</span>{' '}
-              {profile?.email || '-'}
+              <span className="font-medium text-gray-700">Email:</span> {profile?.email || '-'}
             </div>
 
             {/* Email Verified */}
             <div className="flex items-center space-x-2">
-              <span className="font-medium text-gray-700">
-                Email Verified:
-              </span>
+              <span className="font-medium text-gray-700">Email Verified:</span>
               {profile?.email_verified ? (
                 <span className="flex items-center text-green-600">
                   <CheckCircleIcon className="h-4 w-4 mr-1" /> Yes
@@ -212,8 +205,7 @@ export default function ProfileSettingsPage() {
 
             {/* Role */}
             <div>
-              <span className="font-medium text-gray-700">Role:</span>{' '}
-              {profile?.role || 'user'}
+              <span className="font-medium text-gray-700">Role:</span> {profile?.role || 'user'}
             </div>
 
             {/* Change Password */}
@@ -222,10 +214,7 @@ export default function ProfileSettingsPage() {
                 {!showPasswordForm ? (
                   <div className="flex items-center justify-between">
                     <span>
-                      <span className="font-medium text-gray-700">
-                        Password:
-                      </span>{' '}
-                      ••••••••
+                      <span className="font-medium text-gray-700">Password:</span> ••••••••
                     </span>
                     <button
                       type="button"
@@ -251,9 +240,7 @@ export default function ProfileSettingsPage() {
                         disabled={changingPassword}
                         className="text-xs px-3 py-1 bg-[#A78BFA] hover:bg-[#8B5CF6] text-white rounded-md"
                       >
-                        {changingPassword
-                          ? 'Changing...'
-                          : 'Save'}
+                        {changingPassword ? 'Changing...' : 'Save'}
                       </button>
                       <button
                         type="button"
@@ -268,9 +255,7 @@ export default function ProfileSettingsPage() {
                       </button>
                     </div>
                     {passwordMessage && (
-                      <p className="text-xs text-gray-700 mt-1">
-                        {passwordMessage}
-                      </p>
+                      <p className="text-xs text-gray-700 mt-1">{passwordMessage}</p>
                     )}
                   </div>
                 )}
@@ -285,22 +270,12 @@ export default function ProfileSettingsPage() {
                 readOnly
                 className="accent-[#A78BFA] h-4 w-4"
               />
-              <span className="ml-2 text-gray-700">
-                Agreed to Terms & Conditions
-              </span>
+              <span className="ml-2 text-gray-700">Agreed to Terms & Conditions</span>
             </div>
 
             {/* Success / Error Messages */}
-            {successMessage && (
-              <p className="text-green-600 text-xs mt-2">
-                {successMessage}
-              </p>
-            )}
-            {errorMessage && (
-              <p className="text-red-600 text-xs mt-2">
-                {errorMessage}
-              </p>
-            )}
+            {successMessage && <p className="text-green-600 text-xs mt-2">{successMessage}</p>}
+            {errorMessage && <p className="text-red-600 text-xs mt-2">{errorMessage}</p>}
 
             {/* Delete Account */}
             <div className="text-center mt-8">

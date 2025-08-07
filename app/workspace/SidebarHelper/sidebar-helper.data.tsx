@@ -21,7 +21,7 @@ export const getSidebarBoxes = (): BoxData[] => {
     'What questions does this raise?',
     'Provide counterarguments to this text.',
     'Give a short summary with hashtags.',
-    'Generate a tweet based on this.'
+    'Generate a tweet based on this.',
   ];
 
   const TemplatesContent = () => (

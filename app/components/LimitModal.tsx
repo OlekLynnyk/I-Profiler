@@ -56,8 +56,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
 
   if (!show) return null;
 
-  const buttonClasses =
-    "text-xs px-5 py-2 rounded-xl min-w-[120px] text-center";
+  const buttonClasses = 'text-xs px-5 py-2 rounded-xl min-w-[120px] text-center';
 
   return (
     <div className="fixed bottom-[100px] w-full flex justify-center px-2 sm:px-4 z-50">
@@ -112,9 +111,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                 {/* Smarter Block */}
                 <div className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-white text-base md:text-lg font-semibold mb-2">
-                      Smarter
-                    </h3>
+                    <h3 className="text-white text-base md:text-lg font-semibold mb-2">Smarter</h3>
                     <p className="text-gray-300 text-sm mb-4">
                       Text description for the Smarter plan goes here.
                     </p>
@@ -130,9 +127,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                 {/* Business Block */}
                 <div className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-white text-base md:text-lg font-semibold mb-2">
-                      Business
-                    </h3>
+                    <h3 className="text-white text-base md:text-lg font-semibold mb-2">Business</h3>
                     <p className="text-gray-300 text-sm mb-4">
                       Text description for the Business plan goes here.
                     </p>
@@ -158,11 +153,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
         </motion.div>
       </AnimatePresence>
 
-      <button
-        onClick={onClose}
-        className="hidden"
-        aria-hidden="true"
-      />
+      <button onClick={onClose} className="hidden" aria-hidden="true" />
     </div>
   );
 }

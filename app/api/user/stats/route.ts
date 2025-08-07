@@ -6,7 +6,10 @@ import dayjs from 'dayjs';
 
 export async function GET() {
   const supabase = createServerComponentClient({ cookies: () => cookies() });
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
   if (authError || !user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -18,7 +21,8 @@ export async function GET() {
     .eq('user_id', user.id)
     .single();
 
-  const plan = (subscription?.plan && isValidPackageType(subscription.plan)) ? subscription.plan : 'Freemium';
+  const plan =
+    subscription?.plan && isValidPackageType(subscription.plan) ? subscription.plan : 'Freemium';
   const planLimits = PACKAGE_LIMITS[plan];
 
   const startOfDay = dayjs().startOf('day').toISOString();

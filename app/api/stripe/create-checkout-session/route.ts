@@ -59,13 +59,13 @@ export async function POST(req: NextRequest) {
   const isActivePaid = subData?.status === 'active' && !isFreemium;
 
   if (isActivePaid) {
-    return NextResponse.json({ error: 'У вас уже есть активная платная подписка' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'У вас уже есть активная платная подписка' },
+      { status: 400 }
+    );
   }
 
-  const {
-    data: subRecord,
-    error: subError,
-  } = await supabase
+  const { data: subRecord, error: subError } = await supabase
     .from('user_subscription')
     .select('stripe_customer_id')
     .eq('user_id', user.id)
@@ -106,16 +106,14 @@ export async function POST(req: NextRequest) {
         customerId = customer.id;
       }
 
-      const { error: upsertError } = await supabase
-        .from('user_subscription')
-        .upsert(
-          {
-            user_id: user.id,
-            stripe_customer_id: customerId,
-            created_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' }
-        );
+      const { error: upsertError } = await supabase.from('user_subscription').upsert(
+        {
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          created_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
 
       if (upsertError) {
         console.error('❌ Supabase upsert error:', upsertError);

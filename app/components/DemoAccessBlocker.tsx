@@ -9,9 +9,7 @@ export default function DemoAccessBlocker({ children }: { children: React.ReactN
   return (
     <div className="relative">
       {/* Размываем контент, если блок */}
-      <div className={isBlocked ? 'blur-sm pointer-events-none' : ''}>
-        {children}
-      </div>
+      <div className={isBlocked ? 'blur-sm pointer-events-none' : ''}>{children}</div>
 
       {/* Блокирующий баннер */}
       {isBlocked && (
@@ -20,7 +18,7 @@ export default function DemoAccessBlocker({ children }: { children: React.ReactN
             <h2 className="text-2xl font-bold mb-4">3 demo attempts used</h2>
             <p className="mb-6">Subscribe to continue using the AI assistant.</p>
             <button
-              onClick={() => window.location.href = '/subscribe'}
+              onClick={() => (window.location.href = '/subscribe')}
               className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded transition"
             >
               Subscribe

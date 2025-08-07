@@ -4,11 +4,7 @@ import { useEffect, useState } from 'react';
 import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { getPackageFromServer } from '@/lib/subscription';
 import { PACKAGE_LIMITS } from '@/types/plan';
-import {
-  isValidPackageType,
-  ValidPackageType,
-  PackageType,
-} from '@/types/plan';
+import { isValidPackageType, ValidPackageType, PackageType } from '@/types/plan';
 
 export function usePackageLimits() {
   const [limits, setLimits] = useState(PACKAGE_LIMITS.Freemium);

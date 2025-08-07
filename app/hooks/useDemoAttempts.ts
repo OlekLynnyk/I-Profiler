@@ -51,4 +51,3 @@ export function useDemoAttempts(): {
     limitReached: demoAttempts >= limit,
   };
 }
-

@@ -1,8 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 const LAYER_COUNT = 3;
 const PARTICLES_PER_LAYER = [1600, 1200, 800]; // увеличено
-const BASE_COLOR = "rgba(255,255,255,0.015)";
+const BASE_COLOR = 'rgba(255,255,255,0.015)';
 const FPS_INTERVAL = 1000 / 30;
 const PREWARM_STEPS = 200;
 
@@ -19,7 +19,7 @@ export default function BlackCognitiveSand() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     let width = (canvas.width = window.innerWidth);
@@ -29,7 +29,7 @@ export default function BlackCognitiveSand() {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
     };
-    window.addEventListener("resize", resize);
+    window.addEventListener('resize', resize);
 
     // Init particles per layer
     for (let l = 0; l < LAYER_COUNT; l++) {
@@ -81,7 +81,7 @@ export default function BlackCognitiveSand() {
       lastFrameTime.current = time;
 
       ctx.globalAlpha = 0.3;
-      ctx.fillStyle = "rgba(11,11,12,0.12)";
+      ctx.fillStyle = 'rgba(11,11,12,0.12)';
       ctx.fillRect(0, 0, width, height);
       ctx.globalAlpha = 1.0;
       ctx.fillStyle = BASE_COLOR;
@@ -125,7 +125,7 @@ export default function BlackCognitiveSand() {
 
     return () => {
       cancelAnimationFrame(animRef.current);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener('resize', resize);
       observer.disconnect();
     };
   }, []);
@@ -134,7 +134,7 @@ export default function BlackCognitiveSand() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 z-0 pointer-events-none"
-      style={{ background: "#0b0b0c" }}
+      style={{ background: '#0b0b0c' }}
     />
   );
 }

@@ -37,22 +37,14 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
     >
       {/* header */}
       <div className="px-4 py-3 flex justify-between items-center">
-        <span className="text-sm font-medium text-[var(--text-primary)]">
-          {box.title}
-        </span>
-        <span className="text-[var(--text-secondary)] text-xs">
-          {isActive ? '▲' : '▼'}
-        </span>
+        <span className="text-sm font-medium text-[var(--text-primary)]">{box.title}</span>
+        <span className="text-[var(--text-secondary)] text-xs">{isActive ? '▲' : '▼'}</span>
       </div>
 
       {/* content */}
       {isActive && (
         <div className="px-4 pb-4 text-sm text-[var(--text-primary)]">
-          {box.renderContent && (
-            <div className="mt-2">
-              {box.renderContent}
-            </div>
-          )}
+          {box.renderContent && <div className="mt-2">{box.renderContent}</div>}
         </div>
       )}
     </div>

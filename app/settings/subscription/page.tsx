@@ -125,13 +125,27 @@ export default function SubscriptionSettings() {
           <h1 className="text-lg md:text-xl font-bold text-gray-900 mb-6">Subscription Settings</h1>
 
           <div className="space-y-3 text-sm text-gray-800">
-            <p><span className="font-medium text-gray-900">My Plan:</span> {plan}</p>
-            <p><span className="font-medium text-gray-900">Package Type:</span> {packageType}</p>
-            <p><span className="font-medium text-gray-900">Subscription Status:</span> {status}</p>
-            <p><span className="font-medium text-gray-900">Next Billing Date:</span> {nextBillingDate}</p>
-            <p><span className="font-medium text-gray-900">Trial Info:</span> {trialEndDate || 'Not on trial'}</p>
+            <p>
+              <span className="font-medium text-gray-900">My Plan:</span> {plan}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">Package Type:</span> {packageType}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">Subscription Status:</span> {status}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">Next Billing Date:</span>{' '}
+              {nextBillingDate}
+            </p>
+            <p>
+              <span className="font-medium text-gray-900">Trial Info:</span>{' '}
+              {trialEndDate || 'Not on trial'}
+            </p>
 
-            <p className={`text-sm font-medium ${cancelAtPeriodEnd ? 'text-red-600' : 'text-green-600'}`}>
+            <p
+              className={`text-sm font-medium ${cancelAtPeriodEnd ? 'text-red-600' : 'text-green-600'}`}
+            >
               {cancelAtPeriodEnd
                 ? `Subscription will end on ${nextBillingDate}`
                 : 'Subscription active and renewing'}
@@ -143,7 +157,9 @@ export default function SubscriptionSettings() {
             </p>
 
             <div className="border border-gray-200 rounded-md p-3 mt-4">
-              <p><span className="font-medium text-gray-900">Payment Method:</span> {paymentMethod}</p>
+              <p>
+                <span className="font-medium text-gray-900">Payment Method:</span> {paymentMethod}
+              </p>
               <button
                 type="button"
                 onClick={handleOpenPortal}
@@ -160,9 +176,14 @@ export default function SubscriptionSettings() {
             <h2 className="text-base font-medium text-gray-900 mb-3">Billing History</h2>
             <div className="divide-y divide-gray-200 border border-gray-200 rounded-md">
               {billingHistory.map((entry) => (
-                <div key={entry.id} className="flex justify-between items-center p-3 text-sm text-gray-700">
+                <div
+                  key={entry.id}
+                  className="flex justify-between items-center p-3 text-sm text-gray-700"
+                >
                   <div className="font-medium text-gray-900">{entry.date}</div>
-                  <div>{entry.amount} {entry.currency}</div>
+                  <div>
+                    {entry.amount} {entry.currency}
+                  </div>
                   <a
                     href={entry.invoiceUrl}
                     target="_blank"
@@ -206,9 +227,7 @@ export default function SubscriptionSettings() {
           </div>
 
           {(upgradeError || portalError) && (
-            <p className="text-red-600 text-xs mt-4">
-              {upgradeError || portalError}
-            </p>
+            <p className="text-red-600 text-xs mt-4">{upgradeError || portalError}</p>
           )}
         </div>
       </div>

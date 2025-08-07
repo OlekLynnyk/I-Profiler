@@ -51,11 +51,7 @@ export default function SaveProfileModal({
 
   const handleSave = async () => {
     if (hasChanges) {
-      await onSave(
-        profileName.trim() || defaultProfileName,
-        aiResponse.trim(),
-        ''
-      );
+      await onSave(profileName.trim() || defaultProfileName, aiResponse.trim(), '');
     }
     onClose();
   };
@@ -80,9 +76,7 @@ export default function SaveProfileModal({
 
   const handleOutsideClick = async () => {
     if (hasChanges) {
-      const confirmSave = window.confirm(
-        'You have unsaved changes. Do you want to save them?'
-      );
+      const confirmSave = window.confirm('You have unsaved changes. Do you want to save them?');
       if (confirmSave) {
         await handleSave();
       }
@@ -123,9 +117,7 @@ export default function SaveProfileModal({
             {/* Top Row: Name field + buttons */}
             <div className="flex justify-between items-center mb-5">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-normal text-[var(--text-secondary)]">
-                  Name:
-                </span>
+                <span className="text-sm font-normal text-[var(--text-secondary)]">Name:</span>
                 {isEditing ? (
                   <input
                     type="text"

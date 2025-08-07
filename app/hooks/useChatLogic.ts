@@ -152,7 +152,7 @@ export function useChatLogic(): UseChatLogicResult {
     if (isGenerating) return;
 
     if (profilingMode && historyLoaded && messages.length > 0) {
-      setErrorMessage("Очистите историю перед началом нового профайлинга.");
+      setErrorMessage('Очистите историю перед началом нового профайлинга.');
       return;
     }
 
@@ -220,9 +220,7 @@ export function useChatLogic(): UseChatLogicResult {
       const logResult = await resLog.json();
 
       if (!resLog.ok) {
-        setErrorMessage(
-          `${logResult.error || 'Error logging generation'} (Trace ID: ${traceId})`
-        );
+        setErrorMessage(`${logResult.error || 'Error logging generation'} (Trace ID: ${traceId})`);
         setGenerationError({ index: newMessages.length - 1 });
         setMessageStatuses((prev) => ({
           ...prev,
@@ -233,8 +231,8 @@ export function useChatLogic(): UseChatLogicResult {
       }
 
       // ✅ Детектим язык прямо на фронте
-      const detectedLang = detectUserLanguage(inputValue || "");
-      const userLanguage = detectedLang || "en";
+      const detectedLang = detectUserLanguage(inputValue || '');
+      const userLanguage = detectedLang || 'en';
 
       const body: any = {
         profileId: activeProfileId,
@@ -294,22 +292,19 @@ export function useChatLogic(): UseChatLogicResult {
       setIsGenerating(false);
       setRefreshToken((prev) => prev + 1);
       await refetch();
-
     } catch (error) {
       console.error(
         JSON.stringify({
-          level: "error",
+          level: 'error',
           traceId,
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : null,
-          context: "handleGenerate",
+          context: 'handleGenerate',
           timestamp: new Date().toISOString(),
         })
       );
 
-      setErrorMessage(
-        `An unexpected error occurred. Please try again. (Trace ID: ${traceId})`
-      );
+      setErrorMessage(`An unexpected error occurred. Please try again. (Trace ID: ${traceId})`);
       setGenerationError({ index: messages.length - 1 });
       setMessageStatuses((prev) => ({
         ...prev,

@@ -104,7 +104,13 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         <div className="text-center text-gray-500 text-sm">or enter your email and password</div>
 
         <div className="w-[85%] mx-auto space-y-4">
-          <form onSubmit={(e) => { e.preventDefault(); handleAuth(); }} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAuth();
+            }}
+            className="space-y-4"
+          >
             <input
               type="email"
               placeholder="Email address"
@@ -128,7 +134,14 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                 className="accent-neutral-600 mt-1"
               />
               <label className="text-sm text-gray-600">
-                I agree to the <a href="/terms" className="underline" target="_blank">Terms of Use</a> and <a href="/privacy" className="underline" target="_blank">Privacy Policy</a>
+                I agree to the{' '}
+                <a href="/terms" className="underline" target="_blank">
+                  Terms of Use
+                </a>{' '}
+                and{' '}
+                <a href="/privacy" className="underline" target="_blank">
+                  Privacy Policy
+                </a>
               </label>
             </div>
 
@@ -148,7 +161,9 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           <button onClick={() => setIsLogin(!isLogin)} className="underline">
             {isLogin ? 'Create an account' : 'Already have an account? Log in'}
           </button>
-          <button onClick={onClose} className="underline">Cancel</button>
+          <button onClick={onClose} className="underline">
+            Cancel
+          </button>
         </div>
       </div>
     </div>

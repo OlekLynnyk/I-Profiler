@@ -1,4 +1,4 @@
-import { ParsedLine } from "./downloadExcel";
+import { ParsedLine } from './downloadExcel';
 
 export function prepareSystemPrompt(
   parsedLines: ParsedLine[],
@@ -9,7 +9,7 @@ export function prepareSystemPrompt(
 
   // Добавляем строгую инструкцию про язык
   prompt.push({
-    type: "text",
+    type: 'text',
     text: `
 INSTRUCTION:
 - Always answer strictly in ${finalLanguage}.
@@ -28,13 +28,13 @@ INSTRUCTION:
     uniqueRows.add(uniqueKey);
 
     prompt.push({
-      type: "text",
+      type: 'text',
       text: `Sheet: ${line.sheetName}\nRow: ${line.rowNumber}\n${line.text}`,
     });
 
     for (const url of line.urls) {
       prompt.push({
-        type: "text",
+        type: 'text',
         text: `LINK: ${url}`,
       });
     }
@@ -42,10 +42,10 @@ INSTRUCTION:
 
   for (const imageBase64 of imagesBase64) {
     prompt.push({
-      type: "image_url",
+      type: 'image_url',
       image_url: {
         url: imageBase64,
-        detail: "high",
+        detail: 'high',
       },
     });
   }

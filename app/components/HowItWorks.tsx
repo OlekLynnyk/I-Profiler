@@ -55,8 +55,10 @@ export default function HowItWorks() {
         <div className="w-full max-w-[400px] text-center lg:text-left px-2 lg:px-6 flex flex-col justify-center space-y-4 z-10 mt-6 lg:mt-0 lg:absolute lg:top-0 lg:left-[850px] h-[auto] lg:h-[800px]">
           <div className="space-y-2">
             <h3 className="text-white text-[36px] sm:text-[42px] lg:text-[50px] leading-tight font-bold">
-              Their words<br />
-              Their world<br />
+              Their words
+              <br />
+              Their world
+              <br />
               Your clarity
             </h3>
             <ul className="mt-4 text-sm sm:text-base text-[#CCCCCC] space-y-2 font-inter">

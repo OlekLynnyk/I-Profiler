@@ -3,12 +3,7 @@
 import { motion } from 'framer-motion';
 import { ClipboardCopy, ThumbsUp, ThumbsDown, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@radix-ui/react-tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 
 interface Attachment {
   name: string;
@@ -97,11 +92,10 @@ export default function ChatBubble({
       className={`w-full py-1 flex ${isUser ? 'justify-end' : 'justify-start'}`}
     >
       <div className="flex flex-col max-w-full sm:max-w-[80%] text-left">
-        
         {/* ✅ ATTACHMENTS — квадратные превью над bubble */}
         {attachments && attachments.length > 0 && (
           <div className="flex flex-col gap-2 mb-2">
-            {attachments.map((file, idx) => (
+            {attachments.map((file, idx) =>
               file.base64.startsWith('data:image/') ? (
                 <img
                   key={`${file.name}-${idx}`}
@@ -118,7 +112,7 @@ export default function ChatBubble({
                   "
                 />
               ) : null
-            ))}
+            )}
           </div>
         )}
 
@@ -140,24 +134,25 @@ export default function ChatBubble({
           {/* ✅ Non-image attachments остаются внутри bubble */}
           {attachments && attachments.length > 0 && (
             <ul className="space-y-2 mt-2">
-              {attachments.map((file, idx) => (
-                !file.base64.startsWith('data:image/') && (
-                  <li
-                    key={`${file.name}-link-${idx}`}
-                    className="flex items-start gap-2 text-xs text-[var(--text-primary)]"
-                  >
-                    <FileText size={14} />
-                    <a
-                      href={file.base64}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline break-all hover:text-[var(--accent)]"
+              {attachments.map(
+                (file, idx) =>
+                  !file.base64.startsWith('data:image/') && (
+                    <li
+                      key={`${file.name}-link-${idx}`}
+                      className="flex items-start gap-2 text-xs text-[var(--text-primary)]"
                     >
-                      {file.name}
-                    </a>
-                  </li>
-                )
-              ))}
+                      <FileText size={14} />
+                      <a
+                        href={file.base64}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline break-all hover:text-[var(--accent)]"
+                      >
+                        {file.name}
+                      </a>
+                    </li>
+                  )
+              )}
             </ul>
           )}
         </div>
@@ -166,9 +161,7 @@ export default function ChatBubble({
         {!isUser && (
           <div className="flex gap-2 mt-1 text-[var(--text-secondary)] text-xs items-center">
             {status === 'pending' && <span className="animate-pulse">...</span>}
-            {status === 'error' && (
-              <span className="text-[var(--danger)]">Error</span>
-            )}
+            {status === 'error' && <span className="text-[var(--danger)]">Error</span>}
 
             <TooltipProvider>
               <Tooltip>

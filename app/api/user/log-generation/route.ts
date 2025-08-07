@@ -18,7 +18,10 @@ export async function POST(req: NextRequest) {
     }
   );
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError || !user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -27,7 +30,9 @@ export async function POST(req: NextRequest) {
 
   const { data: limits, error: limitsError } = await supabase
     .from('user_limits')
-    .select('used_today, daily_limit, limit_reset_at, used_monthly, monthly_limit, monthly_reset_at')
+    .select(
+      'used_today, daily_limit, limit_reset_at, used_monthly, monthly_limit, monthly_reset_at'
+    )
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -37,17 +42,19 @@ export async function POST(req: NextRequest) {
     const nextMonthlyReset = new Date();
     nextMonthlyReset.setUTCDate(now.getUTCDate() + 28);
 
-    const initResult = await supabase.from('user_limits').insert([{
-      user_id: userId,
-      plan: 'Freemium',
-      used_today: 1,
-      used_monthly: 1,
-      daily_limit: 10,
-      monthly_limit: 100,
-      limit_reset_at: now.toISOString(),
-      monthly_reset_at: nextMonthlyReset.toISOString(),
-      active: false,
-    }]);
+    const initResult = await supabase.from('user_limits').insert([
+      {
+        user_id: userId,
+        plan: 'Freemium',
+        used_today: 1,
+        used_monthly: 1,
+        daily_limit: 10,
+        monthly_limit: 100,
+        limit_reset_at: now.toISOString(),
+        monthly_reset_at: nextMonthlyReset.toISOString(),
+        active: false,
+      },
+    ]);
 
     if (initResult.error) {
       return NextResponse.json({ error: 'Failed to initialize limits' }, { status: 500 });
@@ -83,7 +90,9 @@ export async function POST(req: NextRequest) {
       used_today: usedToday + 1,
       used_monthly: usedMonthly + 1,
       limit_reset_at: shouldResetDaily ? nextDailyReset.toISOString() : limits.limit_reset_at,
-      monthly_reset_at: shouldResetMonthly ? nextMonthlyReset.toISOString() : limits.monthly_reset_at,
+      monthly_reset_at: shouldResetMonthly
+        ? nextMonthlyReset.toISOString()
+        : limits.monthly_reset_at,
       updated_at: now.toISOString(),
     })
     .eq('user_id', userId);

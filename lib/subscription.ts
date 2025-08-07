@@ -23,10 +23,7 @@ export async function hasActiveSubscription(supabase: SupabaseClient): Promise<b
 
   if (error || !data) return false;
 
-  return (
-    data.status === 'active' &&
-    new Date(data.subscription_ends_at) > new Date()
-  );
+  return data.status === 'active' && new Date(data.subscription_ends_at) > new Date();
 }
 
 /**
@@ -53,4 +50,3 @@ export async function getPackageFromServer(supabase: SupabaseClient): Promise<Pa
 
   return data.package_type;
 }
- 

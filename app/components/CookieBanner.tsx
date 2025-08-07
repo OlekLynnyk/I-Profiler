@@ -58,10 +58,7 @@ export default function CookieBanner() {
         className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] md:max-w-5xl z-50 transition-all duration-300 ease-out opacity-100 translate-y-0"
       >
         <div className="bg-neutral-900 text-white rounded-md shadow-xl px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span
-            id="cookie-banner-desc"
-            className="text-xs leading-snug"
-          >
+          <span id="cookie-banner-desc" className="text-xs leading-snug">
             We use cookies to improve your experience. See our{' '}
             <Link
               href="/privacy"

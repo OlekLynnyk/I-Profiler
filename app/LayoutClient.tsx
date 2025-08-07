@@ -15,7 +15,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
       <AuthProvider>
         {children}
         <SidebarHelper />
-        <Sidebar packageType="Free" refreshToken={0} /> 
+        <Sidebar packageType="Free" refreshToken={0} />
         <CookieBanner />
       </AuthProvider>
     </SidebarProvider>

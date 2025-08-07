@@ -32,14 +32,14 @@ export default function HomePage() {
         <div className="w-full lg:w-[80%] space-y-2 pl-[20px]">
           <div className="min-h-[4rem]">
             <h1 className="text-[40px] md:text-[82px] font-bold uppercase leading-tight tracking-tight break-words">
-              <span className="text-white">WE UNLOCK INSIGHTS WITH</span><br />
-              <span className="text-white">ADVANCED PROFILING</span><br />
+              <span className="text-white">WE UNLOCK INSIGHTS WITH</span>
+              <br />
+              <span className="text-white">ADVANCED PROFILING</span>
+              <br />
               <div className="text-[#C084FC] leading-tight" style={{ fontSize: '28.6px' }}>
                 <div>SEE WHAT OTHERS CANNOT</div>
                 <div>
-                  REDUCE HUMAN{' '}
-                  <span style={{ fontSize: '22.6px' }}>FACTOR</span>{' '}
-                  RISK
+                  REDUCE HUMAN <span style={{ fontSize: '22.6px' }}>FACTOR</span> RISK
                 </div>
               </div>
             </h1>
@@ -81,10 +81,17 @@ export default function HomePage() {
             About
           </h2>
           <p className="text-[#E5E5E5] w-full md:max-w-3xl mx-auto text-sm md:text-base leading-relaxed font-inter font-weight-400 text-justify hyphens-auto break-words">
-            We don’t claim to read minds. Instead, we interpret silent signals — how someone dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves them. Powered by advanced AI, we blend behavioural science with elegant inference to transform fragments into full pictures.
+            We don’t claim to read minds. Instead, we interpret silent signals — how someone
+            dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
+            them. Powered by advanced AI, we blend behavioural science with elegant inference to
+            transform fragments into full pictures.
           </p>
           <p className="text-[#E5E5E5] w-full md:max-w-3xl mx-auto text-sm md:text-base leading-relaxed font-inter font-weight-400 text-justify hyphens-auto break-words">
-            Much like Pininfarina designs beauty into motion, we design insight into human nature. Every person carries a unique internal compass — we help you interpret it. Not to label, but to understand. To lead. To connect. Whether you're a strategist, founder or curious, I,Profiler offers a new lens. See nuance. Sense motivation. Speak with resonance. Because influence begins with pure understanding.
+            Much like Pininfarina designs beauty into motion, we design insight into human nature.
+            Every person carries a unique internal compass — we help you interpret it. Not to label,
+            but to understand. To lead. To connect. Whether you're a strategist, founder or curious,
+            I,Profiler offers a new lens. See nuance. Sense motivation. Speak with resonance.
+            Because influence begins with pure understanding.
           </p>
         </div>
       </section>

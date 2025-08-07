@@ -63,10 +63,7 @@ export function useUserPlan(refreshToken?: number) {
     hasReachedDailyLimit,
     hasReachedMonthlyLimit,
     limitResetAt,
-    progress:
-      dailyLimit > 0
-        ? Math.min((usedDaily / dailyLimit) * 100, 100)
-        : 0,
+    progress: dailyLimit > 0 ? Math.min((usedDaily / dailyLimit) * 100, 100) : 0,
     refetch: fetchPlan,
   };
 }

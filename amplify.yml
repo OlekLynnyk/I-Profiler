@@ -1,20 +1,17 @@
-import type { NextConfig } from 'next';
-import * as dotenv from 'dotenv';
-import { existsSync } from 'fs';
-
-// Load `.env.production` only if it exists (important for runtime build environments like Amplify)
-const envPath = '.env.production';
-if (existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-  console.log(`[next.config] Loaded environment from ${envPath}`);
-} else {
-  console.warn(`[next.config] Warning: ${envPath} not found — environment variables may be missing`);
-}
-
-const nextConfig: NextConfig = {
-  output: 'standalone',
-  reactStrictMode: true,
-  swcMinify: true,
-};
-
-export default nextConfig;
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*

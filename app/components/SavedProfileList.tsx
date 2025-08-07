@@ -50,12 +50,7 @@ export default function SavedProfileList() {
     }
   };
 
-  const handleUpdate = async (
-    id: string,
-    name: string,
-    aiResponse: string,
-    comments: string
-  ) => {
+  const handleUpdate = async (id: string, name: string, aiResponse: string, comments: string) => {
     try {
       await updateProfile(id, {
         profile_name: name,
@@ -82,9 +77,7 @@ export default function SavedProfileList() {
       {loading ? (
         <p className="text-sm text-[var(--text-secondary)]">Loading saved profiles…</p>
       ) : profiles.length === 0 ? (
-        <p className="text-sm text-[var(--text-secondary)] italic">
-          No saved profiles yet.
-        </p>
+        <p className="text-sm text-[var(--text-secondary)] italic">No saved profiles yet.</p>
       ) : (
         profiles.map((profile) => (
           <div
@@ -116,12 +109,7 @@ export default function SavedProfileList() {
           onClose={() => setSelectedProfile(null)}
           aiResponse={selectedProfile.chat_json.ai_response}
           onSave={async (name, aiResponse, comments) => {
-            await handleUpdate(
-              selectedProfile.id,
-              name,
-              aiResponse,
-              comments
-            );
+            await handleUpdate(selectedProfile.id, name, aiResponse, comments);
           }}
           defaultProfileName={selectedProfile.profile_name}
           readonly={false}

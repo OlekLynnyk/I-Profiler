@@ -32,17 +32,17 @@ export function useChatInputState() {
 
       if (
         !ALLOWED_TYPES.some((type) => file.type.startsWith(type)) &&
-        file.type !== "image/heic" &&
-        !file.name.toLowerCase().endsWith(".heic")
+        file.type !== 'image/heic' &&
+        !file.name.toLowerCase().endsWith('.heic')
       ) {
         newErrors.push(`${file.name} has unsupported type.`);
         continue;
       }
 
-      if (file.type === "image/heic" || file.name.toLowerCase().endsWith(".heic")) {
+      if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
         try {
-          if (typeof window === "undefined") {
-            throw new Error("HEIC conversion can only run in the browser.");
+          if (typeof window === 'undefined') {
+            throw new Error('HEIC conversion can only run in the browser.');
           }
 
           // ✅ Импорт heic2any
@@ -51,7 +51,7 @@ export function useChatInputState() {
           // ✅ Конвертируем HEIC → JPEG
           const result = await heic2any({
             blob: file,
-            toType: "image/jpeg",
+            toType: 'image/jpeg',
             quality: 0.8,
           });
 
@@ -71,11 +71,9 @@ export function useChatInputState() {
             continue;
           }
 
-          const convertedFile = new File(
-            [resizedBlob],
-            file.name.replace(/\.heic$/i, '.jpg'),
-            { type: 'image/jpeg' }
-          );
+          const convertedFile = new File([resizedBlob], file.name.replace(/\.heic$/i, '.jpg'), {
+            type: 'image/jpeg',
+          });
 
           console.log(`[DEBUG] HEIC converted and resized: ${convertedFile.name}`);
 

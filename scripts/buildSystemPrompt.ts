@@ -1,11 +1,11 @@
-import { STANDARD_PROMPTS } from "./constants";
+import { STANDARD_PROMPTS } from './constants';
 
 export function buildSystemPrompt({
   type,
   formulaPrompt,
   userLanguage,
 }: {
-  type: "profiling";
+  type: 'profiling';
   formulaPrompt: string;
   userLanguage: string;
 }): string {
@@ -27,5 +27,7 @@ export function buildSystemPrompt({
     `--- START OF INSTRUCTIONS ---`,
     standardPrompt.trim(),
     `--- END OF INSTRUCTIONS ---`,
-  ].join("\n\n").trim();
+  ]
+    .join('\n\n')
+    .trim();
 }

@@ -52,11 +52,7 @@ const Cube = () => {
         ];
 
         faceOffsets.forEach((f, i) => {
-          const facePos: [number, number, number] = [
-            x + f.pos[0],
-            y + f.pos[1],
-            z + f.pos[2],
-          ];
+          const facePos: [number, number, number] = [x + f.pos[0], y + f.pos[1], z + f.pos[2]];
           const faceRot: [number, number, number] = [...f.rot];
 
           tiles.push(

@@ -89,20 +89,12 @@ export async function POST(req: NextRequest) {
  * Отправка письма пользователю о том, что его аккаунт soft deleted.
  * Реализуй эту функцию через Sendgrid, Resend, AWS SES — любой твой email провайдер.
  */
-async function sendAccountDeletionEmail({
-  email,
-  fullName,
-}: {
-  email: string;
-  fullName: string;
-}) {
+async function sendAccountDeletionEmail({ email, fullName }: { email: string; fullName: string }) {
   // TODO:
   // - подключить твой email-провайдер (например Resend, AWS SES)
   // - сформировать письмо
 
-  console.log(
-    `Simulate sending email to ${email} — Account deleted with retention 90 days.`
-  );
+  console.log(`Simulate sending email to ${email} — Account deleted with retention 90 days.`);
 
   const message = `
     Hi ${fullName || 'there'},

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface PlanProgressProps {
   planName: string;
@@ -6,18 +6,14 @@ interface PlanProgressProps {
   total: number;
 }
 
-export const PlanProgress: React.FC<PlanProgressProps> = ({
-  planName,
-  used,
-  total,
-}) => {
+export const PlanProgress: React.FC<PlanProgressProps> = ({ planName, used, total }) => {
   const percentage = total > 0 ? (used / total) * 100 : 0;
 
   // На десктопе оставляем 90, на мобилке уменьшаем до 72
   const size = 90;
   const mobileSize = 72;
-  const radius = (size / 2) - 5;
-  const mobileRadius = (mobileSize / 2) - 4;
+  const radius = size / 2 - 5;
+  const mobileRadius = mobileSize / 2 - 4;
   const circumference = 2 * Math.PI * radius;
   const mobileCircumference = 2 * Math.PI * mobileRadius;
   const offset = circumference * (1 - percentage / 100);
@@ -39,12 +35,7 @@ export const PlanProgress: React.FC<PlanProgressProps> = ({
             height: `${size}px`,
           }}
         >
-          <svg
-            width={size}
-            height={size}
-            viewBox={`0 0 ${size} ${size}`}
-            className="-rotate-90"
-          >
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
             <defs>
               <linearGradient id="purpleGradient" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stopColor="#7C3AED" />
@@ -68,19 +59,17 @@ export const PlanProgress: React.FC<PlanProgressProps> = ({
               cx={size / 2}
               cy={size / 2}
               r={radius}
-              stroke={isNearLimit ? "url(#purpleToRedGradient)" : "url(#purpleGradient)"}
+              stroke={isNearLimit ? 'url(#purpleToRedGradient)' : 'url(#purpleGradient)'}
               strokeWidth="10"
               fill="none"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
               strokeLinecap="round"
-              style={{ transition: "stroke-dashoffset 0.5s ease" }}
+              style={{ transition: 'stroke-dashoffset 0.5s ease' }}
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <div className="text-xs text-muted-foreground lowercase leading-tight">
-              daily
-            </div>
+            <div className="text-xs text-muted-foreground lowercase leading-tight">daily</div>
             <div className="text-xs text-muted-foreground font-mono">
               {used}/{total}
             </div>
@@ -124,19 +113,19 @@ export const PlanProgress: React.FC<PlanProgressProps> = ({
               cx={mobileSize / 2}
               cy={mobileSize / 2}
               r={mobileRadius}
-              stroke={isNearLimit ? "url(#purpleToRedGradientMobile)" : "url(#purpleGradientMobile)"}
+              stroke={
+                isNearLimit ? 'url(#purpleToRedGradientMobile)' : 'url(#purpleGradientMobile)'
+              }
               strokeWidth="8"
               fill="none"
               strokeDasharray={mobileCircumference}
               strokeDashoffset={mobileOffset}
               strokeLinecap="round"
-              style={{ transition: "stroke-dashoffset 0.5s ease" }}
+              style={{ transition: 'stroke-dashoffset 0.5s ease' }}
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <div className="text-[10px] text-muted-foreground lowercase leading-tight">
-              daily
-            </div>
+            <div className="text-[10px] text-muted-foreground lowercase leading-tight">daily</div>
             <div className="text-[10px] text-muted-foreground font-mono">
               {used}/{total}
             </div>

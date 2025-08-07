@@ -44,13 +44,17 @@ export default function Header({ onLoginClick }: HeaderProps) {
         {!pathname.startsWith('/workspace') && (
           <>
             <button
-              onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() =>
+                document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+              }
               className="text-sm font-inter text-[#E5E5E5] hover:text-[#C084FC] transition-all"
             >
               About
             </button>
             <button
-              onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() =>
+                document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
+              }
               className="text-sm font-inter text-[#E5E5E5] hover:text-[#C084FC] transition-all"
             >
               Pricing

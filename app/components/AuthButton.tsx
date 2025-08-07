@@ -53,9 +53,5 @@ export default function AuthButton() {
     return <button disabled>...</button>;
   }
 
-  return (
-    <button onClick={user ? handleLogout : handleLogin}>
-      {user ? 'Logout' : 'Login'}
-    </button>
-  );
+  return <button onClick={user ? handleLogout : handleLogin}>{user ? 'Logout' : 'Login'}</button>;
 }

@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
       cancel_at_period_end: true,
     });
 
-    return NextResponse.json({ success: true, message: 'Subscription will be canceled at period end' });
+    return NextResponse.json({
+      success: true,
+      message: 'Subscription will be canceled at period end',
+    });
   } catch (err) {
     console.error('❌ Stripe cancel error:', err);
     return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 });

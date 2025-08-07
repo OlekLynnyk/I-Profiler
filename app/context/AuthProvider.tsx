@@ -1,16 +1,7 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from 'react';
-import {
-  Session,
-  User,
-} from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { logWarn } from '@/lib/logger'; // ← импортируем логгер
 

@@ -11,10 +11,7 @@ export async function POST() {
   const supabase = await createServerClientForApi();
   const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
 
-  const { error } = await supabase
-    .from('chat_messages')
-    .delete()
-    .lt('timestamp', twelveHoursAgo);
+  const { error } = await supabase.from('chat_messages').delete().lt('timestamp', twelveHoursAgo);
 
   if (error) {
     console.error('[Cleanup Error]', error);

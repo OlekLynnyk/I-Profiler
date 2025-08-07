@@ -38,7 +38,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   const handleKeyToggle = (e: KeyboardEvent<HTMLDivElement>, boxId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      setActiveBox(prev => (prev === boxId ? null : boxId));
+      setActiveBox((prev) => (prev === boxId ? null : boxId));
     }
   };
 
@@ -88,11 +88,24 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       id: 'profile-settings',
       title: 'Profile Settings',
       content: (
-        <div className="space-y-2 text-sm text-[var(--text-primary)]" onClick={(e) => e.stopPropagation()}>
-          <a href="/settings/profile" target="_blank" rel="noopener noreferrer" className="block hover:text-[var(--accent)]">
+        <div
+          className="space-y-2 text-sm text-[var(--text-primary)]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <a
+            href="/settings/profile"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block hover:text-[var(--accent)]"
+          >
             Edit Profile
           </a>
-          <a href="/settings/subscription" target="_blank" rel="noopener noreferrer" className="block hover:text-[var(--accent)]">
+          <a
+            href="/settings/subscription"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block hover:text-[var(--accent)]"
+          >
             Manage Subscription
           </a>
         </div>
@@ -102,7 +115,10 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       id: 'theme-settings',
       title: 'Theme',
       content: (
-        <div className="space-y-2 text-sm text-[var(--text-primary)]" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="space-y-2 text-sm text-[var(--text-primary)]"
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             onClick={() => setTheme('light')}
             className={cn(
@@ -153,7 +169,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         return (
           <div
             key={box.id}
-            onClick={() => setActiveBox(prev => (prev === box.id ? null : box.id))}
+            onClick={() => setActiveBox((prev) => (prev === box.id ? null : box.id))}
             onKeyDown={(e) => handleKeyToggle(e, box.id)}
             role="button"
             tabIndex={0}
@@ -174,13 +190,9 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
                   <PlanProgressFetcher refreshToken={refreshToken} />
                 </PlanUsageProvider>
               ) : (
-                <span className="text-sm font-medium text-[var(--text-primary)]">
-                  {box.title}
-                </span>
+                <span className="text-sm font-medium text-[var(--text-primary)]">{box.title}</span>
               )}
-              <span className="text-[var(--text-secondary)] text-xs">
-                {isActive ? '▲' : '▼'}
-              </span>
+              <span className="text-[var(--text-secondary)] text-xs">{isActive ? '▲' : '▼'}</span>
             </div>
             {isActive && (
               <div id={`${box.id}-content`} className="px-3 sm:px-4 pb-4">
@@ -196,14 +208,12 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
 
 function PlanProgressFetcher({ refreshToken }: { refreshToken: number }) {
   const { updatedAt } = usePlanUsage();
-  const { plan, limits, used, hasReachedDailyLimit, limitResetAt } = useUserPlan(updatedAt + refreshToken);
+  const { plan, limits, used, hasReachedDailyLimit, limitResetAt } = useUserPlan(
+    updatedAt + refreshToken
+  );
 
   if (!plan)
-    return (
-      <div className="text-xs text-[var(--text-secondary)]">
-        Loading plan data...
-      </div>
-    );
+    return <div className="text-xs text-[var(--text-secondary)]">Loading plan data...</div>;
 
   return (
     <div>

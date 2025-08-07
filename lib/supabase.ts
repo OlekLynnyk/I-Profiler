@@ -1,6 +1,9 @@
 'use client';
 
-import { createPagesBrowserClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import {
+  createPagesBrowserClient,
+  createServerComponentClient,
+} from '@supabase/auth-helpers-nextjs';
 import { type SupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { type Database } from '@/types/supabase';

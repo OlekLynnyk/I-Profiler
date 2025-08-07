@@ -11,7 +11,9 @@ export default function CallbackPage() {
   useEffect(() => {
     const run = async () => {
       // ✅ Просто получаем сессию — куки установятся через middleware
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       if (!session) {
         router.replace('/login');
