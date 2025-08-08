@@ -42,7 +42,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
         </button>
 
         {!pathname.startsWith('/workspace') && (
-          <>
+          <div className="hidden sm:flex items-center gap-4">
             <button
               onClick={() =>
                 document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
@@ -59,7 +59,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
             >
               Pricing
             </button>
-          </>
+          </div>
         )}
       </div>
 
@@ -67,7 +67,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
         {!isLoading && session && (
           <Link
             href="/workspace"
-            className="px-4 py-2 bg-[#C084FC] text-[#212529] text-sm font-inter rounded-2xl hover:bg-[#D8B4FE] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)]"
+            className="px-2.5 py-1.5 bg-[#C084FC] text-[#212529] text-sm font-inter rounded-xl hover:bg-[#D8B4FE] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)]"
           >
             My Workspace
           </Link>

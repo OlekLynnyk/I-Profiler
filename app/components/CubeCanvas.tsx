@@ -82,7 +82,7 @@ const Cube = () => {
 
 export default function CubeCanvas() {
   return (
-    <div className="w-full h-full relative overflow-hidden bg-transparent">
+    <div className="hidden md:block w-full h-full relative overflow-hidden bg-transparent">
       <Canvas
         className="w-full h-full relative z-10"
         camera={{ position: [8, 8, 8] }}

@@ -545,7 +545,7 @@ export default function WorkspacePage() {
             </div>
 
             <div className="mt-2 text-center text-xs text-[var(--text-secondary)]">
-              H1NTED can make mistakes. Check{' '}
+              H1NTED can make mistakes. See{' '}
               <a
                 href="/terms"
                 target="_blank"
