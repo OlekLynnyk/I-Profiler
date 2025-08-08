@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { getRedirectTo } from '@/utils/getRedirectTo';
 
 export default function AuthButton() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function AuthButton() {
     await supabase.auth.signInWithOAuth({
       provider: 'github', // или 'google'
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo: getRedirectTo(),
       },
     });
   };

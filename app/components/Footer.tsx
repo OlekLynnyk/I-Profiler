@@ -17,15 +17,15 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
         <div className="space-y-2 text-sm text-[#E5E5E5] font-inter font-weight-400">
-          <p>© {new Date().getFullYear()} Fractal+ Inc. All rights reserved.</p>
-          <p>123 Example Street, Berlin, Germany</p>
+          <p>© {new Date().getFullYear()} H1NTED Ltd. All rights reserved.</p>
+          <p>123 Example Street, Dublin, Ireland</p>
           <p>
             Questions or feedback? Write to us at:{' '}
             <a
               href="mailto:support@fractalplus.ai"
               className="text-[#C084FC] hover:underline transition-all"
             >
-              support@fractalplus.ai
+              support@hinted.ai
             </a>
           </p>
         </div>

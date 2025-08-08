@@ -38,7 +38,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
           className="text-lg font-montserrat font-weight-600 text-[#F5F5F5] hover:opacity-75 transition-all flex items-center gap-2"
         >
           <img src="/images/octopus-logo.png" alt="Logo" className="w-6 h-6" />
-          I,Profiler
+          H1NTED 
         </button>
 
         {!pathname.startsWith('/workspace') && (

@@ -90,8 +90,8 @@ export default function HomePage() {
             Much like Pininfarina designs beauty into motion, we design insight into human nature.
             Every person carries a unique internal compass — we help you interpret it. Not to label,
             but to understand. To lead. To connect. Whether you're a strategist, founder or curious,
-            I,Profiler offers a new lens. See nuance. Sense motivation. Speak with resonance.
-            Because influence begins with pure understanding.
+            H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance. Because
+            influence begins with pure understanding.
           </p>
         </div>
       </section>

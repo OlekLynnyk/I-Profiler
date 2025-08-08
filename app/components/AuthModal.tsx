@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { FcGoogle } from 'react-icons/fc';
+import { getRedirectTo } from '@/utils/getRedirectTo';
 
 export default function AuthModal({ onClose }: { onClose: () => void }) {
   const supabase = createClientComponentClient();
@@ -37,7 +38,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: getRedirectTo(),
         queryParams: { prompt: 'select_account' },
       },
     });
@@ -72,7 +73,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: getRedirectTo(),
         },
       });
 
@@ -91,7 +92,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         ref={modalRef}
         className="bg-white text-black w-full max-w-md max-h-[90vh] overflow-y-auto p-5 rounded-2xl space-y-4 shadow-xl"
       >
-        <h2 className="text-base font-medium text-center text-gray-700">Welcome to I,Profiler</h2>
+        <h2 className="text-base font-medium text-center text-gray-700">Welcome to H1NTED</h2>
 
         <button
           onClick={handleGoogleLogin}

@@ -6,15 +6,15 @@ export default function PrivacyPage() {
         <p>Effective Date: [Insert Date]</p>
 
         <p>
-          This Privacy Policy describes how I,Profiler ("we", "our", "us") collects, uses,
-          discloses, and protects personal data when you use our platform, accessible via our
-          website and associated services.
+          This Privacy Policy describes how H1NTED ("we", "our", "us") collects, uses, discloses,
+          and protects personal data when you use our platform, accessible via our website and
+          associated services.
         </p>
 
         <h2 className="text-xl font-semibold">1. Data Controller</h2>
         <p>
-          I,Profiler is the data controller. While our company is not yet formally incorporated, it
-          will be established in Ireland. For any questions, you may contact us at: [Insert Contact
+          H1NTED is the data controller. While our company is not yet formally incorporated, it will
+          be established in Ireland. For any questions, you may contact us at: [Insert Contact
           Email].
         </p>
 

@@ -560,7 +560,7 @@ export default function WorkspacePage() {
             </div>
 
             <div className="mt-2 text-center text-xs text-[var(--text-secondary)]">
-              I,Profiler can make mistakes. Check important info. See{' '}
+              H1NTED can make mistakes. Check important info. See{' '}
               <a
                 href="/terms"
                 target="_blank"

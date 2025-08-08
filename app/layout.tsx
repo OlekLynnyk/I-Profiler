@@ -7,7 +7,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'; // ← уточни 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'I,Profiler',
+  title: 'H1NTED',
   description: 'A scalable AI profiling assistant',
 };
 
