@@ -82,20 +82,20 @@ export default function SavedProfileList() {
         profiles.map((profile) => (
           <div
             key={profile.id}
-            className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 px-3 py-2 hover:bg-[var(--surface)] transition cursor-pointer rounded-md"
+            className="flex justify-between items-center px-3 py-1 hover:bg-[var(--surface)] transition cursor-pointer"
           >
             <span
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedProfile(profile);
               }}
-              className="text-sm sm:text-sm text-[var(--text-primary)] hover:underline break-words"
+              className="text-sm text-[var(--text-primary)] hover:underline"
             >
               {profile.profile_name}
             </span>
             <button
               onClick={() => handleDelete(profile.id)}
-              className="text-[var(--text-secondary)] hover:text-[var(--danger)] text-sm self-start sm:self-auto"
+              className="text-[var(--text-secondary)] hover:text-[var(--danger)] text-sm"
             >
               ✕
             </button>

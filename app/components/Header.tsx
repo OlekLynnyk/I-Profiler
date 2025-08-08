@@ -31,7 +31,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
   };
 
   return (
-    <header className="w-full px-4 py-3 flex flex-wrap justify-between items-center gap-3 bg-transparent text-[#E5E5E5] relative overflow-hidden">
+    <header className="w-full px-4 py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 bg-transparent text-[#E5E5E5] relative overflow-hidden">
       <div className="flex flex-wrap items-center gap-4 relative z-10">
         <button
           onClick={confirmAndGoHome}
@@ -63,11 +63,11 @@ export default function Header({ onLoginClick }: HeaderProps) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 relative z-10">
+      <div className="flex flex-wrap items-start sm:items-center gap-2 sm:gap-4 relative z-10">
         {!isLoading && session && (
           <Link
             href="/workspace"
-            className="px-4 py-2 bg-[#C084FC] text-[#212529] text-sm font-inter rounded-2xl hover:bg-[#D8B4FE] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)]"
+            className="px-4 py-2 bg-[#C084FC] text-[#212529] text-sm font-inter rounded-2xl hover:bg-[#D8B4FE] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)] max-w-[10rem] truncate text-center"
           >
             My Workspace
           </Link>

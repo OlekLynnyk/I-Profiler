@@ -274,7 +274,7 @@ export default function WorkspacePage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
-                  className="flex flex-col items-center justify-center text-center w-full py-12 px-4 mt-12"
+                  className="flex flex-col items-center justify-center text-center w-full py-12 px-4 mt-28"
                 >
                   {/* Лого */}
                   <img src="/images/logo.png" alt="Logo" className="w-10 h-10 mb-1" />
@@ -348,12 +348,12 @@ export default function WorkspacePage() {
                   {attachedFiles.map((file, idx) => (
                     <div
                       key={idx}
-                      className="relative w-[88px] h-[88px] sm:w-20 sm:h-20 rounded-xl overflow-hidden max-w-full"
+                      className="relative w-20 h-20 rounded-xl overflow-hidden max-w-full sm:max-w-[80px]"
                     >
                       <img
                         src={URL.createObjectURL(file)}
                         alt={`attachment ${idx}`}
-                        className="object-cover w-full h-full rounded-xl max-w-full"
+                        className="object-cover w-full h-full rounded-xl"
                       />
                       <button
                         onClick={() => handleFileRemove(file)}
@@ -376,11 +376,11 @@ export default function WorkspacePage() {
                   onKeyDown={handleKeyDown}
                   placeholder="Ask anything"
                   disabled={isDragging}
-                  className="w-full px-4 py-3 text-base sm:text-sm placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
+                  className="w-full px-4 py-2 text-[clamp(0.875rem,1vw,1rem)] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
                 />
 
                 <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
-                  <div className="flex flex-wrap gap-2 items-center">
+                  <div className="flex flex-wrap gap-2 items-center w-full min-w-0">
                     <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
                       <Plus size={16} className="text-[var(--text-primary)]" />
                       <input
@@ -409,9 +409,10 @@ export default function WorkspacePage() {
                         setProfilingMode(next);
                       }}
                       className={`
-                      flex items-center gap-1 h-10 sm:h-8 px-4 sm:px-3
+                      flex items-center gap-1 h-8 px-3
                       rounded-full shadow-sm transition
                       text-xs font-medium
+                      whitespace-nowrap truncate min-w-0 flex-shrink
                       ${
                         isImageActive
                           ? 'bg-[#C084FC] text-white hover:bg-[#a05adb]'

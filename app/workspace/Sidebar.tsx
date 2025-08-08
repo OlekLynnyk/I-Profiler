@@ -182,7 +182,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
                 : 'border-[var(--card-border)] bg-[var(--card-bg)]',
               'hover:shadow-sm'
             )}
-            style={{ backgroundColor: isActive ? 'transparent' : undefined }}
+            style={{ backgroundColor: undefined }}
           >
             <div className="px-3 sm:px-4 py-3 flex justify-between items-center">
               {box.id === 'plan-box' ? (

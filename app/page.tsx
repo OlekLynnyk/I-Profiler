@@ -31,15 +31,17 @@ export default function HomePage() {
       <main className="flex flex-col lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
         <div className="w-full lg:w-[80%] space-y-2 pl-[20px]">
           <div className="min-h-[4rem]">
-            <h1 className="text-[40px] md:text-[82px] font-bold uppercase leading-tight tracking-tight break-words">
+            <h1 className="text-[28px] sm:text-[36px] md:text-[48px] lg:text-[82px] font-bold uppercase leading-tight tracking-tight break-words text-balance">
               <span className="text-white">WE UNLOCK INSIGHTS WITH</span>
               <br />
               <span className="text-white">ADVANCED PROFILING</span>
               <br />
-              <div className="text-[#C084FC] leading-tight" style={{ fontSize: '28.6px' }}>
-                <div>SEE WHAT OTHERS CANNOT</div>
-                <div>
-                  REDUCE HUMAN <span style={{ fontSize: '22.6px' }}>FACTOR</span> RISK
+              <div className="text-[#C084FC] text-[1.6rem] sm:text-[1.8rem] md:text-[2rem] leading-snug space-y-1">
+                <div className="whitespace-nowrap text-center sm:text-left">
+                  SEE WHAT OTHERS CANNOT
+                </div>
+                <div className="whitespace-nowrap text-center sm:text-left">
+                  REDUCE HUMAN <span className="text-[1.3rem] sm:text-[1.5rem]">FACTOR</span> RISK
                 </div>
               </div>
             </h1>
