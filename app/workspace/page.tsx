@@ -380,7 +380,7 @@ export default function WorkspacePage() {
                 />
 
                 <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
-                  <div className="flex flex-wrap gap-2 items-center w-full min-w-0">
+                  <div className="flex flex-wrap gap-2 items-center">
                     <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
                       <Plus size={16} className="text-[var(--text-primary)]" />
                       <input
@@ -412,7 +412,6 @@ export default function WorkspacePage() {
                       flex items-center gap-1 h-8 px-3
                       rounded-full shadow-sm transition
                       text-xs font-medium
-                      whitespace-nowrap truncate min-w-0 flex-shrink
                       ${
                         isImageActive
                           ? 'bg-[#C084FC] text-white hover:bg-[#a05adb]'
@@ -439,29 +438,6 @@ export default function WorkspacePage() {
                     >
                       <FaLinkedin className="w-3.5 h-3.5" />
                       LinkedIn
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = !isChatActive;
-                        setIsChatActive(next);
-                        setChatMode(next ? 'chat' : 'none');
-                        setIsImageActive(false);
-                      }}
-                      className={`
-                      flex items-center gap-1 h-8 px-3
-                      rounded-full shadow-sm transition
-                      text-xs font-medium
-                      ${
-                        isChatActive
-                          ? 'bg-[#C084FC] text-white hover:bg-[#a05adb]'
-                          : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)]'
-                      }
-                    `}
-                      aria-label="Toggle Chat Mode"
-                    >
-                      💬 Chat
                     </button>
 
                     <div className="relative">
@@ -498,10 +474,18 @@ export default function WorkspacePage() {
                         "
                         >
                           <button
-                            className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
-                            onClick={() => alert('Option 1 clicked')}
+                            className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition ${
+                              isChatActive ? 'text-[#C084FC]' : ''
+                            }`}
+                            onClick={() => {
+                              const next = !isChatActive;
+                              setIsChatActive(next);
+                              setChatMode(next ? 'chat' : 'none');
+                              setIsImageActive(false);
+                              setShowMoreDropdown(false);
+                            }}
                           >
-                            Option 1
+                            💬 Chat
                           </button>
                           <button
                             className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
@@ -561,7 +545,7 @@ export default function WorkspacePage() {
             </div>
 
             <div className="mt-2 text-center text-xs text-[var(--text-secondary)]">
-              H1NTED can make mistakes. Check important info{' '}
+              H1NTED can make mistakes. Check{' '}
               <a
                 href="/terms"
                 target="_blank"
