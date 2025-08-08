@@ -81,7 +81,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     },
     {
       name: 'Business',
-      price: '€8',
+      price: '€799',
       description: 'Enterprise-level access and personalised onboarding.',
       features: [
         'Everything in Smarter',

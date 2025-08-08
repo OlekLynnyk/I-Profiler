@@ -54,6 +54,9 @@ async function ensureExcelFileExists() {
 
 export async function POST(req: NextRequest) {
   const traceId = randomUUID();
+  console.log(
+    `[${traceId}] DEBUG: XAI_API_KEY is ${process.env.XAI_API_KEY ? '✅ PRESENT' : '❌ MISSING'}`
+  );
 
   try {
     const {
@@ -221,6 +224,7 @@ INSTRUCTION:
       });
     }
 
+    console.log(`[${traceId}] DEBUG: Sending ${messages.length} messages to XAI...`);
     const grokResponse = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -235,6 +239,8 @@ INSTRUCTION:
         stream: false,
       }),
     });
+
+    console.log(`[${traceId}] DEBUG: XAI responded with status ${grokResponse.status}`);
 
     const contentType = grokResponse.headers.get('content-type') || '';
 
