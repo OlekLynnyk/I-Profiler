@@ -75,18 +75,43 @@ export default function HomePage() {
         <Pricing onDemoClick={() => setIsAuthModalOpen(true)} />
       </section>
 
-      <section id="about" className="mt-12 mb-10 relative z-10">
+      {/* ABOUT — мобильные улучшения без изменения десктопа */}
+      <section id="about" className="mt-12 mb-10 relative z-10 px-4 md:px-0">
         <div className="text-center space-y-6">
           <h2 className="text-3xl md:text-4xl font-montserrat font-weight-600 text-[#F5F5F5]">
             About
           </h2>
-          <p className="text-[#E5E5E5] w-full md:max-w-3xl mx-auto text-sm md:text-base leading-relaxed font-inter font-weight-400 text-justify hyphens-auto break-words">
+
+          <p
+            className="
+              text-[#E5E5E5] mx-auto
+              max-w-[60ch] md:max-w-3xl
+              text-[15px] md:text-base
+              leading-relaxed font-inter font-weight-400
+              text-left md:text-justify
+              text-pretty
+              hyphens-none md:hyphens-auto
+              break-words
+            "
+          >
             We don’t claim to read minds. Instead, we interpret silent signals — how someone
             dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
             them. Powered by advanced AI, we blend behavioural science with elegant inference to
             transform fragments into full pictures.
           </p>
-          <p className="text-[#E5E5E5] w-full md:max-w-3xl mx-auto text-sm md:text-base leading-relaxed font-inter font-weight-400 text-justify hyphens-auto break-words">
+
+          <p
+            className="
+              text-[#E5E5E5] mx-auto
+              max-w-[60ch] md:max-w-3xl
+              text-[15px] md:text-base
+              leading-relaxed font-inter font-weight-400
+              text-left md:text-justify
+              text-pretty
+              hyphens-none md:hyphens-auto
+              break-words
+            "
+          >
             Much like Pininfarina designs beauty into motion, we design insight into human nature.
             Every person carries a unique internal compass — we help you interpret it. Not to label,
             but to understand. To lead. To connect. Whether you're a strategist, founder or curious,
@@ -95,6 +120,7 @@ export default function HomePage() {
           </p>
         </div>
       </section>
+      {/* /ABOUT */}
 
       {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}
       <Footer />

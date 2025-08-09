@@ -4,38 +4,42 @@ import { FaLinkedin } from 'react-icons/fa';
 
 export default function Footer() {
   return (
-    <footer className="py-12 px-6 mt-24 relative overflow-hidden bg-transparent">
-      {/* Блок для фонового изображения */}
+    <footer className="mt-16 sm:mt-24 px-4 sm:px-6 py-10 sm:py-12 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
+      {/* Фоновый арт (осьминог) — МЕНЬШЕ и скрыт на мобиле */}
       <div
-        className="absolute inset-0 w-full h-full bg-center bg-no-repeat bg-contain opacity-5 pointer-events-none"
+        className="hidden sm:block absolute inset-0 bg-center bg-no-repeat opacity-5 pointer-events-none
+                   bg-[length:5px_auto] sm:bg-[length:45px_auto] md:bg-[length:85px_auto] lg:bg-[length:125px_auto]"
         style={{
           backgroundImage: "url('/images/footer-art.png')",
           maskImage: 'radial-gradient(circle at center, white 30%, transparent 80%)',
           WebkitMaskImage: 'radial-gradient(circle at center, white 30%, transparent 80%)',
         }}
+        aria-hidden
       />
 
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
-        <div className="space-y-2 text-sm text-[#E5E5E5] font-inter font-weight-400">
-          <p>© {new Date().getFullYear()} H1NTED Ltd. All rights reserved.</p>
+      <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 sm:gap-8 text-center md:text-left">
+        {/* Левая колонка */}
+        <div className="w-full md:w-auto space-y-2 text-[13px] sm:text-sm text-[#E5E5E5] font-inter">
+          <p>© {new Date().getFullYear()} H1NTED Ltd. All rights reserved.</p>
           <p>123 Example Street, Dublin, Ireland</p>
           <p>
             Questions or feedback? Write to us at:{' '}
             <a
-              href="mailto:support@fractalplus.ai"
-              className="text-[#C084FC] hover:underline transition-all"
+              href="mailto:support@hinted.ai"
+              className="text-[#C084FC] hover:underline transition-all break-all"
             >
               support@hinted.ai
             </a>
           </p>
         </div>
 
-        <div className="flex items-center gap-6 text-[#E5E5E5] text-lg font-inter font-weight-400">
+        {/* Правая колонка */}
+        <div className="w-full md:w-auto flex flex-wrap items-center justify-center md:justify-end gap-x-4 gap-y-3 text-[#E5E5E5] text-sm font-inter">
           <a
             href="/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#C084FC] hover:underline text-sm transition-all"
+            className="hover:text-[#C084FC] hover:underline transition-all"
           >
             Terms of Use
           </a>
@@ -43,7 +47,7 @@ export default function Footer() {
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#C084FC] hover:underline text-sm transition-all"
+            className="hover:text-[#C084FC] hover:underline transition-all"
           >
             Privacy Policy
           </a>
@@ -51,10 +55,10 @@ export default function Footer() {
             href="https://www.linkedin.com/in/oleksandrlynnyk/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#C084FC] transition-all"
+            className="inline-flex items-center hover:text-[#C084FC] transition-all"
             aria-label="LinkedIn"
           >
-            <FaLinkedin size={24} />
+            <FaLinkedin size={22} />
           </a>
         </div>
       </div>
