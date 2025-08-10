@@ -20,9 +20,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
-      }
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) onClose();
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -34,37 +32,28 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       setError('You must agree to the Terms to continue.');
       return;
     }
-
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: getRedirectTo(),
-        queryParams: { prompt: 'select_account' },
-      },
+      options: { redirectTo: getRedirectTo(), queryParams: { prompt: 'select_account' } },
     });
-
     if (error) setError(error.message);
   };
 
   const handleAuth = async () => {
     setError('');
     setInfo('');
-
     if (!agree) {
       setError('You must agree to the Terms to continue.');
       return;
     }
-
     if (!email || !password) {
       setError('Email and password are required.');
       return;
     }
-
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError(error.message);
-      } else {
+      if (error) setError(error.message);
+      else {
         onClose();
         router.refresh();
       }
@@ -72,14 +61,10 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: getRedirectTo(),
-        },
+        options: { emailRedirectTo: getRedirectTo() },
       });
-
-      if (error) {
-        setError(error.message);
-      } else {
+      if (error) setError(error.message);
+      else {
         localStorage.setItem('agreed_to_terms', 'true');
         setInfo('Check your email to confirm your registration.');
       }
@@ -104,7 +89,8 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
         <div className="text-center text-gray-500 text-sm">or enter your email and password</div>
 
-        <div className="w-[85%] mx-auto space-y-4">
+        {/* шире на очень узких экранах, как обсуждали */}
+        <div className="w-full sm:w-[85%] mx-auto space-y-4">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -127,14 +113,15 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
               className="w-full border border-gray-300 p-2.5 rounded-xl placeholder-gray-400"
             />
 
-            <div className="flex items-start gap-2">
+            {/* строка согласия — одна линия на мобиле */}
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={agree}
                 onChange={() => setAgree(!agree)}
-                className="accent-neutral-600 mt-1"
+                className="accent-neutral-600 mt-0.5 shrink-0 scale-90 sm:scale-100"
               />
-              <label className="text-sm text-gray-600">
+              <label className="text-[11px] sm:text-sm text-gray-600 leading-tight tracking-tight whitespace-nowrap">
                 I agree to the{' '}
                 <a href="/terms" className="underline" target="_blank">
                   Terms of Use

@@ -62,7 +62,7 @@ export default function HeaderBar({
         className="text-sm sm:text-sm font-inter font-semibold text-[var(--text-primary)] cursor-pointer focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]"
         onClick={onLogout}
       >
-        Home
+        H1NTED
       </div>
 
       {/* Right controls */}

@@ -11,34 +11,37 @@ export default function HowItWorks() {
           <div className="grid grid-cols-2 gap-4 justify-items-center">
             {/* Phone A */}
             <div className="relative w-[46vw] max-w-[240px] aspect-[9/19.5]">
-              {/* Экран: подгонка под рамку — числа подобраны под макет айфона */}
-              <div className="absolute left-[13%] top-[9%] w-[74%] h-[82%] overflow-hidden rounded-[22px]">
+              {/* Экран — подогнан к рамке */}
+              <div className="absolute inset-x-[7.1%] top-[8.4%] bottom-[9.4%] overflow-hidden rounded-[24px]">
                 <Image
                   src="/images/phone-left-screen.webp"
                   alt="Phone screen left"
                   fill
                   className="object-cover"
+                  sizes="(max-width: 520px) 46vw, 240px"
                   priority
                 />
               </div>
-              {/* Рамка */}
+              {/* Рамка — ровно размером контейнера */}
               <Image
                 src="/images/phone-mockup.webp"
                 alt="Phone frame left"
                 fill
                 className="object-contain z-10 pointer-events-none select-none"
+                sizes="(max-width: 520px) 46vw, 240px"
                 priority
               />
             </div>
 
             {/* Phone B */}
             <div className="relative w-[46vw] max-w-[240px] aspect-[9/19.5]">
-              <div className="absolute left-[13%] top-[8%] w-[74%] h-[84%] overflow-hidden rounded-[22px]">
+              <div className="absolute inset-x-[7.1%] top-[8.4%] bottom-[9.4%] overflow-hidden rounded-[24px]">
                 <Image
                   src="/images/phone-right-screen.webp"
                   alt="Phone screen right"
                   fill
-                  className="object-cover object-center"
+                  className="object-cover"
+                  sizes="(max-width: 520px) 46vw, 240px"
                   priority
                 />
               </div>
@@ -47,6 +50,7 @@ export default function HowItWorks() {
                 alt="Phone frame right"
                 fill
                 className="object-contain z-10 pointer-events-none select-none"
+                sizes="(max-width: 520px) 46vw, 240px"
                 priority
               />
             </div>
@@ -72,17 +76,14 @@ export default function HowItWorks() {
           {/* BOTTOM: WHY 1 */}
           <div className="mt-8 rounded-2xl bg-white/5 border border-white/10 px-4 py-5">
             <h4 className="text-base font-semibold text-white">Why 1</h4>
-            <p className="text-sm text-[#CCCCCC] leading-relaxed">
-              Короткое объяснение причины/ценности. (Заменим на ваш текст.)
-            </p>
+            <p className="text-sm text-[#CCCCCC] leading-relaxed">text 1</p>
           </div>
 
-          {/* safe area снизу */}
           <div className="pb-[env(safe-area-inset-bottom)]" />
         </div>
         {/* ===== /MOBILE ONLY ===== */}
 
-        {/* ===== DESKTOP ONLY — ВАШ ИСХОДНЫЙ КОД БЕЗ ИЗМЕНЕНИЙ ===== */}
+        {/* ===== DESKTOP ONLY — исходный код без изменений ===== */}
         <div className="hidden lg:block">
           <div className="w-full relative flex flex-col items-center">
             {/* Левый телефон */}
@@ -158,21 +159,15 @@ export default function HowItWorks() {
                 <div className="grid grid-cols-3 divide-x divide-white/10 px-10 py-8">
                   <div className="pr-8">
                     <h4 className="text-lg font-semibold text-white">Why 1</h4>
-                    <p className="text-sm text-[#CCCCCC] leading-relaxed">
-                      Короткое объяснение причины/ценности. (Заменим на ваш текст.)
-                    </p>
+                    <p className="text-sm text-[#CCCCCC] leading-relaxed">text 1</p>
                   </div>
                   <div className="px-8">
                     <h4 className="text-lg font-semibold text-white">Why 2</h4>
-                    <p className="text-sm text-[#CCCCCC] leading-relaxed">
-                      Короткое объяснение причины/ценности. (Заменим на ваш текст.)
-                    </p>
+                    <p className="text-sm text-[#CCCCCC] leading-relaxed">Text 2</p>
                   </div>
                   <div className="pl-8">
                     <h4 className="text-lg font-semibold text-white">Why 3</h4>
-                    <p className="text-sm text-[#CCCCCC] leading-relaxed">
-                      Короткое объяснение причины/ценности. (Заменим на ваш текст.)
-                    </p>
+                    <p className="text-sm text-[#CCCCCC] leading-relaxed">Text 3</p>
                   </div>
                 </div>
               </div>
