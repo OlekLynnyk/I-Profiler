@@ -4,7 +4,7 @@ import { FaLinkedin } from 'react-icons/fa';
 
 export default function Footer() {
   return (
-    <footer className="mt-16 sm:mt-24 px-4 sm:px-6 py-10 sm:py-12 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
+    <footer className="mt-16 sm:mt-24 px-4 sm:px-6 py-10 sm:py-12 pb-14 sm:pb-12 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
       {/* Фоновый арт (осьминог) — МЕНЬШЕ и скрыт на мобиле */}
       <div
         className="hidden sm:block absolute inset-0 bg-center bg-no-repeat opacity-5 pointer-events-none

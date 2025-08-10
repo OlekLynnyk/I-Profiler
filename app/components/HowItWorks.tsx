@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import React from 'react';
 
@@ -17,6 +15,7 @@ export default function HowItWorks() {
                 width={230}
                 height={500}
                 className="object-cover w-full h-full"
+                priority
               />
             </div>
           </div>
@@ -39,6 +38,7 @@ export default function HowItWorks() {
                 width={230}
                 height={510}
                 className="object-cover w-full h-full object-center"
+                priority
               />
             </div>
           </div>
@@ -51,7 +51,7 @@ export default function HowItWorks() {
           />
         </div>
 
-        {/* Текстовый блок */}
+        {/* Текстовый блок (HOW) */}
         <div className="w-full max-w-[400px] text-center lg:text-left px-2 lg:px-6 flex flex-col justify-center space-y-4 z-10 mt-6 lg:mt-0 lg:absolute lg:top-0 lg:left-[850px] h-[auto] lg:h-[800px]">
           <div className="space-y-2">
             <h3 className="text-white text-[36px] sm:text-[42px] lg:text-[50px] leading-tight font-bold">
@@ -70,6 +70,35 @@ export default function HowItWorks() {
           </div>
         </div>
       </div>
+
+      {/* WHY — горизонтальная полоса, ТОЛЬКО десктоп */}
+      <div className="hidden lg:block w-full mt-10">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+            <div className="grid grid-cols-3 divide-x divide-white/10 px-10 py-8">
+              <div className="pr-8">
+                <h4 className="text-lg font-semibold text-white">Why 1</h4>
+                <p className="text-sm text-[#CCCCCC] leading-relaxed">
+                  Короткое объяснение причины/ценности. (Заменим на ваш текст.)
+                </p>
+              </div>
+              <div className="px-8">
+                <h4 className="text-lg font-semibold text-white">Why 2</h4>
+                <p className="text-sm text-[#CCCCCC] leading-relaxed">
+                  Короткое объяснение причины/ценности. (Заменим на ваш текст.)
+                </p>
+              </div>
+              <div className="pl-8">
+                <h4 className="text-lg font-semibold text-white">Why 3</h4>
+                <p className="text-sm text-[#CCCCCC] leading-relaxed">
+                  Короткое объяснение причины/ценности. (Заменим на ваш текст.)
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* /WHY */}
     </section>
   );
 }

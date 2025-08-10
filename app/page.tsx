@@ -17,9 +17,7 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (session) {
-      setIsAuthModalOpen(false);
-    }
+    if (session) setIsAuthModalOpen(false);
   }, [session]);
 
   return (
@@ -75,49 +73,51 @@ export default function HomePage() {
         <Pricing onDemoClick={() => setIsAuthModalOpen(true)} />
       </section>
 
-      {/* ABOUT — мобильные улучшения без изменения десктопа */}
+      {/* ABOUT — мобайл ровный текст, десктоп без изменений */}
       <section id="about" className="mt-12 mb-10 relative z-10 px-4 md:px-0">
         <div className="text-center space-y-6">
           <h2 className="text-3xl md:text-4xl font-montserrat font-weight-600 text-[#F5F5F5]">
             About
           </h2>
 
-          <p
-            className="
-              text-[#E5E5E5] mx-auto
-              max-w-[60ch] md:max-w-3xl
-              text-[15px] md:text-base
-              leading-relaxed font-inter font-weight-400
-              text-left md:text-justify
-              text-pretty
-              hyphens-none md:hyphens-auto
-              break-words
-            "
-          >
-            We don’t claim to read minds. Instead, we interpret silent signals — how someone
-            dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
-            them. Powered by advanced AI, we blend behavioural science with elegant inference to
-            transform fragments into full pictures.
-          </p>
+          {/* Узкая "мера" на мобиле создаёт ощущение рамки без самой рамки */}
+          <div className="mx-auto max-w-[38ch] sm:max-w-[48ch] md:max-w-3xl text-justify md:text-justify">
+            <p
+              lang="en"
+              className="
+                text-[#E5E5E5]
+                text-[15px] md:text-base
+                leading-relaxed font-inter font-weight-400
+                text-pretty
+                hyphens-auto
+                break-words
+                mb-6
+              "
+            >
+              We don’t claim to read minds. Instead, we interpret silent signals — how someone
+              dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
+              them. Powered by advanced AI, we blend behavioural science with elegant inference to
+              transform fragments into full pictures.
+            </p>
 
-          <p
-            className="
-              text-[#E5E5E5] mx-auto
-              max-w-[60ch] md:max-w-3xl
-              text-[15px] md:text-base
-              leading-relaxed font-inter font-weight-400
-              text-left md:text-justify
-              text-pretty
-              hyphens-none md:hyphens-auto
-              break-words
-            "
-          >
-            Much like Pininfarina designs beauty into motion, we design insight into human nature.
-            Every person carries a unique internal compass — we help you interpret it. Not to label,
-            but to understand. To lead. To connect. Whether you're a strategist, founder or curious,
-            H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance. Because
-            influence begins with pure understanding.
-          </p>
+            <p
+              lang="en"
+              className="
+                text-[#E5E5E5]
+                text-[15px] md:text-base
+                leading-relaxed font-inter font-weight-400
+                text-pretty
+                hyphens-auto
+                break-words
+              "
+            >
+              Much like Pininfarina designs beauty into motion, we design insight into human nature.
+              Every person carries a unique internal compass — we help you interpret it. Not to
+              label, but to understand. To lead. To connect. Whether you're a strategist, founder or
+              curious, H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance.
+              Because influence begins with pure understanding.
+            </p>
+          </div>
         </div>
       </section>
       {/* /ABOUT */}

@@ -1,17 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 
 const supabase = createPagesBrowserClient();
 
 type Plan = {
-  id: string; // стабильный идентификатор (для loading/checkout)
+  id: string;
   name: string;
   price: string;
   description: string;
   features: string[];
-  action?: () => void; // для фри-плана
+  action?: () => void;
   highlight?: boolean;
 };
 
@@ -102,12 +102,103 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     },
   ];
 
+  // ----- MOBILE LAYOUT STATE (не влияет на десктоп) -----
+  // По умолчанию большой — Smarter
+  const [activeId, setActiveId] = useState<string>(plans[1].id);
+
+  const activePlan = useMemo(() => plans.find((p) => p.id === activeId)!, [plans, activeId]);
+  const smallPlans = useMemo(() => plans.filter((p) => p.id !== activeId), [plans, activeId]);
+
+  // Карточка тарифа (универсальная, управляем размеры через prop)
+  const PlanCard = ({
+    plan,
+    size,
+    onClick,
+  }: {
+    plan: Plan;
+    size: 'small' | 'large';
+    onClick?: () => void;
+  }) => {
+    const isFree = plan.id === 'free';
+    const isLoading = loadingPlan === plan.id;
+
+    // размеры и плотность под мобильный
+    const density = size === 'large' ? 'p-5 rounded-xl' : 'p-4 rounded-lg'; // компактнее для small
+
+    const titleSize = size === 'large' ? 'text-xl' : 'text-base';
+    const priceSize = size === 'large' ? 'text-3xl' : 'text-2xl';
+    const descSize = size === 'large' ? 'text-base' : 'text-sm';
+    const listText = size === 'large' ? 'text-sm' : 'text-[13px]';
+
+    const borderShadow = plan.highlight
+      ? 'border-[#C084FC] shadow-[0_4px_10px_rgba(192,132,252,0.35)]'
+      : 'border-[#D1D4D6]';
+
+    return (
+      <div
+        className={`bg-[#F6F5ED] border shadow ${density} ${borderShadow}`}
+        // На мобиле маленькие карточки кликабельны целиком
+        onClick={size === 'small' ? onClick : undefined}
+        role={size === 'small' ? 'button' : undefined}
+        tabIndex={size === 'small' ? 0 : -1}
+      >
+        <h3 className={`${titleSize} text-[#111827] mb-1`}>{plan.name}</h3>
+
+        <p className={`${priceSize} text-[#111827] mb-3`}>
+          {plan.price}
+          {!isFree && <span className="text-xs align-middle"> /4 weeks</span>}
+        </p>
+
+        <p className={`text-[#374151] ${descSize} leading-relaxed mb-4`}>{plan.description}</p>
+
+        <ul className={`text-left ${listText} text-[#374151] mb-5 space-y-2 leading-relaxed`}>
+          {plan.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2">
+              <span aria-hidden className="mt-0.5 text-[#6B21A8]">
+                ✔
+              </span>
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        <button
+          onClick={isFree ? (isLoggedIn ? undefined : plan.action) : () => handleCheckout(plan.id)}
+          className={`w-full ${size === 'large' ? 'py-3.5' : 'py-3'} px-4 rounded-2xl bg-[#C084FC] text-[#212529]
+                      hover:bg-[#D8B4FE] disabled:opacity-50 text-sm md:text-base min-h-11`}
+          disabled={(isFree && isLoggedIn) || isLoading}
+        >
+          {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Get Started'}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <section className="pt-6 md:pt-8 pb-16 md:pb-24 bg-transparent">
       <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
         <h2 className="text-2xl sm:text-3xl md:text-4xl text-[#F5F5F5] mb-6 sm:mb-8">Pricing</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        {/* ===== MOBILE (две маленькие сверху, одна большая снизу) ===== */}
+        <div className="md:hidden space-y-4">
+          {/* Верхняя строка: две маленькие карточки */}
+          <div className="grid grid-cols-2 gap-4">
+            {smallPlans.map((p) => (
+              <PlanCard key={p.id} plan={p} size="small" onClick={() => setActiveId(p.id)} />
+            ))}
+          </div>
+
+          {/* Нижняя: активная (большая) карточка */}
+          <div>
+            <PlanCard key={activePlan.id} plan={activePlan} size="large" />
+          </div>
+
+          {/* нижняя безопасная зона iOS */}
+          <div className="pb-[env(safe-area-inset-bottom)]" />
+        </div>
+
+        {/* ===== DESKTOP (исходный макет без изменений) ===== */}
+        <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {plans.map((plan) => {
             const isFree = plan.id === 'free';
             const isLoading = loadingPlan === plan.id;
