@@ -26,26 +26,60 @@ export default function HomePage() {
 
       <Header onLoginClick={() => setIsAuthModalOpen(true)} />
 
-      <main className="flex flex-col lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
+      {/* ===== MOBILE HERO (как на стикере): один экран с текстами ===== */}
+      <section className="md:hidden px-6 max-w-7xl mx-auto relative z-10">
+        {/* высота = экран минус небольшой запас под шапку + safe area */}
+        <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-4">
+          <div className="space-y-3">
+            <h1 className="font-bold uppercase leading-tight tracking-tight text-[34px]">
+              <span className="text-white block">WE UNLOCK INSIGHTS WITH</span>
+              <span className="text-white block">ADVANCED PROFILING</span>
+              <div className="text-[#C084FC] leading-tight max-w-[18ch] mt-2">
+                <div className="text-[22px]">SEE WHAT OTHERS CANNOT</div>
+                <div className="text-[22px]">
+                  REDUCE HUMAN <span className="text-[18px]">FACTOR</span> RISK
+                </div>
+              </div>
+            </h1>
+
+            <p className="text-[0.8rem] leading-relaxed max-w-[18ch]">
+              Since people do not tell us who they are, but show it through their signals, these
+              must be interpreted.
+            </p>
+          </div>
+
+          {!session && (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="bg-transparent text-[#E5E5E5] border-2 border-white font-inter font-weight-400 py-2 px-5 rounded-2xl text-base hover:bg-[#C084FC] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)] w-fit"
+            >
+              Start Free Trial
+            </button>
+          )}
+        </div>
+      </section>
+      {/* ===== /MOBILE HERO ===== */}
+
+      {/* ===== DESKTOP HERO — без изменений ===== */}
+      <main className="hidden md:flex lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
         <div className="w-full lg:w-[80%] space-y-2 pl-[20px]">
           <div className="min-h-[4rem]">
-            <h1 className="font-bold uppercase leading-tight tracking-tight break-words text-[34px] md:text-[82px]">
+            <h1 className="font-bold uppercase leading-tight tracking-tight break-words text-[82px]">
               <span className="text-white">WE UNLOCK INSIGHTS WITH</span>
               <br />
               <span className="text-white">ADVANCED PROFILING</span>
               <br />
-              {/* Мобайл: те же по ширине, что и “PROFILING”; десктоп — как было */}
-              <div className="text-[#C084FC] leading-tight max-w-[18ch] md:max-w-none">
-                <div className="text-[22px] md:text-[28.6px]">SEE WHAT OTHERS CANNOT</div>
-                <div className="text-[22px] md:text-[28.6px]">
-                  REDUCE HUMAN <span className="text-[18px] md:text-[22.6px]">FACTOR</span> RISK
+              <div className="text-[#C084FC] leading-tight" style={{ fontSize: '28.6px' }}>
+                <div>SEE WHAT OTHERS CANNOT</div>
+                <div>
+                  REDUCE HUMAN <span style={{ fontSize: '22.6px' }}>FACTOR</span> RISK
                 </div>
               </div>
             </h1>
           </div>
 
-          <div className="space-y-6 text-[0.8rem] md:text-[0.9rem] leading-relaxed md:max-w-[28.6rem]">
-            <p className="max-w-[18ch] md:max-w-none">
+          <div className="space-y-6 text-[0.9rem] leading-relaxed max-w-[28.6rem]">
+            <p>
               Since people do not tell us who they are, but show it <br />
               through their signals, these must be interpreted.
             </p>
@@ -65,6 +99,7 @@ export default function HomePage() {
           <CubeCanvas />
         </div>
       </main>
+      {/* ===== /DESKTOP HERO ===== */}
 
       <section className="mt-10 relative z-10">
         <HowItWorks />
@@ -81,19 +116,10 @@ export default function HomePage() {
             About
           </h2>
 
-          {/* Узкая "мера" на мобиле создаёт ощущение рамки без самой рамки */}
           <div className="mx-auto max-w-[38ch] sm:max-w-[48ch] md:max-w-3xl text-justify md:text-justify">
             <p
               lang="en"
-              className="
-                text-[#E5E5E5]
-                text-[15px] md:text-base
-                leading-relaxed font-inter font-weight-400
-                text-pretty
-                hyphens-auto
-                break-words
-                mb-6
-              "
+              className="text-[#E5E5E5] text-[15px] md:text-base leading-relaxed font-inter font-weight-400 text-pretty hyphens-auto break-words mb-6"
             >
               We don’t claim to read minds. Instead, we interpret silent signals — how someone
               dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
@@ -103,14 +129,7 @@ export default function HomePage() {
 
             <p
               lang="en"
-              className="
-                text-[#E5E5E5]
-                text-[15px] md:text-base
-                leading-relaxed font-inter font-weight-400
-                text-pretty
-                hyphens-auto
-                break-words
-              "
+              className="text-[#E5E5E5] text-[15px] md:text-base leading-relaxed font-inter font-weight-400 text-pretty hyphens-auto break-words"
             >
               Much like Pininfarina designs beauty into motion, we design insight into human nature.
               Every person carries a unique internal compass — we help you interpret it. Not to
@@ -121,7 +140,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      {/* /ABOUT */}
 
       {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}
       <Footer />
