@@ -29,22 +29,23 @@ export default function HomePage() {
       <main className="flex flex-col lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
         <div className="w-full lg:w-[80%] space-y-2 pl-[20px]">
           <div className="min-h-[4rem]">
-            <h1 className="text-[40px] md:text-[82px] font-bold uppercase leading-tight tracking-tight break-words">
+            <h1 className="font-bold uppercase leading-tight tracking-tight break-words text-[34px] md:text-[82px]">
               <span className="text-white">WE UNLOCK INSIGHTS WITH</span>
               <br />
               <span className="text-white">ADVANCED PROFILING</span>
               <br />
-              <div className="text-[#C084FC] leading-tight" style={{ fontSize: '28.6px' }}>
-                <div>SEE WHAT OTHERS CANNOT</div>
-                <div>
-                  REDUCE HUMAN <span style={{ fontSize: '22.6px' }}>FACTOR</span> RISK
+              {/* Мобайл: те же по ширине, что и “PROFILING”; десктоп — как было */}
+              <div className="text-[#C084FC] leading-tight max-w-[18ch] md:max-w-none">
+                <div className="text-[22px] md:text-[28.6px]">SEE WHAT OTHERS CANNOT</div>
+                <div className="text-[22px] md:text-[28.6px]">
+                  REDUCE HUMAN <span className="text-[18px] md:text-[22.6px]">FACTOR</span> RISK
                 </div>
               </div>
             </h1>
           </div>
 
-          <div className="space-y-6 text-[0.8rem] md:text-[0.9rem] leading-relaxed max-w-[28.6rem]">
-            <p>
+          <div className="space-y-6 text-[0.8rem] md:text-[0.9rem] leading-relaxed md:max-w-[28.6rem]">
+            <p className="max-w-[18ch] md:max-w-none">
               Since people do not tell us who they are, but show it <br />
               through their signals, these must be interpreted.
             </p>
