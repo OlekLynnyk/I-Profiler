@@ -6,7 +6,7 @@ export default function HowItWorks() {
   return (
     <section className="bg-transparent text-white relative overflow-hidden">
       <div className="w-full relative px-4">
-        {/* ===== MOBILE ONLY (только эта часть изменена) ===== */}
+        {/* ===== MOBILE ONLY ===== */}
         <div className="lg:hidden w-full mx-auto max-w-[520px]">
           {/* TOP: два телефона рядом, экран точно в рамке */}
           <div className="grid grid-cols-2 gap-4 justify-items-center">
@@ -37,19 +37,14 @@ export default function HowItWorks() {
             </ul>
           </div>
 
-          {/* BOTTOM: WHY 1 */}
-          <div className="mt-8 rounded-2xl bg-white/5 border border-white/10 px-4 py-5">
-            <h4 className="text-base font-semibold text-white">Why 1</h4>
-            <p className="text-sm text-[#CCCCCC] leading-relaxed">text 1</p>
-          </div>
-
+          {/* WHY — удалено на мобайле */}
           <div className="pb-[env(safe-area-inset-bottom)]" />
         </div>
         {/* ===== /MOBILE ONLY ===== */}
 
-        {/* ===== DESKTOP ONLY — без изменений ===== */}
+        {/* ===== DESKTOP ONLY ===== */}
         <div className="hidden lg:block">
-          <div className="w-full relative flex flex-col items-center">
+          <div className="w-full relative flex flex-col items-start">
             {/* Левый телефон */}
             <div className="relative w-[300px] md:w-[400px] lg:w-[600px] h-[600px] lg:h-[800px] mb-10 lg:mb-0 lg:ml-[-26px]">
               <div className="absolute z-0 top-0 left-0 w-full h-full flex items-center justify-center">
@@ -96,47 +91,77 @@ export default function HowItWorks() {
               />
             </div>
 
-            {/* Текстовый блок (HOW) */}
-            <div className="w-full max-w-[400px] text-center lg:text-left px-2 lg:px-6 flex flex-col justify-center space-y-4 z-10 mt-6 lg:mt-0 lg:absolute lg:top-0 lg:left-[850px] h-[auto] lg:h-[800px]">
-              <div className="space-y-2">
-                <h3 className="text-white text-[36px] sm:text-[42px] lg:text-[50px] leading-tight font-bold">
-                  Their words
-                  <br />
-                  Their world
-                  <br />
-                  Your clarity
-                </h3>
-                <ul className="mt-4 text-sm sm:text-base text-[#CCCCCC] space-y-2 font-inter">
-                  <li>Understand what drives them</li>
-                  <li>See the unconscious command</li>
-                  <li>Speak their internal language</li>
-                  <li>Win trust in one message</li>
-                </ul>
+            {/* Текстовый блок (DESKTOP) */}
+            <div
+              className="
+                w-full max-w-[450px] text-center lg:text-left px-2 lg:px-6
+                flex flex-col justify-start gap-y-6 z-10 mt-6 lg:mt-0
+                lg:absolute 
+                lg:left-[820px]          /* было 850px → подвинул левее на 30px */
+                lg:top-[125px]
+                h-[auto] lg:h-[640px]
+              "
+            >
+              {/* Верх: три пары */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-white text-[36px] sm:text-[42px] lg:text-[50px] leading-[1.05] font-bold">
+                    Their words ...
+                  </h3>
+                  {/* РАЗМЕР ФИОЛЕТОВОГО ТЕКСТА: меняй здесь.
+                     Сейчас: text-sm sm:text-base. Например, так:
+                     className="text-base lg:text-[18px] text-[#C084FC] mt-1" */}
+                  <p className="text-sm sm:text-base text-[#C084FC] mt-1">
+                    — Unearth motives that shape their decisions
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-white text-[36px] sm:text-[42px] lg:text-[50px] leading-[1.05] font-bold">
+                    Their world ...
+                  </h3>
+                  <p className="text-sm sm:text-base text-[#C084FC] mt-1">
+                    — Spaek in the cadence of their inner voice
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-white text-[36px] sm:text-[42px] lg:text-[50px] leading-[1.05] font-bold">
+                    Your clarity ...
+                  </h3>
+                  <p className="text-sm sm:text-base text-[#C084FC] mt-1">
+                    — Command trust with personalised messages
+                  </p>
+                </div>
+              </div>
+
+              {/* Низ: убрали рамку и justify → больше нет «дыр» между словами */}
+              <div className="mt-4">
+                <h4 className="text-white text-lg font-semibold mb-2">
+                  The Distinction Method — an exact science
+                </h4>
+                <ol
+                  className="
+                    text-[#CCCCCC] text-sm sm:text-base leading-relaxed
+                    space-y-2 list-decimal ml-5 text-left
+                    text-pretty hyphens-auto break-words
+                  "
+                >
+                  <li>
+                    Upload a clue{' '}
+                    <span className="text-white/60">(look, accessory, LinkedIn... No bio)</span>
+                  </li>
+                  <li>Extract deep intelligence from nuanced signals</li>
+                  <li>
+                    Orchestrate your Business and personal influence with tailored precision,
+                    transforming human understanding into into a signature of your triumphs.
+                  </li>
+                </ol>
               </div>
             </div>
           </div>
 
-          {/* WHY — десктоп как было */}
-          <div className="w-full mt-10">
-            <div className="max-w-6xl mx-auto px-6">
-              <div className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-                <div className="grid grid-cols-3 divide-x divide-white/10 px-10 py-8">
-                  <div className="pr-8">
-                    <h4 className="text-lg font-semibold text-white">Why 1</h4>
-                    <p className="text-sm text-[#CCCCCC] leading-relaxed">text 1</p>
-                  </div>
-                  <div className="px-8">
-                    <h4 className="text-lg font-semibold text-white">Why 2</h4>
-                    <p className="text-sm text-[#CCCCCC] leading-relaxed">Text 2</p>
-                  </div>
-                  <div className="pl-8">
-                    <h4 className="text-lg font-semibold text-white">Why 3</h4>
-                    <p className="text-sm text-[#CCCCCC] leading-relaxed">Text 3</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* WHY — удалено на десктопе */}
         </div>
         {/* ===== /DESKTOP ONLY ===== */}
       </div>

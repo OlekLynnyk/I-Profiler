@@ -72,7 +72,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       id: 'price_1RQYE4AGnqjZyhfAY8kOMZwm', // Smarter
       name: 'Smarter',
       price: '€249',
-      description: 'Advanced profiling tools for individuals.',
+      description: 'Advanced profiling tools for individuals',
       features: [
         'Everything in Freemium',
         '250 AI queries',
@@ -85,7 +85,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       id: 'price_1RQYEXAGnqjZyhfAryCzNkqV', // Business
       name: 'Business',
       price: '€799',
-      description: 'Enterprise-level access with onboarding.',
+      description: 'Enterprise-level access with onboarding',
       features: [
         'Everything in Smarter',
         '1,000 AI queries',
