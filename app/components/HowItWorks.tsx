@@ -11,11 +11,11 @@ export default function HowItWorks() {
           {/* TOP: два телефона рядом, экран точно в рамке */}
           <div className="grid grid-cols-2 gap-4 justify-items-center">
             <PhoneMockupMobile
-              screenSrc="/images/phone-left-screen.webp"
+              screenSrc="/images/phone-left-screen1.webp"
               className="w-[46vw] max-w-[240px]"
             />
             <PhoneMockupMobile
-              screenSrc="/images/phone-right-screen.webp"
+              screenSrc="/images/phone-right-screen2.webp"
               className="w-[46vw] max-w-[240px]"
             />
           </div>
@@ -48,9 +48,9 @@ export default function HowItWorks() {
             {/* Левый телефон */}
             <div className="relative w-[300px] md:w-[400px] lg:w-[600px] h-[600px] lg:h-[800px] mb-10 lg:mb-0 lg:ml-[-26px]">
               <div className="absolute z-0 top-0 left-0 w-full h-full flex items-center justify-center">
-                <div className="w-[230px] h-[500px] overflow-hidden rounded-[28px] relative">
+                <div className="w-[230px] h-[500px] overflow-hidden rounded-[26px] relative origin-center scale-[0.985]">
                   <Image
-                    src="/images/phone-left-screen.webp"
+                    src="/images/phone-left-screen1.webp"
                     alt="Phone screen left"
                     width={230}
                     height={500}
@@ -71,12 +71,12 @@ export default function HowItWorks() {
             {/* Правый телефон */}
             <div className="relative w-[300px] md:w-[400px] lg:w-[600px] h-[600px] lg:h-[800px] mb-10 lg:mb-0 lg:absolute lg:top-0 lg:left-[270px]">
               <div className="absolute z-0 top-0 left-0 w-full h-full flex items-center justify-center">
-                <div className="w-[230px] h-[510px] overflow-hidden rounded-[28px] relative -translate-y-[8px] translate-x-[2px]">
+                <div className="w-[230px] h-[500px] overflow-hidden rounded-[26px] relative origin-center scale-[0.985] -translate-y-[6px]">
                   <Image
-                    src="/images/phone-right-screen.webp"
+                    src="/images/phone-right-screen2.webp"
                     alt="Phone screen right"
                     width={230}
-                    height={510}
+                    height={500}
                     className="object-cover w-full h-full object-center"
                     priority
                   />
@@ -97,7 +97,7 @@ export default function HowItWorks() {
                 w-full max-w-[450px] text-center lg:text-left px-2 lg:px-6
                 flex flex-col justify-start gap-y-6 z-10 mt-6 lg:mt-0
                 lg:absolute 
-                lg:left-[820px]          /* было 850px → подвинул левее на 30px */
+                lg:left-[820px]
                 lg:top-[125px]
                 h-[auto] lg:h-[640px]
               "
@@ -108,9 +108,6 @@ export default function HowItWorks() {
                   <h3 className="text-white text-[36px] sm:text-[42px] lg:text-[50px] leading-[1.05] font-bold">
                     Their words ...
                   </h3>
-                  {/* РАЗМЕР ФИОЛЕТОВОГО ТЕКСТА: меняй здесь.
-                     Сейчас: text-sm sm:text-base. Например, так:
-                     className="text-base lg:text-[18px] text-[#C084FC] mt-1" */}
                   <p className="text-sm sm:text-base text-[#C084FC] mt-1">
                     — Unearth motives that shape their decisions
                   </p>

@@ -32,7 +32,7 @@ export default function HomePage() {
         <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-4">
           <div className="space-y-3">
             {/* Верх: 4 строки, крупнее */}
-            <h1 className="font-bold uppercase leading-tight tracking-tight text-[65px]">
+            <h1 className="font-bold uppercase leading-tight tracking-tight text-[60px]">
               <span className="block text-white">WE UNLOCK</span>
               <span className="block text-white">INSIGHTS WITH</span>
               <span className="block text-white">ADVANCED</span>
