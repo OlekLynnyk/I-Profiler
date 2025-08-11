@@ -26,23 +26,29 @@ export default function HomePage() {
 
       <Header onLoginClick={() => setIsAuthModalOpen(true)} />
 
-      {/* ===== MOBILE HERO (как на стикере): один экран с текстами ===== */}
+      {/* ===== MOBILE HERO (только мобильный) ===== */}
       <section className="md:hidden px-6 max-w-7xl mx-auto relative z-10">
-        {/* высота = экран минус небольшой запас под шапку + safe area */}
+        {/* держим кнопку на месте, без пустот — увеличиваем заголовок */}
         <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-4">
           <div className="space-y-3">
-            <h1 className="font-bold uppercase leading-tight tracking-tight text-[34px]">
-              <span className="text-white block">WE UNLOCK INSIGHTS WITH</span>
-              <span className="text-white block">ADVANCED PROFILING</span>
-              <div className="text-[#C084FC] leading-tight max-w-[18ch] mt-2">
-                <div className="text-[22px]">SEE WHAT OTHERS CANNOT</div>
-                <div className="text-[22px]">
-                  REDUCE HUMAN <span className="text-[18px]">FACTOR</span> RISK
-                </div>
-              </div>
+            {/* Верх: 4 строки, крупнее */}
+            <h1 className="font-bold uppercase leading-tight tracking-tight text-[40px]">
+              <span className="block text-white">WE UNLOCK</span>
+              <span className="block text-white">INSIGHTS WITH</span>
+              <span className="block text-white">ADVANCED</span>
+              <span className="block text-white">PROFILING</span>
             </h1>
 
-            <p className="text-[0.8rem] leading-relaxed max-w-[18ch]">
+            {/* Центр: −20% */}
+            <div className="text-[#C084FC] leading-tight mt-2">
+              <div className="text-[17.6px]">SEE WHAT OTHERS CANNOT</div>
+              <div className="text-[17.6px]">
+                REDUCE HUMAN <span className="text-[14.4px]">FACTOR</span> RISK
+              </div>
+            </div>
+
+            {/* Низ: вмещаем в 2 строки на ~390px */}
+            <p className="text-[16px] leading-snug max-w-[33ch]">
               Since people do not tell us who they are, but show it through their signals, these
               must be interpreted.
             </p>
@@ -109,7 +115,7 @@ export default function HomePage() {
         <Pricing onDemoClick={() => setIsAuthModalOpen(true)} />
       </section>
 
-      {/* ABOUT — мобайл ровный текст, десктоп без изменений */}
+      {/* ABOUT — без изменений на десктопе/мобайле */}
       <section id="about" className="mt-12 mb-10 relative z-10 px-4 md:px-0">
         <div className="text-center space-y-6">
           <h2 className="text-3xl md:text-4xl font-montserrat font-weight-600 text-[#F5F5F5]">
