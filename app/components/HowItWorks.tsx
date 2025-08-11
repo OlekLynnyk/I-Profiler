@@ -1,59 +1,23 @@
 import Image from 'next/image';
 import React from 'react';
+import PhoneMockupMobile from './PhoneMockupMobile';
 
 export default function HowItWorks() {
   return (
     <section className="bg-transparent text-white relative overflow-hidden">
       <div className="w-full relative px-4">
-        {/* ===== MOBILE ONLY ===== */}
+        {/* ===== MOBILE ONLY (только эта часть изменена) ===== */}
         <div className="lg:hidden w-full mx-auto max-w-[520px]">
-          {/* TOP: два телефона рядом */}
+          {/* TOP: два телефона рядом, экран точно в рамке */}
           <div className="grid grid-cols-2 gap-4 justify-items-center">
-            {/* Phone A */}
-            <div className="relative w-[46vw] max-w-[240px] aspect-[9/19.5]">
-              {/* Экран — подогнан к рамке */}
-              <div className="absolute inset-x-[7.1%] top-[8.4%] bottom-[9.4%] overflow-hidden rounded-[24px]">
-                <Image
-                  src="/images/phone-left-screen.webp"
-                  alt="Phone screen left"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 520px) 46vw, 240px"
-                  priority
-                />
-              </div>
-              {/* Рамка — ровно размером контейнера */}
-              <Image
-                src="/images/phone-mockup.webp"
-                alt="Phone frame left"
-                fill
-                className="object-contain z-10 pointer-events-none select-none"
-                sizes="(max-width: 520px) 46vw, 240px"
-                priority
-              />
-            </div>
-
-            {/* Phone B */}
-            <div className="relative w-[46vw] max-w-[240px] aspect-[9/19.5]">
-              <div className="absolute inset-x-[7.1%] top-[8.4%] bottom-[9.4%] overflow-hidden rounded-[24px]">
-                <Image
-                  src="/images/phone-right-screen.webp"
-                  alt="Phone screen right"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 520px) 46vw, 240px"
-                  priority
-                />
-              </div>
-              <Image
-                src="/images/phone-mockup.webp"
-                alt="Phone frame right"
-                fill
-                className="object-contain z-10 pointer-events-none select-none"
-                sizes="(max-width: 520px) 46vw, 240px"
-                priority
-              />
-            </div>
+            <PhoneMockupMobile
+              screenSrc="/images/phone-left-screen.webp"
+              className="w-[46vw] max-w-[240px]"
+            />
+            <PhoneMockupMobile
+              screenSrc="/images/phone-right-screen.webp"
+              className="w-[46vw] max-w-[240px]"
+            />
           </div>
 
           {/* CENTER: текст HOW */}
@@ -83,7 +47,7 @@ export default function HowItWorks() {
         </div>
         {/* ===== /MOBILE ONLY ===== */}
 
-        {/* ===== DESKTOP ONLY — исходный код без изменений ===== */}
+        {/* ===== DESKTOP ONLY — без изменений ===== */}
         <div className="hidden lg:block">
           <div className="w-full relative flex flex-col items-center">
             {/* Левый телефон */}

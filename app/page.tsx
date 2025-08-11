@@ -32,7 +32,7 @@ export default function HomePage() {
         <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-4">
           <div className="space-y-3">
             {/* Верх: 4 строки, крупнее */}
-            <h1 className="font-bold uppercase leading-tight tracking-tight text-[50px]">
+            <h1 className="font-bold uppercase leading-tight tracking-tight text-[60px]">
               <span className="block text-white">WE UNLOCK</span>
               <span className="block text-white">INSIGHTS WITH</span>
               <span className="block text-white">ADVANCED</span>
@@ -48,7 +48,7 @@ export default function HomePage() {
             </div>
 
             {/* Низ: вмещаем в 2 строки на ~390px */}
-            <p className="text-[18px] leading-snug max-w-[33ch]">
+            <p className="text-[12px] leading-snug max-w-[33ch]">
               Since people do not tell us who they are, but show it through their signals, these
               must be interpreted.
             </p>
