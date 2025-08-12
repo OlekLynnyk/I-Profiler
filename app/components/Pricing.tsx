@@ -96,12 +96,12 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     },
   ];
 
-  // ----- MOBILE STATE (не влияет на десктоп) -----
+  // ----- MOBILE STATE (оставляем как есть) -----
   const [activeId, setActiveId] = useState<string>(plans[1].id); // по умолчанию Smarter
   const activePlan = useMemo(() => plans.find((p) => p.id === activeId)!, [plans, activeId]);
   const smallPlans = useMemo(() => plans.filter((p) => p.id !== activeId), [plans, activeId]);
 
-  // Универсальная карточка
+  // ======= Универсальная карточка (ИСПОЛЬЗУЕТСЯ ТОЛЬКО НА МОБИЛЬНОМ — НЕ МЕНЯЕМ ВИЗУАЛ) =======
   const PlanCard = ({
     plan,
     size,
@@ -118,7 +118,6 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       : 'border-[#D1D4D6]';
 
     if (size === 'small') {
-      // КВАДРАТ: показываем только name, price, короткое описание
       return (
         <button
           type="button"
@@ -134,13 +133,11 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               {!isFree && <span className="text-[10px] align-middle"> /4 weeks</span>}
             </p>
             <p className="text-[#374151] text-sm mt-2 line-clamp-3">{plan.description}</p>
-            {/* чек‑лист и кнопка скрыты на small */}
           </div>
         </button>
       );
     }
 
-    // LARGE: полный контент
     return (
       <div className={`bg-[#F6F5ED] border ${borderShadow} p-5 rounded-xl shadow`}>
         <h3 className="text-xl text-[#111827] mb-1">{plan.name}</h3>
@@ -172,10 +169,19 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
 
   return (
     <section className="pt-6 md:pt-8 pb-16 md:pb-24 bg-transparent">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 text-center">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl text-[#F5F5F5] mb-6 sm:mb-8">Pricing</h2>
+      <div className="max-w-6xl mx-auto px-4 md:px-6 text-center relative">
+        {/* лёгкий верхний глоу — как в How it works */}
+        <div
+          className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2
+          h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl"
+        />
 
-        {/* ===== MOBILE (< md): 2 квадрата сверху + развернутый снизу ===== */}
+        {/* Заголовок — lux */}
+        <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-6 sm:mb-8">
+          Pricing
+        </h2>
+
+        {/* ===== MOBILE (< md): ОСТАВЛЕНО БЕЗ ИЗМЕНЕНИЙ ===== */}
         <div className="md:hidden space-y-4">
           <div className="grid grid-cols-2 gap-4">
             {smallPlans.map((p) => (
@@ -183,7 +189,6 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             ))}
           </div>
 
-          {/* Развёрнутый блок — с плавной анимацией появления/смены */}
           <div
             key={activePlan.id}
             className="transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95"
@@ -194,7 +199,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           <div className="pb-[env(safe-area-inset-bottom)]" />
         </div>
 
-        {/* ===== DESKTOP (>= md): исходный макет без изменений) ===== */}
+        {/* ===== DESKTOP (>= md): ✨ LUX DESKTOP ✨ ===== */}
         <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {plans.map((plan) => {
             const isFree = plan.id === 'free';
@@ -203,39 +208,71 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             return (
               <div
                 key={plan.id}
-                className={`p-5 sm:p-6 md:p-7 rounded-xl bg-[#F6F5ED] border shadow
-                  ${
-                    plan.highlight
-                      ? 'border-[#C084FC] shadow-[0_4px_10px_rgba(192,132,252,0.35)]'
-                      : 'border-[#D1D4D6]'
-                  }`}
+                className={`
+                  group relative rounded-3xl bg-white/5 backdrop-blur
+                  ring-1 ring-white/10 p-8 text-left
+                  shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+                  transition-transform duration-200 hover:-translate-y-1
+                  hover:shadow-[0_20px_60px_rgba(168,85,247,0.15)]
+                  ${plan.highlight ? 'ring-purple-300/30' : ''}
+                `}
               >
-                <h3 className="text-lg sm:text-xl md:text-2xl text-[#111827] mb-1">{plan.name}</h3>
-                <p className="text-2xl sm:text-3xl text-[#111827] mb-3 sm:mb-4">
-                  {plan.price}
+                {/* светящаяся тонкая полоса сверху */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-purple-400/0 via-purple-400/60 to-purple-400/0 rounded-t-3xl" />
+
+                {/* бейдж на популярном плане */}
+                {plan.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-purple-500/15 text-purple-200 px-3 py-1 text-xs tracking-wide ring-1 ring-purple-300/20">
+                    Most popular
+                  </div>
+                )}
+
+                <h3 className="text-xl font-semibold text-white tracking-tight">{plan.name}</h3>
+
+                <div className="mt-1 text-3xl font-extrabold text-white">
+                  {plan.price}{' '}
                   {!isFree && (
-                    <span className="text-[10px] sm:text-xs align-middle"> /4 weeks</span>
+                    <span className="align-middle text-sm font-medium text-white/70">/4 weeks</span>
                   )}
-                </p>
-                <p className="text-[#374151] mb-4 sm:mb-5 text-sm md:text-base leading-relaxed">
-                  {plan.description}
-                </p>
-                <ul className="text-left text-sm text-[#374151] mb-5 sm:mb-6 space-y-2 leading-relaxed">
+                </div>
+
+                <p className="mt-3 text-base leading-relaxed text-white/70">{plan.description}</p>
+
+                <ul className="mt-6 space-y-3">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <span aria-hidden className="mt-0.5 text-[#C084FC]">
-                        ✔
-                      </span>
-                      <span>{feature}</span>
+                    <li key={feature} className="flex items-start gap-3">
+                      <svg
+                        className="mt-1 h-5 w-5 flex-none"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden
+                      >
+                        <path
+                          d="M5 12l4 4 10-10"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-purple-300"
+                        />
+                      </svg>
+                      <span className="text-white/80">{feature}</span>
                     </li>
                   ))}
                 </ul>
+
                 <button
                   onClick={
                     isFree ? (isLoggedIn ? undefined : plan.action) : () => handleCheckout(plan.id)
                   }
-                  className="w-full py-3 sm:py-3.5 px-4 rounded-2xl bg-[#C084FC] text-[#212529]
-                             hover:bg-[#D8B4FE] disabled:opacity-50 text-sm md:text-base min-h-11"
+                  className="
+                    mt-8 w-full rounded-full px-6 py-4
+                    bg-purple-500/20 text-white
+                    ring-1 ring-purple-300/30
+                    backdrop-blur
+                    transition-colors duration-200
+                    hover:bg-purple-500/30 hover:ring-purple-300/50
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60
+                    disabled:opacity-60
+                  "
                   disabled={(isFree && isLoggedIn) || isLoading}
                 >
                   {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Get Started'}

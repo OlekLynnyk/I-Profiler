@@ -9,7 +9,10 @@ import { getRedirectTo } from '@/utils/getRedirectTo';
 export default function AuthModal({ onClose }: { onClose: () => void }) {
   const supabase = createClientComponentClient();
   const router = useRouter();
-  const modalRef = useRef<HTMLDivElement | null>(null);
+
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,13 +21,26 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
+  // lock scroll + esc + focus
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) onClose();
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    emailRef.current?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
   }, [onClose]);
+
+  // клик по фону
+  const onBackdrop = (e: React.MouseEvent) => {
+    if (e.target === shellRef.current) onClose();
+  };
 
   const handleGoogleLogin = async () => {
     setError('');
@@ -50,6 +66,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       setError('Email and password are required.');
       return;
     }
+
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
@@ -72,84 +89,141 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
-      <div
-        ref={modalRef}
-        className="bg-white text-black w-full max-w-md max-h-[90vh] overflow-y-auto p-5 rounded-2xl space-y-4 shadow-xl"
-      >
-        <h2 className="text-base font-medium text-center text-gray-700">Welcome to H1NTED</h2>
+    <div
+      ref={shellRef}
+      onMouseDown={onBackdrop}
+      className="fixed inset-0 z-50 flex items-center justify-center px-4
+                 bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-title"
+    >
+      {/* мягкий glow под карточкой */}
+      <div className="pointer-events-none absolute inset-0 mx-auto max-w-md h-[360px] top-1/2 -translate-y-1/2 bg-purple-500/10 blur-3xl rounded-[48px]" />
 
+      <div
+        ref={dialogRef}
+        className="relative w-[92%] max-w-md max-h-[90vh] overflow-y-auto
+                   rounded-2xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur
+                   shadow-[0_20px_80px_rgba(0,0,0,0.45)] p-6 sm:p-7 text-white"
+      >
+        <div className="flex items-start justify-between">
+          <h2 id="auth-title" className="text-lg font-semibold tracking-tight">
+            Welcome to H1NTED
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-md px-2 py-1 text-white/70 hover:text-white
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Google */}
         <button
           onClick={handleGoogleLogin}
-          className="w-[85%] mx-auto border border-gray-300 bg-white text-gray-800 font-medium py-2.5 rounded-xl flex items-center justify-center gap-2 hover:shadow-md transition"
+          className="mt-5 w-full inline-flex items-center justify-center gap-3
+                     rounded-xl px-4 py-3 bg-white/[0.08] hover:bg-white/[0.12]
+                     ring-1 ring-white/15 text-white
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60"
         >
           <FcGoogle className="text-xl" />
           Continue with Google
         </button>
 
-        <div className="text-center text-gray-500 text-sm">or enter your email and password</div>
-
-        {/* шире на очень узких экранах, как обсуждали */}
-        <div className="w-full sm:w-[85%] mx-auto space-y-4">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleAuth();
-            }}
-            className="space-y-4"
-          >
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 p-2.5 rounded-xl placeholder-gray-400"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 p-2.5 rounded-xl placeholder-gray-400"
-            />
-
-            {/* строка согласия — одна линия на мобиле */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={agree}
-                onChange={() => setAgree(!agree)}
-                className="accent-neutral-600 mt-0.5 shrink-0 scale-90 sm:scale-100"
-              />
-              <label className="text-[11px] sm:text-sm text-gray-600 leading-tight tracking-tight whitespace-nowrap">
-                I agree to the{' '}
-                <a href="/terms" className="underline" target="_blank">
-                  Terms of Use
-                </a>{' '}
-                and{' '}
-                <a href="/privacy" className="underline" target="_blank">
-                  Privacy Policy
-                </a>
-              </label>
-            </div>
-
-            {error && <div className="text-red-500 text-sm">{error}</div>}
-            {info && <div className="text-green-600 text-sm">{info}</div>}
-
-            <button
-              type="submit"
-              className="mx-auto block border border-gray-400 text-gray-700 bg-transparent px-6 py-2 rounded-xl hover:shadow transition mt-2"
-            >
-              {isLogin ? 'Login' : 'Create Account'}
-            </button>
-          </form>
+        <div className="my-5 text-center text-xs text-white/50">
+          or enter your email and password
         </div>
 
-        <div className="w-[85%] mx-auto flex justify-between text-xs sm:text-sm text-gray-600 pt-2">
-          <button onClick={() => setIsLogin(!isLogin)} className="underline">
+        {/* Inputs */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAuth();
+          }}
+          className="space-y-3"
+        >
+          <input
+            ref={emailRef}
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-xl bg-white/[0.06] ring-1 ring-white/10
+                       px-4 py-3 text-sm placeholder-white/50
+                       focus:outline-none focus:ring-2 focus:ring-purple-300/60"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-xl bg-white/[0.06] ring-1 ring-white/10
+                       px-4 py-3 text-sm placeholder-white/50
+                       focus:outline-none focus:ring-2 focus:ring-purple-300/60"
+          />
+
+          {/* согласие */}
+          <label className="mt-1.5 flex items-start gap-3 text-xs text-white/70">
+            <input
+              type="checkbox"
+              checked={agree}
+              onChange={() => setAgree(!agree)}
+              className="mt-0.5 h-4 w-4 rounded border-white/30 bg-transparent
+                         text-purple-400 focus:ring-purple-300/60"
+            />
+            <span className="leading-tight">
+              I agree to the{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                className="underline decoration-purple-300/40 underline-offset-4 hover:text-white"
+              >
+                Terms of Use
+              </a>{' '}
+              and{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                className="underline decoration-purple-300/40 underline-offset-4 hover:text-white"
+              >
+                Privacy Policy
+              </a>
+              .
+            </span>
+          </label>
+
+          {error && <div className="text-red-300 text-xs">{error}</div>}
+          {info && <div className="text-green-300 text-xs">{info}</div>}
+
+          <button
+            type="submit"
+            disabled={!agree || !email || !password}
+            className="mt-4 w-full rounded-full px-5 py-3
+                       bg-purple-500/20 text-white
+                       ring-1 ring-purple-300/30 backdrop-blur
+                       hover:bg-purple-500/30 hover:ring-purple-300/50
+                       disabled:opacity-60
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60"
+          >
+            {isLogin ? 'Login' : 'Create Account'}
+          </button>
+        </form>
+
+        {/* нижняя панель */}
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-purple-300 hover:text-purple-200 underline underline-offset-4 decoration-purple-300/40"
+          >
             {isLogin ? 'Create an account' : 'Already have an account? Log in'}
           </button>
-          <button onClick={onClose} className="underline">
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60 rounded-md px-2 py-1"
+          >
             Cancel
           </button>
         </div>

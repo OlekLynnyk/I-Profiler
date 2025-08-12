@@ -31,63 +31,82 @@ export default function Header({ onLoginClick }: HeaderProps) {
   };
 
   return (
-    <header className="w-full px-4 py-3 flex flex-wrap justify-between items-center gap-3 bg-transparent text-[#E5E5E5] relative overflow-hidden">
-      <div className="flex flex-wrap items-center gap-4 relative z-10">
-        <button
-          onClick={confirmAndGoHome}
-          className="text-lg font-montserrat font-weight-600 text-[#F5F5F5] hover:opacity-75 transition-all flex items-center gap-2"
-        >
-          <img src="/images/octopus-logo.png" alt="Logo" className="w-6 h-6" />
-          H1NTED
-        </button>
+    <header className="sticky top-0 z-50 w-full">
+      {/* стеклянный фон */}
+      <div className="relative supports-[backdrop-filter]:backdrop-blur bg-black/30 supports-[backdrop-filter]:bg-black/30">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="h-14 sm:h-[60px] flex items-center justify-between">
+            {/* ЛЕВАЯ ЗОНА: логотип + навигация */}
+            <div className="flex items-center gap-6">
+              <button
+                onClick={confirmAndGoHome}
+                className="group inline-flex items-center gap-2 rounded-xl px-2 py-1 ring-1 ring-white/10 hover:ring-white/25 transition"
+                aria-label="H1NTED — home"
+              >
+                <img
+                  src="/images/octopus-logo.png"
+                  alt="Logo"
+                  className="w-6 h-6 rounded-full ring-1 ring-purple-300/30"
+                />
+                <span className="text-white font-semibold tracking-tight group-hover:text-white/90">
+                  H1NTED
+                </span>
+              </button>
 
-        {!pathname.startsWith('/workspace') && (
-          <div className="hidden sm:flex items-center gap-4">
-            <button
-              onClick={() =>
-                document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-sm font-inter text-[#E5E5E5] hover:text-[#C084FC] transition-all"
-            >
-              About
-            </button>
-            <button
-              onClick={() =>
-                document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
-              }
-              className="text-sm font-inter text-[#E5E5E5] hover:text-[#C084FC] transition-all"
-            >
-              Pricing
-            </button>
+              {!pathname.startsWith('/workspace') && (
+                <nav className="hidden sm:flex items-center gap-6">
+                  <button
+                    onClick={() =>
+                      document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+                    }
+                    className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60 rounded-md px-1"
+                  >
+                    About
+                  </button>
+                  <button
+                    onClick={() =>
+                      document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
+                    }
+                    className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60 rounded-md px-1"
+                  >
+                    Pricing
+                  </button>
+                </nav>
+              )}
+            </div>
+
+            {/* ПРАВАЯ ЗОНА: аутентификация */}
+            <div className="flex items-center gap-4">
+              {!isLoading && session && (
+                <Link
+                  href="/workspace"
+                  className="rounded-full px-4 py-1.5 text-sm bg-purple-500/20 text-white ring-1 ring-purple-300/30 backdrop-blur transition-colors hover:bg-purple-500/30 hover:ring-purple-300/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60"
+                >
+                  My Workspace
+                </Link>
+              )}
+
+              {!isLoading && session ? (
+                <button
+                  onClick={handleLogout}
+                  className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60 rounded-md px-1"
+                >
+                  Logout
+                </button>
+              ) : (
+                <button
+                  onClick={onLoginClick}
+                  className="text-white/90 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60 rounded-md px-1"
+                >
+                  Login
+                </button>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className="flex flex-wrap items-center gap-4 relative z-10">
-        {!isLoading && session && (
-          <Link
-            href="/workspace"
-            className="px-2.5 py-1.5 bg-[#C084FC] text-[#212529] text-sm font-inter rounded-xl hover:bg-[#D8B4FE] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)]"
-          >
-            My Workspace
-          </Link>
-        )}
-
-        {!isLoading && session ? (
-          <button
-            onClick={handleLogout}
-            className="text-sm font-inter text-[#E5E5E5] hover:text-[#C084FC] transition-all"
-          >
-            Logout
-          </button>
-        ) : (
-          <button
-            onClick={onLoginClick}
-            className="text-sm font-inter text-[#E5E5E5] hover:text-[#C084FC] transition-all"
-          >
-            Login
-          </button>
-        )}
+        {/* нижний «волосок»-разделитель */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </div>
     </header>
   );

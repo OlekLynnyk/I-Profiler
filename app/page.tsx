@@ -28,10 +28,8 @@ export default function HomePage() {
 
       {/* ===== MOBILE HERO (только мобильный) ===== */}
       <section className="md:hidden px-6 max-w-7xl mx-auto relative z-10">
-        {/* держим кнопку на месте, без пустот — увеличиваем заголовок */}
         <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-4">
           <div className="space-y-3">
-            {/* Верх: 4 строки, крупнее */}
             <h1 className="font-bold uppercase leading-tight tracking-tight text-[60px]">
               <span className="block text-white">WE UNLOCK</span>
               <span className="block text-white">INSIGHTS WITH</span>
@@ -39,16 +37,18 @@ export default function HomePage() {
               <span className="block text-white">PROFILING</span>
             </h1>
 
-            {/* Центр: −20% */}
-            <div className="text-[#C084FC] font-bold leading-tight mt-2">
-              <div className="text-[20.6px]">SEE WHAT OTHERS CANNOT</div>
-              <div className="text-[20.6px]">
-                REDUCE HUMAN <span className="text-[17.0px]">FACTOR</span> RISK
-              </div>
+            {/* акцентные фразы — тот же тон, что в lux секциях */}
+            <div className="mt-3 space-y-1.5">
+              <p className="text-purple-300 font-semibold uppercase tracking-wider text-[18px]">
+                SEE WHAT OTHERS CANNOT
+              </p>
+              <p className="text-purple-300 font-semibold uppercase tracking-wider text-[18px]">
+                REDUCE HUMAN <span className="text-[15px] sm:text-[16px]">FACTOR</span> RISK
+              </p>
             </div>
 
-            {/* Низ: вмещаем в 2 строки на ~390px */}
-            <p className="text-[10px] leading-snug max-w-[33ch]">
+            {/* абзац — мягче по тону */}
+            <p className="text-[10px] leading-snug text-white/70 max-w-[33ch]">
               Since people do not tell us who they are, but show it through their signals, these
               must be interpreted.
             </p>
@@ -57,7 +57,12 @@ export default function HomePage() {
           {!session && (
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="bg-transparent text-[#E5E5E5] border-2 border-white font-inter font-weight-400 py-2 px-5 rounded-2xl text-base hover:bg-[#C084FC] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)] w-fit"
+              className="rounded-full px-6 py-3
+                         bg-purple-500/20 text-white
+                         ring-1 ring-purple-300/30 backdrop-blur
+                         transition-colors
+                         hover:bg-purple-500/30 hover:ring-purple-300/50
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60 w-fit"
             >
               Start Free Trial
             </button>
@@ -66,7 +71,7 @@ export default function HomePage() {
       </section>
       {/* ===== /MOBILE HERO ===== */}
 
-      {/* ===== DESKTOP HERO — без изменений ===== */}
+      {/* ===== DESKTOP HERO — только визуальная подгонка текста ===== */}
       <main className="hidden md:flex lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
         <div className="w-full lg:w-[80%] space-y-2 pl-[20px]">
           <div className="min-h-[4rem]">
@@ -75,17 +80,25 @@ export default function HomePage() {
               <br />
               <span className="text-white">ADVANCED PROFILING</span>
               <br />
-              <div className="text-[#C084FC] leading-tight" style={{ fontSize: '28.6px' }}>
-                <div>SEE WHAT OTHERS CANNOT</div>
-                <div>
-                  REDUCE HUMAN <span style={{ fontSize: '22.6px' }}>FACTOR</span> RISK
-                </div>
+              <div className="mt-2 space-y-1.5">
+                <p
+                  className="text-purple-300 font-semibold uppercase tracking-wider"
+                  style={{ fontSize: '24px' }}
+                >
+                  SEE WHAT OTHERS CANNOT
+                </p>
+                <p
+                  className="text-purple-300 font-semibold uppercase tracking-wider"
+                  style={{ fontSize: '24px' }}
+                >
+                  REDUCE HUMAN <span style={{ fontSize: '20px' }}>FACTOR</span> RISK
+                </p>
               </div>
             </h1>
           </div>
 
           <div className="space-y-6 text-[0.9rem] leading-relaxed max-w-[28.6rem]">
-            <p>
+            <p className="text-white/70">
               Since people do not tell us who they are, but show it <br />
               through their signals, these must be interpreted.
             </p>
@@ -93,7 +106,12 @@ export default function HomePage() {
             {!session && (
               <button
                 onClick={() => setIsAuthModalOpen(true)}
-                className="bg-transparent text-[#E5E5E5] border-2 border-white font-inter font-weight-400 py-2 px-5 rounded-2xl text-base hover:bg-[#C084FC] transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15)]"
+                className="rounded-full px-6 py-3
+                           bg-purple-500/20 text-white
+                           ring-1 ring-purple-300/30 backdrop-blur
+                           transition-colors
+                           hover:bg-purple-500/30 hover:ring-purple-300/50
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60"
               >
                 Start Free Trial
               </button>
@@ -115,37 +133,30 @@ export default function HomePage() {
         <Pricing onDemoClick={() => setIsAuthModalOpen(true)} />
       </section>
 
-      {/* ABOUT — без изменений на десктопе/мобайле */}
-      <section id="about" className="mt-12 mb-10 relative z-10 px-4 md:px-0">
-        <div className="text-center space-y-6">
-          <h2 className="text-3xl md:text-4xl font-montserrat font-weight-600 text-[#F5F5F5]">
-            About
-          </h2>
-
-          <div className="mx-auto max-w-[38ch] sm:max-w-[48ch] md:max-w-3xl text-justify md:text-justify">
-            <p
-              lang="en"
-              className="text-[#E5E5E5] text-[15px] md:text-base leading-relaxed font-inter font-weight-400 text-pretty hyphens-auto break-words mb-6"
-            >
-              We don’t claim to read minds. Instead, we interpret silent signals — how someone
-              dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
-              them. Powered by advanced AI, we blend behavioural science with elegant inference to
-              transform fragments into full pictures.
-            </p>
-
-            <p
-              lang="en"
-              className="text-[#E5E5E5] text-[15px] md:text-base leading-relaxed font-inter font-weight-400 text-pretty hyphens-auto break-words"
-            >
-              Much like Pininfarina designs beauty into motion, we design insight into human nature.
-              Every person carries a unique internal compass — we help you interpret it. Not to
-              label, but to understand. To lead. To connect. Whether you're a strategist, founder or
-              curious, H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance.
-              Because influence begins with pure understanding.
-            </p>
-          </div>
+      {/* ===== ABOUT — адаптировано под lux-tech ===== */}
+      <section id="about" className="relative z-10 mx-auto max-w-5xl px-6 py-24 lg:py-28">
+        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-px w-[min(760px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <h2 className="text-center text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+          About
+        </h2>
+        <div className="mt-8 space-y-6 max-w-3xl mx-auto text-base md:text-lg leading-relaxed md:leading-8 text-white/80 text-center">
+          <p lang="en">
+            We don’t claim to read minds. Instead, we interpret silent signals — how someone
+            dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
+            them. Powered by advanced AI, we blend behavioural science with elegant inference to
+            transform fragments into full pictures.
+          </p>
+          <p lang="en">
+            Much like Pininfarina designs beauty into motion, we design insight into human nature.
+            Every person carries a unique internal compass — we help you interpret it. Not to label,
+            but to understand. To lead. To connect. Whether you're a strategist, founder or curious,
+            H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance. Because
+            influence begins with pure understanding.
+          </p>
         </div>
+        <div className="pointer-events-none absolute left-1/2 bottom-6 -translate-x-1/2 h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl" />
       </section>
+      {/* ===== /ABOUT ===== */}
 
       {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}
       <Footer />
