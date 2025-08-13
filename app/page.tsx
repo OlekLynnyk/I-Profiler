@@ -7,9 +7,14 @@ import HowItWorks from './components/HowItWorks';
 import Pricing from './components/Pricing';
 import { useAuth } from '@/app/context/AuthProvider';
 import Footer from './components/Footer';
-import CubeCanvas from './components/CubeCanvas';
 import AuthModal from './components/AuthModal';
 import BlackCognitiveSand from '@/components/effects/BlackCognitiveSand';
+import dynamic from 'next/dynamic';
+
+const CubeCanvas = dynamic(() => import('./components/CubeCanvas'), {
+  ssr: false,
+  loading: () => null, // можно заменить на <Loader /> если хочешь
+});
 
 export default function HomePage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
