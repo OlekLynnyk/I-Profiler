@@ -30,90 +30,133 @@ export default function HomePage() {
       <section className="md:hidden px-6 max-w-7xl mx-auto relative z-10">
         <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-4">
           <div className="space-y-3">
-            <h1 className="font-bold uppercase leading-tight tracking-tight text-[60px]">
-              <span className="block text-white">WE UNLOCK</span>
-              <span className="block text-white">INSIGHTS WITH</span>
-              <span className="block text-white">ADVANCED</span>
-              <span className="block text-white">PROFILING</span>
+            {/* H1 */}
+            <h1 className="font-extrabold uppercase leading-[0.94] tracking-tight text-[clamp(2rem,9vw,3.75rem)]">
+              <span className="block text-white">We Unlock</span>
+              <span className="block text-white">Insights With</span>
+              <span className="block text-white">Advanced</span>
+              <span className="block text-white">Profiling</span>
             </h1>
 
-            {/* акцентные фразы — тот же тон, что в lux секциях */}
-            <div className="mt-3 space-y-1.5">
-              <p className="text-purple-300 font-semibold uppercase tracking-wider text-[18px]">
-                SEE WHAT OTHERS CANNOT
-              </p>
-              <p className="text-purple-300 font-semibold uppercase tracking-wider text-[18px]">
-                REDUCE HUMAN <span className="text-[15px] sm:text-[16px]">FACTOR</span> RISK
-              </p>
+            {/* ЗАМЕНЕННЫЙ блок подзаголовков */}
+            <div className="leading-tight mt-2 font-bold text-[20.6px] text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6]">
+              <div>SEE WHAT OTHERS CANNOT</div>
+              <div>
+                REDUCE HUMAN <span className="text-[17px]">FACTOR</span> RISK
+              </div>
             </div>
 
-            {/* абзац — мягче по тону */}
-            <p className="text-[10px] leading-snug text-white/70 max-w-[33ch]">
-              Since people do not tell us who they are, but show it through their signals, these
-              must be interpreted.
+            {/* Описание */}
+            <p className="text-[13px] leading-snug text-white/70 max-w-[30ch]">
+              As people rarely tell us who they are, yet reveal it through their unconscious
+              signals, these must be interpreted to harness one’s influence.
             </p>
           </div>
 
+          {/* CTA — стеклянная таблетка */}
           {!session && (
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="rounded-full px-6 py-3
-                         bg-purple-500/20 text-white
-                         ring-1 ring-purple-300/30 backdrop-blur
-                         transition-colors
-                         hover:bg-purple-500/30 hover:ring-purple-300/50
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60 w-fit"
+              className="
+                relative inline-flex items-center justify-center w-fit
+                rounded-full px-6 py-3 font-semibold tracking-wide text-[#F5F3FF]
+                transition-[transform,box-shadow,background,opacity] duration-200
+                ring-1 backdrop-blur
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23]
+                hover:-translate-y-[1px]
+              "
+              style={{
+                backgroundImage:
+                  'linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)),' +
+                  'radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.20) 0%, rgba(168,85,247,0) 60%)',
+                boxShadow:
+                  'inset 0 2px 0 rgba(255,255,255,0.08), inset 0 1px 0 rgba(0,0,0,0.30), 0 8px 24px rgba(0,0,0,0.45)',
+                WebkitTextStroke: 'transparent',
+                borderColor: 'rgba(255,255,255,0.12)',
+              }}
             >
-              Start Free Trial
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[6px]"
+                style={{
+                  background:
+                    'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
+                }}
+              />
+              <span className="relative z-[1]">Start Free Trial</span>
             </button>
           )}
         </div>
       </section>
       {/* ===== /MOBILE HERO ===== */}
 
-      {/* ===== DESKTOP HERO — только визуальная подгонка текста ===== */}
+      {/* ===== DESKTOP HERO ===== */}
       <main className="hidden md:flex lg:flex-row items-center justify-between flex-grow text-left px-6 mt-10 gap-12 max-w-7xl mx-auto relative z-10">
         <div className="w-full lg:w-[80%] space-y-2 pl-[20px]">
+          {/* H1 */}
           <div className="min-h-[4rem]">
-            <h1 className="font-bold uppercase leading-tight tracking-tight break-words text-[82px]">
-              <span className="text-white">WE UNLOCK INSIGHTS WITH</span>
-              <br />
-              <span className="text-white">ADVANCED PROFILING</span>
-              <br />
-              <div className="mt-2 space-y-1.5">
-                <p
-                  className="text-purple-300 font-semibold uppercase tracking-wider"
-                  style={{ fontSize: '24px' }}
-                >
-                  SEE WHAT OTHERS CANNOT
-                </p>
-                <p
-                  className="text-purple-300 font-semibold uppercase tracking-wider"
-                  style={{ fontSize: '24px' }}
-                >
-                  REDUCE HUMAN <span style={{ fontSize: '20px' }}>FACTOR</span> RISK
-                </p>
-              </div>
+            <h1
+              className="
+                font-extrabold uppercase tracking-tight
+                leading-[1.05] [text-wrap:balance]
+                text-[clamp(3.75rem,5vw+1rem,5.75rem)]
+              "
+            >
+              <span className="block text-white">We Unlock Insights With</span>
+              <span className="block text-white">Advanced Profiling</span>
             </h1>
+
+            {/* ЗАМЕНЕННЫЙ блок подзаголовков */}
+            <div
+              className="
+                font-bold mt-3 leading-tight text-transparent bg-clip-text
+                bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6]
+                text-[28.6px]
+              "
+            >
+              <div>SEE WHAT OTHERS CANNOT</div>
+              <div>
+                REDUCE HUMAN <span className="text-[22.6px]">FACTOR</span> RISK
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-6 text-[0.9rem] leading-relaxed max-w-[28.6rem]">
-            <p className="text-white/70">
-              Since people do not tell us who they are, but show it <br />
-              through their signals, these must be interpreted.
+          {/* Описание + CTA */}
+          <div className="space-y-6 text-[1rem] leading-relaxed max-w-[32rem]">
+            <p className="text-[15px] leading-snug text-white/70 max-w-[36ch]">
+              As people rarely tell us who they are, yet reveal it through their unconscious
+              signals, these must be interpreted to harness one’s influence.
             </p>
 
             {!session && (
               <button
                 onClick={() => setIsAuthModalOpen(true)}
-                className="rounded-full px-6 py-3
-                           bg-purple-500/20 text-white
-                           ring-1 ring-purple-300/30 backdrop-blur
-                           transition-colors
-                           hover:bg-purple-500/30 hover:ring-purple-300/50
-                           focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60"
+                className="
+                  relative inline-flex items-center justify-center
+                  rounded-full px-7 py-3.5 font-semibold tracking-wide text-[#F5F3FF]
+                  transition-[transform,box-shadow,background,opacity] duration-200
+                  ring-1 backdrop-blur
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23]
+                  hover:-translate-y-[1px]
+                "
+                style={{
+                  backgroundImage:
+                    'linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)),' +
+                    'radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.20) 0%, rgba(168,85,247,0) 60%)',
+                  boxShadow:
+                    'inset 0 2px 0 rgba(255,255,255,0.10), inset 0 1px 0 rgba(0,0,0,0.35), 0 14px 32px rgba(168,85,247,0.35)',
+                  borderColor: 'rgba(255,255,255,0.12)',
+                }}
               >
-                Start Free Trial
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[6px]"
+                  style={{
+                    background:
+                      'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
+                  }}
+                />
+                <span className="relative z-[1]">Start Free Trial</span>
               </button>
             )}
           </div>
@@ -133,7 +176,7 @@ export default function HomePage() {
         <Pricing onDemoClick={() => setIsAuthModalOpen(true)} />
       </section>
 
-      {/* ===== ABOUT — адаптировано под lux-tech ===== */}
+      {/* ===== ABOUT ===== */}
       <section id="about" className="relative z-10 mx-auto max-w-5xl px-6 py-24 lg:py-28">
         <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-px w-[min(760px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         <h2 className="text-center text-3xl md:text-4xl font-extrabold tracking-tight text-white">

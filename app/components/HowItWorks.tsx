@@ -17,15 +17,15 @@ const STEPS: Step[] = [
     id: 1,
     title: 'Step 1 — Upload a Clue',
     tagline: 'Their words …',
-    desc: 'Look, accessory, LinkedIn profile — no bio needed.',
+    desc: 'Their look, accessories, or LinkedIn — no bio needed.',
     start: 0,
     end: 3,
   },
   {
     id: 2,
-    title: 'Step 2 — AI Analyzes',
+    title: 'Step 2 — AI Analyses',
     tagline: 'Their world …',
-    desc: 'Extracts deep behavioral insights from subtle signals.',
+    desc: 'Gain profound behavioral insights from subtle signals.',
     start: 3,
     end: 6,
   },
@@ -33,7 +33,7 @@ const STEPS: Step[] = [
     id: 3,
     title: 'Step 3 — Actionable Output',
     tagline: 'Your clarity …',
-    desc: 'Get tailored messaging strategies to increase influence.',
+    desc: 'Get a decisive YES or NO. Reduce risk in your decision-making.',
     start: 6,
     end: 9,
   },
@@ -45,7 +45,7 @@ export default function HowItWorks() {
   const railRef = useRef<HTMLDivElement | null>(null);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [active, setActive] = useState<number>(1);
-  const [showPoster, setShowPoster] = useState<boolean>(false);
+  const [showPoster, setShowPoster] = useState<boolean>(true);
   const [beamPath, setBeamPath] = useState<string>('');
 
   // Политики производительности
@@ -250,7 +250,7 @@ export default function HowItWorks() {
             </div>
 
             {/* ПРАВАЯ КОЛОНКА — шаги + слоганы как лейблы */}
-            <div>
+            <div className="max-w-[510px]">
               <h2 className="mb-8 text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
                 How it works
               </h2>
@@ -289,18 +289,15 @@ export default function HowItWorks() {
               </ol>
 
               {/* Низ: краткая подпись‑метод */}
-              <div className="mt-10">
-                <h4 className="text-white text-lg font-semibold mb-2">
-                  The Distinction Method — an exact science
-                </h4>
-                <ol className="text-[#CCCCCC] text-base leading-relaxed space-y-2 list-decimal ml-5">
-                  <li>
-                    Upload a clue{' '}
-                    <span className="text-white/60">(look, accessory, LinkedIn… No bio)</span>
-                  </li>
-                  <li>Extract deep intelligence from nuanced signals</li>
-                  <li>Orchestrate your business and personal influence with tailored precision.</li>
-                </ol>
+              <div className="mt-16 pt-8 border-t border-white/10 space-y-5 max-w-[520px]">
+                <p className="text-[#E0E0E0] text-[16px] leading-relaxed">
+                  The Distinction Method assists you in orchestrating your business and personal
+                  strategic influence with tailored clinical precision.
+                </p>
+                <p className="text-[#E0E0E0] text-[16px] leading-relaxed">
+                  It provides clarity on key situations and an advanced, near-total understanding of
+                  their core motivations and behavioural patterns.
+                </p>
               </div>
             </div>
 
