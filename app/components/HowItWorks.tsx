@@ -57,9 +57,12 @@ export default function HowItWorks() {
   }, []);
 
   const saveData =
-    (navigator as any)?.connection?.saveData === true ||
-    (navigator as any)?.connection?.effectiveType === '2g';
+    typeof navigator !== 'undefined' &&
+    ((navigator as any)?.connection?.saveData === true ||
+      (navigator as any)?.connection?.effectiveType === '2g');
+
   const lowCPU =
+    typeof navigator !== 'undefined' &&
     typeof (navigator as any)?.hardwareConcurrency === 'number' &&
     (navigator as any).hardwareConcurrency < 4;
 
