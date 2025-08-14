@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react'; // ⬅️ добавил Suspense
 import { AuthProvider } from './context/AuthProvider';
 import { SidebarProvider } from './context/SidebarContext';
 import SidebarHelper from '@/app/workspace/SidebarHelper';
@@ -14,7 +14,10 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
   return (
     <SidebarProvider>
       <AuthProvider>
-        <SessionBridge /> {/* ✅ Инициализация сессии до children */}
+        {/* ⬇️ Оборачиваем в Suspense */}
+        <Suspense fallback={null}>
+          <SessionBridge />
+        </Suspense>
         {children}
         <SidebarHelper />
         <Sidebar packageType="Free" refreshToken={0} />
@@ -24,9 +27,6 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
   );
 }
 
-/**
- * Прод-уровня хук для управления cookie consent.
- */
 function useCookieConsent() {
   useEffect(() => {
     const consent = localStorage.getItem('cookieConsent');
