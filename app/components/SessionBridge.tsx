@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // ⬅️ добавлено
 
 function waitForAuthCookie(timeout = 3000): Promise<void> {
   return new Promise((resolve) => {
@@ -13,7 +13,7 @@ function waitForAuthCookie(timeout = 3000): Promise<void> {
       if (document.cookie.includes('sb-access-token')) {
         resolve();
       } else if (waited >= timeout) {
-        resolve(); // всё равно продолжаем — не вешаем UI
+        resolve(); // всё равно продолжаем
       } else {
         waited += interval;
         setTimeout(check, interval);
@@ -26,6 +26,7 @@ function waitForAuthCookie(timeout = 3000): Promise<void> {
 
 export default function SessionBridge() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // ⬅️ добавлено
 
   useEffect(() => {
     const syncSession = async () => {
@@ -42,7 +43,7 @@ export default function SessionBridge() {
       }
 
       if (!clientSession?.access_token || !clientSession?.refresh_token) {
-        console.warn('[SessionBridge] No access or refresh token');
+        console.warn('[SessionBridge] No tokens');
         return;
       }
 
@@ -56,13 +57,15 @@ export default function SessionBridge() {
         return;
       }
 
-      console.info('[SessionBridge] Supabase session restored');
-      await waitForAuthCookie(); // 🟢 ключевая часть: ждём, пока cookie установится
-      router.refresh(); // 🔁 теперь делаем SSR с учётом актуальной куки
+      console.info('[SessionBridge] Session restored');
+
+      const isFromStripe = searchParams.get('checkout') === 'success'; // ⬅️ новый флаг
+      await waitForAuthCookie(isFromStripe ? 5000 : 3000); // ⏳ увеличиваем ожидание
+      router.refresh(); // 🔁 повторная отрисовка страницы
     };
 
     syncSession();
-  }, [router]);
+  }, [router, searchParams]); // ⬅️ добавлено
 
   return null;
 }

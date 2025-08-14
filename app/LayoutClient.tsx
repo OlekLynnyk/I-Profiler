@@ -6,6 +6,7 @@ import { SidebarProvider } from './context/SidebarContext';
 import SidebarHelper from '@/app/workspace/SidebarHelper';
 import Sidebar from '@/app/workspace/Sidebar';
 import CookieBanner from '@/components/CookieBanner';
+import SessionBridge from '@/components/SessionBridge'; // ✅ подключен
 
 export default function LayoutClient({ children }: { children: React.ReactNode }) {
   useCookieConsent();
@@ -13,6 +14,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
   return (
     <SidebarProvider>
       <AuthProvider>
+        <SessionBridge /> {/* ✅ Инициализация сессии до children */}
         {children}
         <SidebarHelper />
         <Sidebar packageType="Free" refreshToken={0} />

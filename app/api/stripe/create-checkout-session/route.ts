@@ -130,8 +130,8 @@ export async function POST(req: NextRequest) {
       mode: 'subscription',
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/workspace?checkout=success`,
-      cancel_url: `${appUrl}/workspace?checkout=cancel`,
+      success_url: `${appUrl}/?checkout=success`,
+      cancel_url: `${appUrl}/?checkout=cancel`,
       metadata: { user_id: user.id },
     });
 

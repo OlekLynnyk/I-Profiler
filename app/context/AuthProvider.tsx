@@ -49,8 +49,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setInitialized(json.initialized ?? false);
           }
         } catch (e) {
-          logWarn('User init failed in AuthProvider', e); // ← централизованное логгирование
+          logWarn('User init failed in AuthProvider', e);
         }
+      }
+
+      // ✅ ДОБАВЛЕНО: повторная инициализация после Stripe checkout
+      if (typeof window !== 'undefined' && window.location.search.includes('checkout=success')) {
+        console.info('[AuthProvider] Reinitializing after Stripe return');
+
+        await new Promise((resolve) => {
+          const interval = 100;
+          let waited = 0;
+
+          const check = () => {
+            if (document.cookie.includes('sb-access-token') || waited >= 5000) {
+              resolve(null);
+            } else {
+              waited += interval;
+              setTimeout(check, interval);
+            }
+          };
+
+          check();
+        });
+
+        const { data: refreshed } = await supabase.auth.getSession();
+        setSession(refreshed.session);
+        setUser(refreshed.session?.user ?? null);
       }
 
       setIsLoading(false);

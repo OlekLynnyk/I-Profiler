@@ -15,25 +15,25 @@ type Step = {
 const STEPS: Step[] = [
   {
     id: 1,
-    title: 'Step 1 — Upload a Clue',
+    title: 'Step 1 — Present a Clues',
     tagline: 'Their words …',
-    desc: 'Their look, accessories, or LinkedIn — no bio needed.',
+    desc: 'A single image of an accessory — enough to begin; No bio.',
     start: 0,
     end: 3,
   },
   {
     id: 2,
-    title: 'Step 2 — AI Analyses',
+    title: 'Step 2 — AI Discernment',
     tagline: 'Their world …',
-    desc: 'Gain profound behavioral insights from subtle signals.',
+    desc: 'In seconds, you gain profound insights — fuel for influence.',
     start: 3,
     end: 6,
   },
   {
     id: 3,
-    title: 'Step 3 — Actionable Output',
+    title: 'Step 3 — Your Advantage',
     tagline: 'Your clarity …',
-    desc: 'Get a decisive YES or NO. Reduce risk in your decision-making.',
+    desc: 'Leverage the edge: orchestrate your business with more YES, deliver the NOs when needed, and move precisely where you intend. Tailored precision. Risks reduced. Decision sharpened.',
     start: 6,
     end: 9,
   },
@@ -253,8 +253,8 @@ export default function HowItWorks() {
             </div>
 
             {/* ПРАВАЯ КОЛОНКА — шаги + слоганы как лейблы */}
-            <div className="max-w-[510px]">
-              <h2 className="mb-8 text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
+            <div className="max-w-[480px] ml-0 mr-auto">
+              <h2 className="mb-10 text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
                 How it works
               </h2>
               <ol className="space-y-8">
@@ -292,14 +292,10 @@ export default function HowItWorks() {
               </ol>
 
               {/* Низ: краткая подпись‑метод */}
-              <div className="mt-16 pt-8 border-t border-white/10 space-y-5 max-w-[520px]">
-                <p className="text-[#E0E0E0] text-[16px] leading-relaxed">
-                  The Distinction Method assists you in orchestrating your business and personal
-                  strategic influence with tailored clinical precision.
-                </p>
-                <p className="text-[#E0E0E0] text-[16px] leading-relaxed">
-                  It provides clarity on key situations and an advanced, near-total understanding of
-                  their core motivations and behavioural patterns.
+              <div className="mt-20 pt-8 border-t border-white/10 mx-auto text-center max-w-[300px] space-y-4">
+                <p className="text-base tracking-widest text-white/70 uppercase font-light">
+                  Do better. Move further with{' '}
+                  <span className="text-white font-semibold glow">H1NTED</span>
                 </p>
               </div>
             </div>

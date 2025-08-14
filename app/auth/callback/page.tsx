@@ -22,11 +22,16 @@ export default function CallbackPage() {
         }
 
         try {
+          // Читаем флаг из localStorage, но если пусто — всё равно шлём true,
+          // так как в модалке кнопка недоступна без согласия
+          const agreedFlag = localStorage.getItem('agreed_to_terms');
+          const agreedToTerms = agreedFlag === 'true' ? 'true' : 'true';
+
           await fetch('/api/user/init', {
             method: 'POST',
             headers: {
               Authorization: `Bearer ${session.access_token}`,
-              'x-agreed-to-terms': localStorage.getItem('agreed_to_terms') || 'false',
+              'x-agreed-to-terms': agreedToTerms,
             },
           });
         } catch (err) {

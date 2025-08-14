@@ -116,21 +116,19 @@ export default function HomePage() {
               className="
                 font-bold mt-3 leading-tight text-transparent bg-clip-text
                 bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6]
-                text-[28.6px]
+                text-[22.0px]
               "
             >
-              <div>SEE WHAT OTHERS CANNOT</div>
-              <div>
-                REDUCE HUMAN <span className="text-[22.6px]">FACTOR</span> RISK
-              </div>
+              <div>FROM AN IMAGE OF A FLEETING DETAILS</div>
+              <div>TO SEEING WHAT OTHERS NEVER GRASP</div>
             </div>
           </div>
 
           {/* Описание + CTA */}
           <div className="space-y-6 text-[1rem] leading-relaxed max-w-[32rem]">
             <p className="text-[15px] leading-snug text-white/70 max-w-[36ch]">
-              As people rarely tell us who they are, yet reveal it through their unconscious
-              signals, these must be interpreted to harness one’s influence.
+              In seconds, you gain the rarest advantage — discerning people through signals they
+              cannot conceal, knowing what words will never reveal
             </p>
 
             {!session && (
@@ -161,7 +159,7 @@ export default function HomePage() {
                       'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
                   }}
                 />
-                <span className="relative z-[1]">Start Free Trial</span>
+                <span className="relative z-[1]">ACCESS NOW</span>
               </button>
             )}
           </div>

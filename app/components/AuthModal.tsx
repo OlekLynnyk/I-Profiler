@@ -48,6 +48,9 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       setError('You must agree to the Terms to continue.');
       return;
     }
+    // 🔹 Добавлено: сохраняем согласие в localStorage, чтобы callback смог его считать
+    localStorage.setItem('agreed_to_terms', 'true');
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: getRedirectTo(), queryParams: { prompt: 'select_account' } },
