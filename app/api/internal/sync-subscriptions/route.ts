@@ -40,7 +40,7 @@ export async function GET() {
         })
         .eq('user_id', data.user_id);
 
-      await updateUserLimits(supabase, data.user_id, 'Freemium');
+      await updateUserLimits(supabase, 'Freemium');
     }
   }
 
