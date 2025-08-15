@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { createPortal } from 'react-dom'; // ✅ добавлено
 
 interface SaveProfileModalProps {
   open: boolean;
@@ -34,13 +35,13 @@ export default function SaveProfileModal({
       setProfileName(defaultProfileName);
       setAiResponse(initialAiResponse || '');
       setIsEditing(!readonly);
-      setHasChanges(isNew); // При новом профиле всегда true, иначе false
+      setHasChanges(isNew);
     }
   }, [open, defaultProfileName, initialAiResponse, readonly, isNew]);
 
   useEffect(() => {
     if (isNew) {
-      setHasChanges(true); // для нового всегда true
+      setHasChanges(true);
     } else {
       const changed =
         profileName.trim() !== defaultProfileName.trim() ||
@@ -85,7 +86,7 @@ export default function SaveProfileModal({
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -114,7 +115,6 @@ export default function SaveProfileModal({
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
           >
-            {/* Top Row: Name field + buttons */}
             <div className="flex justify-between items-center mb-5">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-normal text-[var(--text-secondary)]">Name:</span>
@@ -159,9 +159,7 @@ export default function SaveProfileModal({
               </div>
             </div>
 
-            {/* Scrollable content */}
             <div className="flex flex-col gap-4 sm:gap-6 flex-grow overflow-hidden">
-              {/* AI Response */}
               {isEditing ? (
                 <textarea
                   value={aiResponse}
@@ -201,7 +199,6 @@ export default function SaveProfileModal({
               )}
             </div>
 
-            {/* Buttons */}
             {isEditing && (
               <div className="flex justify-between mt-6">
                 <button
@@ -241,6 +238,7 @@ export default function SaveProfileModal({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    typeof document !== 'undefined' ? document.body : ({} as HTMLElement)
   );
 }

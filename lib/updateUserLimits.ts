@@ -2,11 +2,18 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { PACKAGE_LIMITS, ValidPackageType } from '@/types/plan';
 import { Database } from '@/types/supabase';
 
-export async function updateUserLimits(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  plan: ValidPackageType
-) {
+export async function updateUserLimits(supabase: SupabaseClient<Database>, plan: ValidPackageType) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error('❌ Failed to get user:', authError?.message);
+    return;
+  }
+
+  const userId = user.id;
   const planLimits = PACKAGE_LIMITS[plan];
   const now = new Date().toISOString();
 
@@ -19,8 +26,6 @@ export async function updateUserLimits(
       limit_reset_at: now,
       updated_at: now,
       active: true,
-
-      // ✅ добавлено для месячного лимита
       monthly_limit: planLimits.requestsPerMonth,
       used_monthly: 0,
       monthly_reset_at: now,

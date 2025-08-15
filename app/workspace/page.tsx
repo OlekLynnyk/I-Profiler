@@ -277,7 +277,7 @@ export default function WorkspacePage() {
                   className="flex flex-col items-center justify-center text-center w-full py-12 px-4 mt-28"
                 >
                   {/* Лого */}
-                  <img src="/images/logo.png" alt="Logo" className="w-10 h-10 mb-1" />
+                  <img src="/images/logo.png" alt="Logo" className="w-10 h-10 mb-2" />
 
                   {/* Основной текст */}
                   <p className="text-[20px] font-semibold text-center text-gray-700 dark:text-[var(--text-primary)]">
@@ -381,7 +381,7 @@ export default function WorkspacePage() {
 
                 <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
                   <div className="flex flex-wrap gap-2 items-center">
-                    <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
+                    <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] dark:bg-[var(--card-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
                       <Plus size={16} className="text-[var(--text-primary)]" />
                       <input
                         type="file"
@@ -415,7 +415,7 @@ export default function WorkspacePage() {
                       ${
                         isImageActive
                           ? 'bg-[#C084FC] text-white hover:bg-[#a05adb]'
-                          : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)]'
+                          : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]'
                       }
                     `}
                       aria-label="Toggle Image Mode"
@@ -428,11 +428,11 @@ export default function WorkspacePage() {
                       type="button"
                       onClick={() => alert('Currently not available.')}
                       className="
-                      flex items-center gap-1 h-8 px-3
-                      rounded-full shadow-sm transition
-                      bg-[var(--button-bg)] text-[var(--text-primary)]
-                      hover:bg-[var(--button-hover-bg)]
-                      text-xs font-medium
+                        flex items-center gap-1 h-8 px-3
+                       rounded-full shadow-sm transition
+                       bg-[var(--button-bg)] text-[var(--text-primary)]
+                       hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
+                       text-xs font-medium
                     "
                       aria-label="LinkedIn Button"
                     >
@@ -447,10 +447,10 @@ export default function WorkspacePage() {
                         aria-label="More Button"
                         className="
                         flex items-center gap-1 h-8 px-3
-                        rounded-full shadow-sm transition
-                        bg-[var(--button-bg)] text-[var(--text-primary)]
-                        hover:bg-[var(--button-hover-bg)]
-                        text-xs font-medium
+                       rounded-full shadow-sm transition
+                       bg-[var(--button-bg)] text-[var(--text-primary)]
+                       hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
+                       text-xs font-medium
                       "
                       >
                         More
@@ -514,7 +514,7 @@ export default function WorkspacePage() {
                     className={`
                     w-9 h-9 flex items-center justify-center
                     rounded-full
-                    bg-[var(--button-bg)]
+                     bg-[var(--button-bg)] dark:bg-[var(--card-bg)]
                     shadow-md
                     text-[var(--text-primary)]
                     hover:bg-[var(--button-hover-bg)]

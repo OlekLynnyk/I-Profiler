@@ -11,7 +11,6 @@ import { useStripeCheckout } from '../hooks/useStripeCheckout';
 import { useSidebar } from '@/app/context/SidebarContext';
 
 // Типы
-
 type SidebarProps = {
   packageType: PackageType;
   refreshToken: number;
@@ -177,12 +176,12 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
             aria-controls={`${box.id}-content`}
             className={cn(
               'transition-all duration-300 cursor-pointer mb-4 rounded-xl border',
-              isActive
-                ? 'border-[var(--accent)]'
-                : 'border-[var(--card-border)] bg-[var(--card-bg)]',
+              // закрыто: всё как было (ничего не меняем)
+              !isActive && 'border-[var(--card-border)] bg-[var(--card-bg)]',
+              // открыто: только эта карточка получает фон + локальный blur (только в dark)
+              isActive && 'border-[var(--accent)] dark:bg-[var(--card-bg)] dark:backdrop-blur-md',
               'hover:shadow-sm'
             )}
-            style={{ backgroundColor: isActive ? 'transparent' : undefined }}
           >
             <div className="px-3 sm:px-4 py-3 flex justify-between items-center">
               {box.id === 'plan-box' ? (

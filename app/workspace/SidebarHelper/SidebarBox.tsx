@@ -28,8 +28,11 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
       title={disabled ? 'Available on Smarter & Business plans' : ''}
       className={`
         transition-all duration-300 mb-4 rounded-xl border
-        ${isActive ? 'border-[var(--accent)]' : 'border-[var(--card-border)]'}
-        bg-[var(--card-bg)]
+        ${
+          isActive
+            ? 'border-[var(--accent)] dark:bg-[var(--card-bg)] dark:backdrop-blur-md'
+            : 'border-[var(--card-border)] bg-[var(--card-bg)]'
+        }
         focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]
         ${disabled ? 'opacity-50' : 'cursor-default'}
         ${!disabled ? 'cursor-pointer' : ''}

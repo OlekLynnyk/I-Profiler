@@ -38,6 +38,9 @@ export async function GET() {
     .select('monthly_limit, used_monthly')
     .eq('user_id', user.id)
     .maybeSingle();
+  if (limitsError) {
+    console.warn('⚠️ Failed to fetch user_limits:', limitsError);
+  }
 
   return NextResponse.json({
     plan,

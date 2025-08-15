@@ -30,7 +30,7 @@ export const getSidebarBoxes = (): BoxData[] => {
         <div
           key={text}
           onClick={() => injectPrompt(text)}
-          className="cursor-pointer hover:underline"
+          className="cursor-pointer hover:text-[var(--accent)]"
         >
           {text}
         </div>

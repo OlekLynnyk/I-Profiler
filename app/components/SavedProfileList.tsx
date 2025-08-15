@@ -89,7 +89,7 @@ export default function SavedProfileList() {
                 e.stopPropagation();
                 setSelectedProfile(profile);
               }}
-              className="text-sm text-[var(--text-primary)] hover:underline"
+              className="text-sm text-[var(--text-primary)] hover:text-[var(--accent)]"
             >
               {profile.profile_name}
             </span>

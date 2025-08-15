@@ -19,21 +19,37 @@
   --font-sans: var(--font-orbitron);
 }
 
-/* Тёмная тема — переопределение */
+/* Тёмная тема — переопределение (только цвета) */
 .dark {
-  --background: #141414;
-  --foreground: #ededed;
+  /* Фон и основной текст */
+  --background: #0B0E11;                              /* canvas */
+  --foreground: rgba(255, 255, 255, 0.92);
 
-  --surface: #1e1e1e;
-  --surface-secondary: #2c2c2c;
-  --text-primary: #ededed;
-  --text-secondary: #a1a1a1;
-  --accent: #8b5cf6;
-  --accent-hover: #7c3aed;
-  --danger: #f87171;
+  /* Поверхности */
+  --surface: #0F141A;
+  --surface-secondary: #16202B;
 
-  --card-bg: #1a1a1a;
-  --card-border: #3d3d3d;
+  /* Текстовые цвета */
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.70);
+
+  /* Акцент */
+  --accent: #B98AF6;                                  /* moonlight lilac */
+  --accent-hover: #A855F7;
+
+  /* Ошибки (дружественные тёмной теме) */
+  --danger: #F29A8E;
+
+  /* Карточки/поле ввода */
+  --card-bg: rgba(18, 25, 36, 0.72);                  /* smoked glass tint */
+  --card-border: rgba(255, 255, 255, 0.14);
+
+  /* Кнопки/чипы (добавлены токены только для тёмной темы) */
+  --button-bg: #1B2733;
+  --button-hover-bg: #223140;
+
+  /* Шрифт не меняем */
+  --font-sans: var(--font-orbitron);
 }
 
 /* Базовые стили */
