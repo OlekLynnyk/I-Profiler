@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { unstable_noStore as noStore } from 'next/cache';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import { parseExcel } from '@/scripts/downloadExcel';
 import { randomUUID } from 'crypto';
@@ -7,6 +9,27 @@ import { STANDARD_PROMPTS } from '@/scripts/constants';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { existsSync, writeFileSync } from 'fs';
 import { Readable } from 'stream';
+
+function redactHeaders(h: any) {
+  if (!h) return {};
+  const safe: Record<string, string> = {};
+  // ReadonlyHeaders/Headers имеют .entries()
+  const entries: Iterable<[string, string]> = typeof h.entries === 'function' ? h.entries() : [];
+  for (const [k, v] of entries) {
+    if (/authorization|cookie|set-cookie|api[-]?key|secret|password/i.test(k)) {
+      safe[k] = '[REDACTED]';
+    } else {
+      safe[k] = v;
+    }
+  }
+  return safe;
+}
+function withTraceJson(traceId: string, data: any, init?: number | ResponseInit) {
+  const res = NextResponse.json(data, init as any);
+  res.headers.set('x-trace-id', traceId);
+  return res;
+}
+// ─────────────────────────────────────────────────────────────
 
 // Функция очистки текста от # и *
 function sanitizeText(text: string): string {
@@ -52,11 +75,22 @@ async function ensureExcelFileExists() {
   console.log('Excel file downloaded to /tmp/file.xlsx');
 }
 
+// Диагностические флаги для исключения кэширования/edge-побочек
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
+  noStore(); // диагностика: исключаем кэш-слои
+
   const traceId = randomUUID();
-  console.log(
-    `[${traceId}] DEBUG: XAI_API_KEY is ${process.env.XAI_API_KEY ? '✅ PRESENT' : '❌ MISSING'}`
-  );
+  const reqHeaders = await headers(); // ← FIX: headers() в твоей версии async
+  const startedAt = Date.now();
+
+  console.log(`[GROK][${traceId}] START`, {
+    xai_api_key: process.env.XAI_API_KEY ? '✅ PRESENT' : '❌ MISSING',
+    method: 'POST',
+    headers: redactHeaders(reqHeaders),
+  });
 
   try {
     const {
@@ -68,7 +102,8 @@ export async function POST(req: NextRequest) {
     } = await req.json();
 
     if (!profileId) {
-      return NextResponse.json({ error: 'Missing profileId' }, { status: 400 });
+      console.warn(`[GROK][${traceId}] MISSING profileId`);
+      return withTraceJson(traceId, { error: 'Missing profileId' }, { status: 400 });
     }
 
     const supabase = await createServerClientForApi();
@@ -77,12 +112,18 @@ export async function POST(req: NextRequest) {
 
     if (profiling) {
       // ✅ НЕ загружаем историю чата в профайлинге
-
       const excelFilePath = '/tmp/file.xlsx';
 
+      console.log(`[GROK][${traceId}] PROFILING: ensureExcelFileExists`);
       await ensureExcelFileExists();
 
+      const parseT0 = Date.now();
       const { parsedLines, imagesBase64, formulaLanguage } = await parseExcel(excelFilePath);
+      console.log(`[GROK][${traceId}] PROFILING: parsed excel in ${Date.now() - parseT0}ms`, {
+        lines: parsedLines.length,
+        images: imagesBase64.length,
+        formulaLanguage,
+      });
 
       // ✅ Выбор языка: приоритет userLangFromRequest → formulaLanguage → en
       const userLanguage = userLangFromRequest || formulaLanguage || 'en';
@@ -147,11 +188,10 @@ export async function POST(req: NextRequest) {
       ]);
 
       if (insertSystemError) {
-        console.error(`[${traceId}] Failed to save system_marker:`, insertSystemError);
+        console.error(`[GROK][${traceId}] Failed to save system_marker:`, insertSystemError);
       }
     } else {
       // ✅ Обычный режим — грузим историю чата
-
       const since = Date.now() - 12 * 60 * 60 * 1000;
 
       const { data: historyRows, error: historyError } = await supabase
@@ -162,16 +202,16 @@ export async function POST(req: NextRequest) {
         .order('timestamp', { ascending: true });
 
       if (historyError) {
-        console.error(`[${traceId}] Error loading history:`, historyError);
-        return NextResponse.json({ error: 'Failed to load chat history' }, { status: 500 });
+        console.error(`[GROK][${traceId}] Error loading history:`, historyError);
+        return withTraceJson(traceId, { error: 'Failed to load chat history' }, { status: 500 });
       }
 
       for (const row of historyRows || []) {
         let parsedContent = row.content;
         try {
           const parsed = JSON.parse(row.content);
-          if (typeof parsed === 'object' && parsed?.text) {
-            parsedContent = parsed.text;
+          if (typeof parsed === 'object' && (parsed as any)?.text) {
+            parsedContent = (parsed as any).text;
           }
         } catch {
           // оставляем как есть
@@ -224,7 +264,11 @@ INSTRUCTION:
       });
     }
 
-    console.log(`[${traceId}] DEBUG: Sending ${messages.length} messages to XAI...`);
+    console.log(`[GROK][${traceId}] XAI: sending messages`, {
+      count: messages.length,
+    });
+
+    const xaiT0 = Date.now();
     const grokResponse = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -240,7 +284,10 @@ INSTRUCTION:
       }),
     });
 
-    console.log(`[${traceId}] DEBUG: XAI responded with status ${grokResponse.status}`);
+    console.log(
+      `[GROK][${traceId}] XAI: status ${grokResponse.status} in ${Date.now() - xaiT0}ms`,
+      { contentType: grokResponse.headers.get('content-type') || '' }
+    );
 
     const contentType = grokResponse.headers.get('content-type') || '';
 
@@ -250,22 +297,33 @@ INSTRUCTION:
       data = await grokResponse.json();
 
       if (!grokResponse.ok) {
-        console.error(`[${traceId}] Grok error:`, data);
-        return NextResponse.json({ error: data?.error || 'Grok API error' }, { status: 500 });
+        console.error(`[GROK][${traceId}] Grok error`, {
+          status: grokResponse.status,
+          body:
+            typeof data === 'object'
+              ? JSON.stringify(data).slice(0, 500)
+              : String(data).slice(0, 500),
+        });
+        return withTraceJson(
+          traceId,
+          { error: (data && (data.error || data.message)) || 'Grok API error' },
+          { status: 500 }
+        );
       }
     } else {
       const text = await grokResponse.text();
-      console.error(`[${traceId}] Grok returned non-JSON:`, text);
-      return NextResponse.json(
-        {
-          error: `Grok returned unexpected response: ${text.slice(0, 300)}`,
-        },
+      console.error(`[GROK][${traceId}] Grok returned non-JSON`, {
+        status: grokResponse.status,
+        snippet: text.slice(0, 300),
+      });
+      return withTraceJson(
+        traceId,
+        { error: `Grok returned unexpected response: ${text.slice(0, 300)}` },
         { status: 500 }
       );
     }
 
-    const aiText = data.choices?.[0]?.message?.content || 'No response from Grok.';
-
+    const aiText = data?.choices?.[0]?.message?.content || 'No response from Grok.';
     const cleanText = sanitizeText(aiText);
 
     const { error: insertError } = await supabase.from('chat_messages').insert([
@@ -280,18 +338,26 @@ INSTRUCTION:
     ]);
 
     if (insertError) {
-      console.error(`[${traceId}] Error saving AI message:`, insertError);
-      return NextResponse.json(
-        {
-          error: 'Failed to save AI message to Supabase.',
-        },
+      console.error(`[GROK][${traceId}] Error saving AI message`, insertError);
+      return withTraceJson(
+        traceId,
+        { error: 'Failed to save AI message to Supabase.' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ result: cleanText });
+    const totalMs = Date.now() - startedAt;
+    console.log(`[GROK][${traceId}] OK in ${totalMs}ms`, {
+      bytes: Buffer.byteLength(cleanText, 'utf8'),
+    });
+
+    return withTraceJson(traceId, { result: cleanText });
   } catch (err: any) {
-    console.error(`[${traceId}] Unexpected error:`, err);
-    return NextResponse.json({ error: err.message || 'Unexpected server error' }, { status: 500 });
+    console.error(`[GROK][${traceId}] UNEXPECTED`, { error: String(err?.message || err) });
+    return withTraceJson(
+      traceId,
+      { error: err?.message || 'Unexpected server error' },
+      { status: 500 }
+    );
   }
 }

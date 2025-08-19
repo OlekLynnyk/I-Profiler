@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { PACKAGE_LIMITS, ValidPackageType } from '@/types/plan';
 import { Database } from '@/types/supabase';
 
@@ -15,7 +15,7 @@ export function useDemoAttempts(): {
 
   useEffect(() => {
     const fetchData = async () => {
-      const supabase = createBrowserSupabaseClient<Database>({
+      const supabase = createPagesBrowserClient<Database>({
         supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
         supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       });

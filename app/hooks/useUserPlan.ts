@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { PACKAGE_LIMITS, isValidPackageType, ValidPackageType } from '@/types/plan';
 import { Database } from '@/types/supabase';
 
@@ -14,7 +14,7 @@ export function useUserPlan(refreshToken?: number) {
   const [limitResetAt, setLimitResetAt] = useState<Date | null>(null);
 
   const fetchPlan = useCallback(async () => {
-    const supabase = createBrowserSupabaseClient<Database>({
+    const supabase = createPagesBrowserClient<Database>({
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
       supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     });

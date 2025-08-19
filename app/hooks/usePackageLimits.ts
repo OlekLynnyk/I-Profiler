@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { getPackageFromServer } from '@/lib/subscription';
 import { PACKAGE_LIMITS } from '@/types/plan';
 import { isValidPackageType, ValidPackageType, PackageType } from '@/types/plan';
+import type { Database } from '@/types/supabase';
 
 export function usePackageLimits() {
   const [limits, setLimits] = useState(PACKAGE_LIMITS.Freemium);
@@ -12,7 +13,7 @@ export function usePackageLimits() {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const supabase = createBrowserSupabaseClient({
+        const supabase = createPagesBrowserClient<Database>({
           supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
           supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         });

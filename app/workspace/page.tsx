@@ -385,8 +385,6 @@ export default function WorkspacePage() {
                       <Plus size={16} className="text-[var(--text-primary)]" />
                       <input
                         type="file"
-                        accept="image/*"
-                        capture="environment"
                         className="hidden"
                         multiple
                         onChange={(e) => {

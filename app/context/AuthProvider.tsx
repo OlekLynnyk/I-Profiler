@@ -3,9 +3,29 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
-import { logWarn } from '@/lib/logger'; // ← импортируем логгер
+import { logWarn } from '@/lib/logger';
 
-const supabase = createPagesBrowserClient();
+const supabase = createPagesBrowserClient({
+  cookieOptions:
+    process.env.NODE_ENV === 'production'
+      ? {
+          name: 'sb',
+          domain: 'main.d3a9q3v3j43fq8.amplifyapp.com',
+          path: '/',
+          sameSite: 'lax',
+          secure: true,
+        }
+      : {
+          name: 'sb',
+          domain: 'localhost',
+          path: '/',
+          sameSite: 'lax',
+          secure: false,
+        },
+});
+
+// ✅ Глобальный флаг инициализации (вне компонента)
+let __hasInitialized = false;
 
 const AuthContext = createContext<{
   session: Session | null;
@@ -35,7 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
 
-      if (data.session?.access_token) {
+      if (data.session?.access_token && !__hasInitialized) {
+        __hasInitialized = true;
         try {
           const res = await fetch('/api/user/init', {
             method: 'POST',
@@ -53,7 +74,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // ✅ ДОБАВЛЕНО: повторная инициализация после Stripe checkout
       if (typeof window !== 'undefined' && window.location.search.includes('checkout=success')) {
         console.info('[AuthProvider] Reinitializing after Stripe return');
 
