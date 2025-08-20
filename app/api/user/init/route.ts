@@ -9,7 +9,15 @@ export async function POST(req: NextRequest) {
   const agreedToTerms = agreedHeader === 'true';
 
   if (!token) {
-    return NextResponse.json({ error: 'Unauthorized: Missing access token' }, { status: 401 });
+    // 🔒 Пользователь не авторизован (возможно после logout) — возвращаем корректный, не ошибочный ответ
+    return NextResponse.json(
+      {
+        success: false,
+        initialized: false,
+        reason: 'no_token',
+      },
+      { status: 200 }
+    );
   }
 
   const supabase = createClient<Database>(

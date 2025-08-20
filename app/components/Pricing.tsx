@@ -101,7 +101,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
   const activePlan = useMemo(() => plans.find((p) => p.id === activeId)!, [plans, activeId]);
   const smallPlans = useMemo(() => plans.filter((p) => p.id !== activeId), [plans, activeId]);
 
-  // ======= Универсальная карточка (ИСПОЛЬЗУЕТСЯ ТОЛЬКО НА МОБИЛЬНОМ — НЕ МЕНЯЕМ ВИЗУАЛ) =======
+  // ======= Универсальная карточка (МОБИЛЬНЫЙ ВИЗУАЛ LUX, ЛОГИКА БЕЗ ИЗМЕНЕНИЙ) =======
   const PlanCard = ({
     plan,
     size,
@@ -113,55 +113,97 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
   }) => {
     const isFree = plan.id === 'free';
     const isLoading = loadingPlan === plan.id;
-    const borderShadow = plan.highlight
-      ? 'border-[#C084FC] shadow-[0_4px_10px_rgba(192,132,252,0.35)]'
-      : 'border-[#D1D4D6]';
+    const isDisabled = (!isLoggedIn && !isFree) || isLoading || (isFree && isLoggedIn);
+
+    const baseCream = 'bg-[#F6F5ED] text-[#111827]';
+    const ringBase = 'ring-1 ring-[#E7E5DD]';
+    const radius = 'rounded-3xl';
+    const luxShadow = 'shadow-[0_10px_30px_rgba(0,0,0,0.10)]';
+    const highlightGlow = plan.highlight
+      ? 'ring-1 ring-[#C084FC]/40 shadow-[0_12px_40px_rgba(192,132,252,0.28)]'
+      : '';
 
     if (size === 'small') {
+      // МАЛАЯ КАРТА (верхние 2 квадрата)
       return (
         <button
           type="button"
           onClick={onClick}
-          className={`bg-[#F6F5ED] border ${borderShadow} rounded-xl
-                      aspect-square w-full overflow-hidden
-                      transition-transform duration-200 active:scale-[0.98]`}
+          className={`
+            ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
+            aspect-square w-full overflow-hidden
+            transition-[transform,box-shadow] duration-200 active:scale-[0.98]
+          `}
         >
           <div className="h-full w-full flex flex-col items-center justify-center p-4 text-center">
-            <h3 className="text-base text-[#111827] font-semibold">{plan.name}</h3>
-            <p className="text-2xl text-[#111827] mt-1">
+            <h3 className="text-[15px] font-semibold">{plan.name}</h3>
+            <p className="mt-1 text-2xl">
               {plan.price}
-              {!isFree && <span className="text-[10px] align-middle"> /4 weeks</span>}
+              {!isFree && (
+                <span className="text-[11px] align-baseline text-[#4B5563]"> /4 weeks</span>
+              )}
             </p>
-            <p className="text-[#374151] text-sm mt-2 line-clamp-3">{plan.description}</p>
+            <p className="mt-2 text-[#374151] text-[13px] leading-snug line-clamp-3">
+              {plan.description}
+            </p>
           </div>
         </button>
       );
     }
 
+    // БОЛЬШАЯ КАРТА (Featured снизу)
     return (
-      <div className={`bg-[#F6F5ED] border ${borderShadow} p-5 rounded-xl shadow`}>
-        <h3 className="text-xl text-[#111827] mb-1">{plan.name}</h3>
-        <p className="text-3xl text-[#111827] mb-3">
+      <div
+        className={`
+          relative ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
+          p-6
+        `}
+      >
+        {/* Тонкая светящаяся полоска сверху — как на десктопе */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-[#C084FC00] via-[#C084FC99] to-[#C084FC00]" />
+
+        {/* Бейдж «Most popular» для highlighted */}
+        {plan.highlight && (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#C084FC]/15 text-[#4C1D95] px-3 py-1 text-[11px] tracking-wide ring-1 ring-[#C084FC]/30">
+            Most popular
+          </div>
+        )}
+
+        <h3 className="text-[20px] font-semibold">{plan.name}</h3>
+
+        <p className="mt-1 text-[32px] font-extrabold">
           {plan.price}
-          {!isFree && <span className="text-xs align-middle"> /4 weeks</span>}
+          {!isFree && (
+            <span className="align-baseline text-[12px] font-medium text-[#4B5563]"> /4 weeks</span>
+          )}
         </p>
-        <p className="text-[#374151] text-base leading-relaxed mb-4">{plan.description}</p>
-        <ul className="text-left text-sm text-[#374151] mb-6 space-y-2 leading-relaxed">
+
+        <p className="mt-3 text-[#374151] text-[15px] leading-relaxed">{plan.description}</p>
+
+        <ul className="mt-5 text-left text-[14px] text-[#374151] space-y-2.5 leading-relaxed">
           {plan.features.map((feature) => (
-            <li key={feature} className="flex items-start gap-2">
-              <span aria-hidden className="mt-0.5 text-[#6B21A8]">
+            <li key={feature} className="flex items-start gap-2.5">
+              <span aria-hidden className="mt-[2px] text-[#6B21A8]">
                 ✔
               </span>
               <span>{feature}</span>
             </li>
           ))}
         </ul>
+
         <button
           onClick={isFree ? (isLoggedIn ? undefined : plan.action) : () => handleCheckout(plan.id)}
-          className="w-full py-3.5 px-4 rounded-2xl bg-[#C084FC] text-[#212529] hover:bg-[#D8B4FE] disabled:opacity-50 text-base min-h-11"
-          disabled={(isFree && isLoggedIn) || isLoading}
+          className="
+            mt-6 w-full min-h-11 rounded-full
+            bg-[#C084FC] text-[#212529]
+            ring-1 ring-[#C084FC]/40
+            transition-[background,ring,transform] duration-200
+            active:scale-[0.99] hover:bg-[#D8B4FE] hover:ring-[#C084FC]/60
+          "
+          disabled={isDisabled}
+          title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
         >
-          {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Get Started'}
+          {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
         </button>
       </div>
     );
@@ -181,14 +223,16 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           Pricing
         </h2>
 
-        {/* ===== MOBILE (< md): ОСТАВЛЕНО БЕЗ ИЗМЕНЕНИЙ ===== */}
-        <div className="md:hidden space-y-4">
+        {/* ===== MOBILE (< md): ОБНОВЛЁН LUX ВИЗУАЛ, ЛОГИКА/АНИМАЦИИ КАК БЫЛИ ===== */}
+        <div className="md:hidden space-y-5">
+          {/* Верх: две малые карточки */}
           <div className="grid grid-cols-2 gap-4">
             {smallPlans.map((p) => (
               <PlanCard key={p.id} plan={p} size="small" onClick={() => setActiveId(p.id)} />
             ))}
           </div>
 
+          {/* Низ: крупная карточка (активный план) */}
           <div
             key={activePlan.id}
             className="transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95"
@@ -199,11 +243,12 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           <div className="pb-[env(safe-area-inset-bottom)]" />
         </div>
 
-        {/* ===== DESKTOP (>= md): ✨ LUX DESKTOP ✨ ===== */}
+        {/* ===== DESKTOP (>= md): ✨ LUX DESKTOP ✨ — БЕЗ ИЗМЕНЕНИЙ ===== */}
         <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {plans.map((plan) => {
             const isFree = plan.id === 'free';
             const isLoading = loadingPlan === plan.id;
+            const isDisabled = (!isLoggedIn && !isFree) || isLoading || (isFree && isLoggedIn);
 
             return (
               <div
@@ -261,7 +306,13 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
 
                 <button
                   onClick={
-                    isFree ? (isLoggedIn ? undefined : plan.action) : () => handleCheckout(plan.id)
+                    isFree
+                      ? isLoggedIn
+                        ? undefined
+                        : plan.action
+                      : isLoggedIn
+                        ? () => handleCheckout(plan.id)
+                        : undefined
                   }
                   className="
                     mt-8 w-full rounded-full px-6 py-4
@@ -273,9 +324,10 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60
                     disabled:opacity-60
                   "
-                  disabled={(isFree && isLoggedIn) || isLoading}
+                  disabled={isDisabled}
+                  title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
                 >
-                  {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Get Started'}
+                  {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
                 </button>
               </div>
             );

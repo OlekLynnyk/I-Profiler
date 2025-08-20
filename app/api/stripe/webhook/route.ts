@@ -153,7 +153,7 @@ async function handleSubscriptionChange(
       })
       .eq('user_id', data.user_id);
 
-    await updateUserLimits(supabase, 'Freemium'); // без data.user_id
+    await updateUserLimits(supabase, 'Freemium', data.user_id); // ✅
   }
 }
 
@@ -200,7 +200,7 @@ async function updateUserSubscription(
   if (error) {
     console.error('❌ Failed to upsert user subscription:', error.message);
   } else {
-    await updateUserLimits(supabase, plan);
+    await updateUserLimits(supabase, plan, userId);
   }
 }
 

@@ -149,33 +149,63 @@ export default function HowItWorks() {
   return (
     <section ref={sectionRef} className="bg-transparent text-white relative overflow-hidden">
       <div className="w-full relative px-4">
-        {/* ===== MOBILE ===== */}
+        {/* ===== MOBILE (АДАПТИРОВАНО) ===== */}
         <div className="lg:hidden w-full mx-auto max-w-[520px]">
-          {/* Телефоны (как было) */}
-          <div className="grid grid-cols-2 gap-4 justify-items-center">
-            <PhoneMockupMobile
-              screenSrc="/images/phone-left-screen1.webp"
-              className="w-[46vw] max-w-[240px]"
-            />
-            <PhoneMockupMobile
-              screenSrc="/images/phone-right-screen2.webp"
-              className="w-[46vw] max-w-[240px]"
-            />
+          {/* 1) Телефон с видео ~80% экрана */}
+          <div className="relative h-[80svh] w-full flex items-center justify-center">
+            <div className="relative w-[88vw] max-w-[380px] aspect-[9/19.5] rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden bg-white/5 backdrop-blur">
+              {!showPoster ? (
+                <video
+                  ref={videoRef}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  poster="/images/howitworks-poster.jpg"
+                  muted
+                  playsInline
+                  loop
+                  preload="metadata"
+                  autoPlay
+                >
+                  <source src="/videos/howitworks-720p-vp9.webm" type="video/webm" />
+                  <source src="/videos/howitworks-720p-h264.mp4" type="video/mp4" />
+                </video>
+              ) : (
+                <Image
+                  src="/images/howitworks-poster.jpg"
+                  alt="Preview of product flow"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              )}
+              {/* мягкое свечение как на десктопе */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-[44px] ring-1 ring-purple-400/20"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-6 -z-10 rounded-[56px] bg-purple-500/10 blur-2xl"
+              />
+            </div>
           </div>
 
-          {/* Шаги (структурированный текст) */}
-          <div className="mt-8 text-center space-y-6">
-            <h3 className="text-white text-[28px] leading-tight font-bold">How it works</h3>
-            <ol className="text-sm text-[#CCCCCC] space-y-4 font-inter text-left mx-auto max-w-[420px] list-decimal pl-5">
+          {/* 2) Тексты шагов под телефоном */}
+          <div className="px-2 pb-[env(safe-area-inset-bottom)] space-y-8">
+            <h3 className="text-center text-white text-[clamp(1.5rem,6vw,1.875rem)] font-extrabold tracking-tight">
+              How it works
+            </h3>
+            <ol className="space-y-8 max-w-[420px] mx-auto text-left">
               {STEPS.map((s) => (
-                <li key={s.id}>
-                  <div className="font-semibold text-white/90">{s.title}</div>
-                  <div className="text-white/50">{s.desc}</div>
+                <li key={s.id} className="space-y-2">
+                  <div className="text-[11px] uppercase tracking-widest text-purple-300/90">
+                    {s.tagline}
+                  </div>
+                  <div className="text-[18px] font-bold text-white leading-tight">{s.title}</div>
+                  <p className="text-[14px] text-white/70 leading-relaxed">{s.desc}</p>
                 </li>
               ))}
             </ol>
           </div>
-          <div className="pb-[env(safe-area-inset-bottom)]" />
         </div>
         {/* ===== /MOBILE ===== */}
 

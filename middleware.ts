@@ -27,6 +27,7 @@ export async function middleware(req: NextRequest) {
   let {
     data: { session },
   } = await supabase.auth.getSession().catch(() => ({ data: { session: null } as any }));
+  console.log('🧩 [middleware] Session ID:', session?.user?.id || 'No session');
 
   if (!session && isReturningFromCheckout) {
     for (let i = 0; i < 5; i++) {

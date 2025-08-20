@@ -37,11 +37,12 @@ export async function POST(req: NextRequest) {
   }
 
   const { priceId } = await req.json().catch(() => ({}));
+  console.log('🧾 Received priceId:', priceId); // 👈 log 1
+
   if (!priceId || typeof priceId !== 'string') {
     return NextResponse.json({ error: 'Missing or invalid priceId' }, { status: 400 });
   }
 
-  // 🔒 Проверка активной подписки в Supabase
   const { data: subData, error: subCheckError } = await supabase
     .from('user_subscription')
     .select('status, plan')
@@ -53,8 +54,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Subscription check failed' }, { status: 500 });
   }
 
-  // Разрешаем Freemium-пользователям покупать платный тариф,
-  // блокируем, если есть активная платная подписка
   const isFreemium = subData?.plan === 'Freemium';
   const isActivePaid = subData?.status === 'active' && !isFreemium;
 
@@ -126,6 +125,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    console.log('📤 Stripe create-checkout-session →', {
+      // 👈 log 2
+      mode: 'subscription',
+      customer: customerId,
+      priceId,
+      userId: user.id,
+      success_url: `${appUrl}/?checkout=success`,
+      cancel_url: `${appUrl}/?checkout=cancel`,
+    });
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
