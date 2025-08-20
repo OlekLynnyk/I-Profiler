@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import { stripe } from '@/lib/stripe';
+import { env } from '@/env.server';
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: subRecord.stripe_customer_id,
-    return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account`,
+    return_url: `${env.NEXT_PUBLIC_APP_URL}/account`,
   });
 
   return NextResponse.json({ url: portalSession.url });

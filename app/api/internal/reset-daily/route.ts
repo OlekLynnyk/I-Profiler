@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import { DateTime } from 'luxon';
+import { env } from '@/env.server';
 
 type UserLimit = {
   user_id: string;
@@ -14,7 +15,7 @@ type UserLimit = {
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('authorization');
-  if (secret !== `Bearer ${process.env.SYNC_SECRET_KEY}`) {
+  if (secret !== `Bearer ${env.SYNC_SECRET_KEY}`) {
     return new Response('Unauthorized', { status: 401 });
   }
 

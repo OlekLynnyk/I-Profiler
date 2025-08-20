@@ -6,6 +6,7 @@ import { getPackageFromServer } from '@/lib/subscription';
 import { PACKAGE_LIMITS } from '@/types/plan';
 import { isValidPackageType, ValidPackageType, PackageType } from '@/types/plan';
 import type { Database } from '@/types/supabase';
+import { env } from '@/env.server';
 
 export function usePackageLimits() {
   const [limits, setLimits] = useState(PACKAGE_LIMITS.Freemium);
@@ -14,8 +15,8 @@ export function usePackageLimits() {
     const fetch = async () => {
       try {
         const supabase = createPagesBrowserClient<Database>({
-          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
+          supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         });
 
         const pkg: PackageType = await getPackageFromServer(supabase);

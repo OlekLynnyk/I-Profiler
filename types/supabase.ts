@@ -260,6 +260,9 @@ export type Database = {
           subscription_ends_at: string | null;
           updated_at: string | null;
           user_id: string;
+          next_billing_date: string | null;
+          trial_end_date: string | null;
+          payment_method: string | null;
         };
         Insert: {
           active?: boolean | null;

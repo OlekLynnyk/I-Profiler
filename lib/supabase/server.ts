@@ -3,12 +3,13 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types/supabase';
+import { env } from '@/env.server';
 
 export async function createServerClientForApi() {
   const cookieStore = await cookies();
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = env.SUPABASE_URL;
+  const SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     console.error('[Supabase Init] Missing ENV vars', {

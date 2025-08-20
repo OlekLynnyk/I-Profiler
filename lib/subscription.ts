@@ -1,7 +1,17 @@
 // lib/subscription.ts
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { PackageType, isValidPackageType } from '@/types/plan';
+import Stripe from 'stripe';
+import {
+  PackageType,
+  isValidPackageType,
+  PRICE_TO_PACKAGE,
+  SubscriptionPlanPayload,
+  mapStripeStatus,
+  ValidPackageType,
+} from '@/types/plan';
+import { Database } from '@/types/supabase';
+import { updateUserLimits } from '@/lib/updateUserLimits';
 
 /**
  * Проверяет наличие активной подписки.
@@ -49,4 +59,96 @@ export async function getPackageFromServer(supabase: SupabaseClient): Promise<Pa
   }
 
   return data.package_type;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                     Централизованный контракт и сервис                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Приводит Stripe.Subscription к внутреннему контракту.
+ * Если priceId неизвестен, даты отсутствуют или план невалиден — возвращает null.
+ */
+export function mapStripeToPlan(subscription: Stripe.Subscription): SubscriptionPlanPayload | null {
+  const item = subscription.items?.data?.[0];
+  const priceId = item?.price?.id;
+  const periodStart = item?.current_period_start;
+  const periodEnd = item?.current_period_end;
+
+  const plan = priceId ? PRICE_TO_PACKAGE[priceId] : undefined;
+
+  if (!priceId || !plan || !isValidPackageType(plan) || !periodStart || !periodEnd) {
+    return null;
+  }
+
+  return {
+    plan,
+    priceId,
+    periodStart: new Date(periodStart * 1000).toISOString(),
+    periodEnd: new Date(periodEnd * 1000).toISOString(),
+    status: mapStripeStatus(subscription.status),
+  };
+}
+
+/**
+ * Единственная точка апдейта подписки пользователя и лимитов.
+ * Правило: если подписка не 'active' (или невалидный маппинг) — безопасный фоллбек в Freemium.
+ */
+export async function syncSubscriptionWithSupabase(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  subscription: Stripe.Subscription
+): Promise<{ plan: ValidPackageType; status: 'active' | 'incomplete' | 'canceled' }> {
+  const mapped = mapStripeToPlan(subscription);
+
+  // единая "метка времени" для created_at/updated_at
+  const now = new Date().toISOString();
+
+  if (!mapped || mapped.status !== 'active') {
+    // Безопасный фоллбек — фиксируем Freemium и лимиты
+    const { error } = await supabase
+      .from('user_subscription')
+      .update({
+        status: 'canceled',
+        package_type: 'Freemium',
+        plan: 'Freemium',
+        stripe_price_id: 'freemium',
+        active: false,
+        subscription_ends_at: null,
+        updated_at: now,
+      })
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    await updateUserLimits(supabase, 'Freemium', userId);
+    return { plan: 'Freemium', status: 'canceled' };
+  }
+
+  const { error } = await supabase.from('user_subscription').upsert(
+    {
+      user_id: userId,
+      // ⚠️ created_at обязателен в Insert типе — даём значение для новых строк
+      created_at: now,
+      updated_at: now,
+
+      stripe_customer_id: subscription.customer as string,
+      stripe_subscription_id: subscription.id,
+      stripe_price_id: mapped.priceId,
+
+      status: mapped.status,
+      subscription_ends_at: mapped.periodEnd,
+      current_period_start: mapped.periodStart,
+
+      plan: mapped.plan,
+      package_type: mapped.plan,
+      active: true,
+    },
+    { onConflict: 'user_id' }
+  );
+
+  if (error) throw error;
+
+  await updateUserLimits(supabase, mapped.plan, userId);
+  return { plan: mapped.plan, status: mapped.status };
 }

@@ -36,11 +36,13 @@ function sanitizeText(text: string): string {
   return text.replace(/[#*]/g, '').trim();
 }
 
+import { env } from '@/env.server';
+
 const s3 = new S3Client({
-  region: process.env.MY_AWS_REGION!,
+  region: env.MY_AWS_REGION,
   credentials: {
-    accessKeyId: process.env.MY_AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.MY_AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: env.MY_AWS_ACCESS_KEY_ID,
+    secretAccessKey: env.MY_AWS_SECRET_ACCESS_KEY,
   },
 });
 
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
   const startedAt = Date.now();
 
   console.log(`[GROK][${traceId}] START`, {
-    xai_api_key: process.env.XAI_API_KEY ? '✅ PRESENT' : '❌ MISSING',
+    xai_api_key: env.XAI_API_KEY ? '✅ PRESENT' : '❌ MISSING',
     method: 'POST',
     headers: redactHeaders(reqHeaders),
   });
@@ -273,7 +275,7 @@ INSTRUCTION:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.XAI_API_KEY}`,
+        Authorization: `Bearer ${env.XAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'grok-2-vision-latest',

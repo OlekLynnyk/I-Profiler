@@ -24,7 +24,7 @@ export default function Footer() {
         {/* Левая колонка */}
         <div className="w-full md:w-auto space-y-2 text-[13px] sm:text-sm text-white/70 font-inter">
           <p>© {new Date().getFullYear()} H1NTED Ltd. All rights reserved.</p>
-          <p>123 Example Street, Dublin, Ireland</p>
+          <p>123 Example Street, Dublin, Ireland, The British Isles. </p>
           <p>
             Questions or feedback? Write to us at{' '}
             <a

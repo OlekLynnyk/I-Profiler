@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { PACKAGE_LIMITS, isValidPackageType, ValidPackageType } from '@/types/plan';
 import { Database } from '@/types/supabase';
+import { env } from '@/env.server';
 
 export function useUserPlan(refreshToken?: number) {
   const [plan, setPlan] = useState<ValidPackageType>('Freemium');
@@ -15,8 +16,8 @@ export function useUserPlan(refreshToken?: number) {
 
   const fetchPlan = useCallback(async () => {
     const supabase = createPagesBrowserClient<Database>({
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
+      supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     });
 
     const { data: userData } = await supabase.auth.getUser();

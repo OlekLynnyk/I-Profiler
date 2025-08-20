@@ -111,11 +111,11 @@ export default function SubscriptionSettings() {
   const {
     plan,
     status,
-    nextBillingDate,
-    trialEndDate,
-    cancelAtPeriodEnd,
-    paymentMethod,
-    packageType,
+    next_billing_date: nextBillingDate,
+    trial_end_date: trialEndDate,
+    cancel_at_period_end: cancelAtPeriodEnd,
+    payment_method: paymentMethod,
+    package_type: packageType,
   } = data;
 
   return (

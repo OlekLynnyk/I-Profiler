@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import Stripe from 'stripe';
 import type { Database } from '@/types/supabase';
+import { env } from '@/env.server';
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+const stripeSecretKey = env.STRIPE_SECRET_KEY;
+const appUrl = env.NEXT_PUBLIC_APP_URL;
 
 if (!stripeSecretKey) {
   throw new Error('STRIPE_SECRET_KEY is not defined');

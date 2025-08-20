@@ -1,12 +1,16 @@
+// app/api/stripe/webhook/route.ts
+
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
-import { createServerClientForApi } from '@/lib/supabase/server';
-import { isValidPackageType } from '@/types/plan';
-import { updateUserLimits } from '@/lib/updateUserLimits';
 import Stripe from 'stripe';
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+import { stripe } from '@/lib/stripe';
+import { createServerClientForApi } from '@/lib/supabase/server';
+import { syncSubscriptionWithSupabase } from '@/lib/subscription';
+
+import { env } from '@/env.server';
+
+const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: Request) {
   const supabase = await createServerClientForApi();
@@ -17,9 +21,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
   }
 
-  let event;
+  let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+
+    const already = await supabase
+      .from('billing_logs')
+      .select('id')
+      .eq('stripe_event_id', event.id)
+      .maybeSingle();
+
+    if (already.data?.id) {
+      console.log('ℹ️ Duplicate webhook, skip:', event.id);
+      return NextResponse.json({ message: '✅ OK (duplicate)' });
+    }
   } catch (err) {
     console.error('❌ Webhook verification failed:', (err as Error).message);
 
@@ -35,25 +50,36 @@ export async function POST(req: Request) {
   }
 
   try {
+    // логируем факт получения события (идемпотентность добавим на шаге 5)
     await logBillingEvent({
       supabase,
       eventType: event.type,
       customerId: extractCustomerId(event),
       payload: event.data.object,
       status: 'success',
+      stripe_event_id: event.id,
     });
 
     switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, supabase);
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await handleCheckoutCompleted(session, supabase);
         break;
-      case 'checkout.session.expired':
-        await handleCheckoutExpired(event.data.object as Stripe.Checkout.Session, supabase);
+      }
+
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await handleCheckoutExpired(session, supabase);
         break;
+      }
+
       case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
-        await handleSubscriptionChange(event.data.object as Stripe.Subscription, supabase);
+      case 'customer.subscription.deleted': {
+        const incoming = event.data.object as Stripe.Subscription;
+        await handleSubscriptionChange(incoming, supabase);
         break;
+      }
+
       default:
         console.log(`ℹ️ Unhandled event type: ${event.type}`);
     }
@@ -63,10 +89,11 @@ export async function POST(req: Request) {
     await logBillingEvent({
       supabase,
       eventType: event?.type ?? 'unknown',
-      payload: event?.data?.object,
+      payload: (event as any)?.data?.object,
       status: 'error',
       errorMessage: (err as Error).message,
       customerId: extractCustomerId(event),
+      stripe_event_id: event.id,
     });
 
     return NextResponse.json({ error: 'Webhook handling failed' }, { status: 500 });
@@ -89,9 +116,9 @@ async function handleCheckoutCompleted(
     return;
   }
 
+  // Берём актуальную подписку из Stripe и синхронизируем единой функцией
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  await updateUserSubscription(userId, subscription, supabase);
-  await initializeCurrentPeriodStartIfMissing(userId, supabase);
+  await syncSubscriptionWithSupabase(supabase, userId, subscription);
 }
 
 async function handleCheckoutExpired(
@@ -119,10 +146,10 @@ async function handleCheckoutExpired(
 }
 
 async function handleSubscriptionChange(
-  subscription: Stripe.Subscription,
+  incoming: Stripe.Subscription,
   supabase: Awaited<ReturnType<typeof createServerClientForApi>>
 ) {
-  const customerId = subscription.customer as string;
+  const customerId = incoming.customer as string;
 
   const { data, error } = await supabase
     .from('user_subscription')
@@ -135,116 +162,9 @@ async function handleSubscriptionChange(
     return;
   }
 
-  await updateUserSubscription(data.user_id, subscription, supabase);
-
-  const isInactive = !['active', 'trialing'].includes(subscription.status);
-  if (isInactive) {
-    console.log(`ℹ️ Подписка стала неактивной. Назначаем Freemium для user_id=${data.user_id}`);
-
-    await supabase
-      .from('user_subscription')
-      .update({
-        status: 'canceled',
-        package_type: 'Freemium',
-        plan: 'Freemium',
-        stripe_subscription_id: null,
-        stripe_price_id: 'freemium',
-        subscription_ends_at: null,
-      })
-      .eq('user_id', data.user_id);
-
-    await updateUserLimits(supabase, 'Freemium', data.user_id); // ✅
-  }
-}
-
-async function updateUserSubscription(
-  userId: string,
-  subscription: Stripe.Subscription,
-  supabase: Awaited<ReturnType<typeof createServerClientForApi>>
-) {
-  const priceId = subscription.items.data[0]?.price.id;
-  if (!priceId) {
-    console.warn('⚠️ Subscription has no priceId');
-    return;
-  }
-
-  const plan = PLAN_MAPPING[priceId] ?? null;
-
-  if (!plan || !isValidPackageType(plan)) {
-    console.warn('⚠️ Invalid plan mapped from priceId:', priceId);
-    return;
-  }
-
-  const item = subscription.items.data?.[0];
-  const timestamp = item?.current_period_end;
-  const subscriptionEndsAt = timestamp
-    ? new Date(timestamp * 1000).toISOString()
-    : new Date().toISOString();
-
-  const { error } = await supabase.from('user_subscription').upsert(
-    {
-      user_id: userId,
-      stripe_customer_id: subscription.customer as string,
-      stripe_subscription_id: subscription.id,
-      stripe_price_id: priceId,
-      status: normalizeStatus(subscription.status),
-      subscription_ends_at: subscriptionEndsAt,
-      plan,
-      package_type: plan,
-      active: true,
-      created_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id' }
-  );
-
-  if (error) {
-    console.error('❌ Failed to upsert user subscription:', error.message);
-  } else {
-    await updateUserLimits(supabase, plan, userId);
-  }
-}
-
-async function initializeCurrentPeriodStartIfMissing(
-  userId: string,
-  supabase: Awaited<ReturnType<typeof createServerClientForApi>>
-) {
-  const { data, error } = await supabase
-    .from('user_subscription')
-    .select('current_period_start')
-    .eq('user_id', userId)
-    .single();
-
-  if (error) {
-    console.error('❌ Failed to fetch current_period_start:', error.message);
-    return;
-  }
-
-  if (!data?.current_period_start) {
-    const { error: updateError } = await supabase
-      .from('user_subscription')
-      .update({ current_period_start: new Date().toISOString() })
-      .eq('user_id', userId);
-
-    if (updateError) {
-      console.error('❌ Failed to initialize current_period_start:', updateError.message);
-    }
-  }
-}
-
-function normalizeStatus(status: string): 'active' | 'canceled' | 'incomplete' {
-  switch (status) {
-    case 'active':
-    case 'trialing':
-      return 'active';
-    case 'canceled':
-    case 'unpaid':
-      return 'canceled';
-    case 'incomplete':
-    case 'incomplete_expired':
-      return 'incomplete';
-    default:
-      return 'canceled';
-  }
+  // Защита от out-of-order: подтягиваем свежую подписку перед синком
+  const fresh = await stripe.subscriptions.retrieve(incoming.id);
+  await syncSubscriptionWithSupabase(supabase, data.user_id, fresh);
 }
 
 function extractCustomerId(event: Stripe.Event): string | undefined {
@@ -260,6 +180,7 @@ async function logBillingEvent(params: {
   payload: any;
   status: 'success' | 'error';
   errorMessage?: string;
+  stripe_event_id?: string;
 }) {
   const { supabase, eventType, customerId, userId, payload, status, errorMessage } = params;
 
@@ -270,15 +191,10 @@ async function logBillingEvent(params: {
     payload,
     status,
     error_message: errorMessage ?? null,
+    stripe_event_id: params.stripe_event_id ?? null,
   });
 
   if (error) {
     console.error('❌ Failed to insert billing_logs:', error);
   }
 }
-
-const PLAN_MAPPING: Record<string, string> = {
-  price_1RQYE4AGnqjZyhfAY8kOMZwm: 'Smarter',
-  price_1RQYEXAGnqjZyhfAryCzNkqV: 'Business',
-  freemium: 'Freemium',
-};

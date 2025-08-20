@@ -1,17 +1,20 @@
+// app/api/internal/sync-subscriptions/route.ts
+
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createServerClientForApi } from '@/lib/supabase/server';
-import { updateUserLimits } from '@/lib/updateUserLimits';
-import { isValidPackageType } from '@/types/plan';
+import { syncSubscriptionWithSupabase } from '@/lib/subscription';
 
 export async function GET() {
   const supabase = await createServerClientForApi();
 
+  // При необходимости расширить пагинацию (starting_after) — пока берём 100
   const subscriptions = await stripe.subscriptions.list({ limit: 100 });
 
   for (const subscription of subscriptions.data) {
     const customerId = subscription.customer as string;
 
+    // Находим нашего пользователя по stripe_customer_id
     const { data, error } = await supabase
       .from('user_subscription')
       .select('user_id')
@@ -23,25 +26,8 @@ export async function GET() {
       continue;
     }
 
-    const isInactive = !['active', 'trialing'].includes(subscription.status);
-
-    if (isInactive) {
-      console.log(`🔁 Подписка неактивна. Переводим user_id=${data.user_id} на Freemium`);
-
-      await supabase
-        .from('user_subscription')
-        .update({
-          status: 'canceled',
-          package_type: 'Freemium',
-          plan: 'Freemium',
-          stripe_subscription_id: null,
-          stripe_price_id: 'freemium',
-          subscription_ends_at: null,
-        })
-        .eq('user_id', data.user_id);
-
-      await updateUserLimits(supabase, 'Freemium');
-    }
+    // Синхронизуем единым сервисом (он сам решит: активный план или Freemium)
+    await syncSubscriptionWithSupabase(supabase, data.user_id, subscription);
   }
 
   return NextResponse.json({ success: true });

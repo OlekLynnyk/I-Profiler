@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { PACKAGE_LIMITS, ValidPackageType } from '@/types/plan';
 import { Database } from '@/types/supabase';
+import { env } from '@/env.server';
 
 export function useDemoAttempts(): {
   demoAttempts: number;
@@ -16,14 +17,14 @@ export function useDemoAttempts(): {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createPagesBrowserClient<Database>({
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
+        supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       });
 
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id;
 
-      console.log('👤 Текущий userId:', userId); // ← Добавлено для проверки
+      console.log('👤 Текущий userId:', userId);
 
       if (!userId) return;
 

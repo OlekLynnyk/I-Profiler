@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
+import { env } from '@/env.server';
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -13,8 +14,8 @@ export async function POST(req: NextRequest) {
 
   // ✅ создаём клиент на паблик-ключе (для getUser(token))
   const supabaseUserClient = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
 
   const {
@@ -29,8 +30,8 @@ export async function POST(req: NextRequest) {
 
   // ✅ создаём админ-клиент для изменений в БД
   const supabaseAdminClient = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.SUPABASE_SERVICE_ROLE_KEY
   );
 
   // ✅ ставим soft delete флаг вместо удаления
