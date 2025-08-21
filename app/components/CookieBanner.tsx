@@ -13,28 +13,20 @@ export default function CookieBanner() {
       setVisible(true);
       document.body.style.overflow = 'hidden';
     }
-
     return () => {
       document.body.style.overflow = '';
     };
   }, []);
 
   useEffect(() => {
-    if (visible && bannerRef.current) {
-      bannerRef.current.focus();
-    }
+    if (visible && bannerRef.current) bannerRef.current.focus();
   }, [visible]);
 
   const handleConsent = (value: 'accepted' | 'rejected') => {
     localStorage.setItem('cookieConsent', value);
     setVisible(false);
     document.body.style.overflow = '';
-
-    // Перезагрузка страницы, чтобы хук в LayoutClient
-    // загрузил или не загрузил скрипты
-    if (value === 'accepted') {
-      window.location.reload();
-    }
+    if (value === 'accepted') window.location.reload();
   };
 
   if (!visible) return null;
@@ -43,9 +35,9 @@ export default function CookieBanner() {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 pointer-events-auto"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 pointer-events-auto"
         aria-hidden="true"
-      ></div>
+      />
 
       {/* Cookie Banner */}
       <div
@@ -55,14 +47,29 @@ export default function CookieBanner() {
         aria-modal="true"
         aria-labelledby="cookie-banner-title"
         aria-describedby="cookie-banner-desc"
-        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] md:max-w-5xl z-50 transition-all duration-300 ease-out opacity-100 translate-y-0"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:max-w-5xl z-50 outline-none"
       >
-        <div className="bg-neutral-900 text-white rounded-md shadow-xl px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span id="cookie-banner-desc" className="text-xs leading-snug">
+        {/* мягкий фиолетовый glow позади карточки */}
+        <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 mx-auto max-w-3xl bg-purple-500/10 blur-3xl rounded-[48px]" />
+
+        <div
+          className="relative bg-white/[0.06] ring-1 ring-white/10 backdrop-blur
+                        text-white rounded-2xl shadow-[0_20px_80px_rgba(0,0,0,0.45)]
+                        px-5 sm:px-6 py-4 flex flex-col md:flex-row items-start md:items-center
+                        justify-between gap-4"
+        >
+          <h2 id="cookie-banner-title" className="sr-only">
+            Cookie notice
+          </h2>
+
+          <span id="cookie-banner-desc" className="text-sm leading-relaxed text-white/90">
             We use cookies to improve your experience. See our{' '}
             <Link
               href="/privacy"
-              className="underline hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white"
+              className="underline decoration-purple-300/40 underline-offset-4
+                         hover:text-white focus:outline-none
+                         focus-visible:ring-2 focus-visible:ring-purple-300/60
+                         rounded"
             >
               Cookie Notice
             </Link>{' '}
@@ -71,16 +78,23 @@ export default function CookieBanner() {
 
           <div className="flex flex-row items-center gap-2">
             <button
-              onClick={() => handleConsent('accepted')}
-              className="bg-white text-black px-4 py-2 rounded-md font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white transition text-sm"
-            >
-              Accept all
-            </button>
-            <button
               onClick={() => handleConsent('rejected')}
-              className="text-white px-4 py-2 rounded-md hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white transition text-sm"
+              className="rounded-full px-5 py-2.5 bg-white/[0.06] ring-1 ring-white/10
+                         hover:bg-white/[0.1] text-white text-sm backdrop-blur
+                         focus:outline-none focus-visible:ring-2
+                         focus-visible:ring-purple-300/60 transition"
             >
               Reject all
+            </button>
+            <button
+              onClick={() => handleConsent('accepted')}
+              className="rounded-full px-5 py-2.5 bg-purple-500/20 ring-1 ring-purple-300/30
+                         hover:bg-purple-500/30 hover:ring-purple-300/50
+                         text-white text-sm backdrop-blur
+                         focus:outline-none focus-visible:ring-2
+                         focus-visible:ring-purple-300/60 transition"
+            >
+              Accept all
             </button>
           </div>
         </div>

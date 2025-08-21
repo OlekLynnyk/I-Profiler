@@ -17,6 +17,7 @@ export type Database = {
           payload: Json;
           status: string;
           stripe_customer_id: string | null;
+          stripe_event_id: string | null;
           user_id: string | null;
         };
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           payload: Json;
           status: string;
           stripe_customer_id?: string | null;
+          stripe_event_id?: string | null;
           user_id?: string | null;
         };
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           payload?: Json;
           status?: string;
           stripe_customer_id?: string | null;
+          stripe_event_id?: string | null;
           user_id?: string | null;
         };
         Relationships: [];
@@ -244,6 +247,38 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_log: {
+        Row: {
+          action: string;
+          created_at: string | null;
+          id: string;
+          metadata: Json | null;
+          user_id: string | null;
+        };
+        Insert: {
+          action: string;
+          created_at?: string | null;
+          id?: string;
+          metadata?: Json | null;
+          user_id?: string | null;
+        };
+        Update: {
+          action?: string;
+          created_at?: string | null;
+          id?: string;
+          metadata?: Json | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_logs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       user_subscription: {
         Row: {
           active: boolean | null;
@@ -260,9 +295,6 @@ export type Database = {
           subscription_ends_at: string | null;
           updated_at: string | null;
           user_id: string;
-          next_billing_date: string | null;
-          trial_end_date: string | null;
-          payment_method: string | null;
         };
         Insert: {
           active?: boolean | null;
