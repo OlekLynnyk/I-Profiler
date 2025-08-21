@@ -40,6 +40,16 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // 🔐 Защита приватных путей (например: /workspace)
+  const protectedPaths = ['/workspace'];
+  const isProtected = protectedPaths.some((prefix) => path.startsWith(prefix));
+
+  if (!session && isProtected) {
+    const loginUrl = new URL('/login', req.url);
+    loginUrl.searchParams.set('redirect', path);
+    return NextResponse.redirect(loginUrl);
+  }
+
   return res;
 }
 
