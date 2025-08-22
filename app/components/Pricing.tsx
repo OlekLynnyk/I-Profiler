@@ -2,8 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+import { motion, useReducedMotion, type Easing } from 'framer-motion';
 
 const supabase = createPagesBrowserClient();
+const easing: Easing = [0.22, 1, 0.36, 1];
+
+const ACCENT = '#A855F7';
 
 type Plan = {
   id: string;
@@ -18,6 +22,7 @@ type Plan = {
 export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -101,7 +106,34 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
   const activePlan = useMemo(() => plans.find((p) => p.id === activeId)!, [plans, activeId]);
   const smallPlans = useMemo(() => plans.filter((p) => p.id !== activeId), [plans, activeId]);
 
-  // ======= Универсальная карточка (МОБИЛЬНЫЙ ВИЗУАЛ LUX, ЛОГИКА БЕЗ ИЗМЕНЕНИЙ) =======
+  // ======= Анимации (Framer) =======
+  const containerVar = {
+    hidden: { opacity: 0, y: 8 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        staggerChildren: reduce ? 0 : 0.06,
+        duration: 0.4,
+        ease: easing, // ✅ сюда подставляем переменную
+      },
+    },
+  };
+
+  const itemVar = {
+    hidden: { opacity: 0, y: 10, scale: 0.98 },
+    show: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.45,
+        ease: easing, // ✅ сюда тоже
+      },
+    },
+  };
+
+  // ======= Универсальная карточка (Mobile визуал LUX) =======
   const PlanCard = ({
     plan,
     size,
@@ -120,11 +152,10 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     const radius = 'rounded-3xl';
     const luxShadow = 'shadow-[0_10px_30px_rgba(0,0,0,0.10)]';
     const highlightGlow = plan.highlight
-      ? 'ring-1 ring-[#C084FC]/40 shadow-[0_12px_40px_rgba(192,132,252,0.28)]'
+      ? `ring-1 ring-[${ACCENT}]/40 shadow-[0_12px_40px_rgba(168,85,247,0.28)]`
       : '';
 
     if (size === 'small') {
-      // МАЛАЯ КАРТА (верхние 2 квадрата)
       return (
         <button
           type="button"
@@ -133,17 +164,22 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
             aspect-square w-full overflow-hidden
             transition-[transform,box-shadow] duration-200 active:scale-[0.98]
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-[${ACCENT}]/60
           `}
+          aria-label={`Activate ${plan.name} plan`}
         >
           <div className="h-full w-full flex flex-col items-center justify-center p-4 text-center">
-            <h3 className="text-[15px] font-semibold">{plan.name}</h3>
+            <h3 className="text-[15px] font-semibold uppercase tracking-wide">{plan.name}</h3>
             <p className="mt-1 text-2xl">
               {plan.price}
               {!isFree && (
                 <span className="text-[11px] align-baseline text-[#4B5563]"> /4 weeks</span>
               )}
             </p>
-            <p className="mt-2 text-[#374151] text-[13px] leading-snug line-clamp-3">
+            <p
+              id={`desc-${plan.id}`}
+              className="mt-2 text-[#374151] text-[13px] leading-snug line-clamp-3"
+            >
               {plan.description}
             </p>
           </div>
@@ -151,41 +187,52 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       );
     }
 
-    // БОЛЬШАЯ КАРТА (Featured снизу)
+    // Large card
     return (
       <div
         className={`
-          relative ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
-          p-6
+          relative ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow} p-6
+          transition-transform duration-200 hover:-translate-y-[2px]
         `}
+        role="group"
+        aria-labelledby={`title-${plan.id}`}
       >
-        {/* Тонкая светящаяся полоска сверху — как на десктопе */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-[#C084FC00] via-[#C084FC99] to-[#C084FC00]" />
+        {/* HL/Accent сверху */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent" />
 
-        {/* Бейдж «Most popular» для highlighted */}
+        {/* бейдж */}
         {plan.highlight && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#C084FC]/15 text-[#4C1D95] px-3 py-1 text-[11px] tracking-wide ring-1 ring-[#C084FC]/30">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#A855F7]/15 text-[#3B145C] px-3 py-1 text-[11px] tracking-wide ring-1 ring-[#A855F7]/30">
             Most popular
           </div>
         )}
 
-        <h3 className="text-[20px] font-semibold">{plan.name}</h3>
+        <h3 id={`title-${plan.id}`} className="text-[20px] font-semibold uppercase tracking-wide">
+          {plan.name}
+        </h3>
 
-        <p className="mt-1 text-[32px] font-extrabold">
+        <p className="mt-1 text-[32px] font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-[#1F2937] via-[#1F2937] to-[#6B21A8]">
           {plan.price}
           {!isFree && (
             <span className="align-baseline text-[12px] font-medium text-[#4B5563]"> /4 weeks</span>
           )}
         </p>
 
-        <p className="mt-3 text-[#374151] text-[15px] leading-relaxed">{plan.description}</p>
+        <p id={`desc-${plan.id}`} className="mt-3 text-[#374151] text-[15px] leading-relaxed">
+          {plan.description}
+        </p>
 
         <ul className="mt-5 text-left text-[14px] text-[#374151] space-y-2.5 leading-relaxed">
           {plan.features.map((feature) => (
             <li key={feature} className="flex items-start gap-2.5">
-              <span aria-hidden className="mt-[2px] text-[#6B21A8]">
-                ✔
-              </span>
+              <svg
+                className="mt-[2px] h-4 w-4 flex-none"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+              >
+                <path d="M5 12l4 4 10-10" stroke={ACCENT} strokeWidth="2" />
+              </svg>
               <span>{feature}</span>
             </li>
           ))}
@@ -195,13 +242,21 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           onClick={isFree ? (isLoggedIn ? undefined : plan.action) : () => handleCheckout(plan.id)}
           className="
             mt-6 w-full min-h-11 rounded-full
-            bg-[#C084FC] text-[#212529]
-            ring-1 ring-[#C084FC]/40
+            text-[#111827]
             transition-[background,ring,transform] duration-200
-            active:scale-[0.99] hover:bg-[#D8B4FE] hover:ring-[#C084FC]/60
+            active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
           "
+          style={{
+            backgroundImage: `
+              radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
+              linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.82))
+            `,
+            boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.6), 0 8px 28px rgba(0,0,0,0.10)',
+            border: '1px solid rgba(168,85,247,0.35)',
+          }}
           disabled={isDisabled}
           title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
+          aria-describedby={`desc-${plan.id}`}
         >
           {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
         </button>
@@ -210,72 +265,104 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
   };
 
   return (
-    <section className="pt-6 md:pt-8 pb-16 md:pb-24 bg-transparent">
+    <section className="pt-6 md:pt-8 pb-16 md:pb-24 bg-transparent" aria-labelledby="pricing-title">
       <div className="max-w-6xl mx-auto px-4 md:px-6 text-center relative">
-        {/* лёгкий верхний глоу — как в How it works */}
+        {/* верхний мягкий глоу */}
         <div
           className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2
           h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl"
+          aria-hidden
         />
 
-        {/* Заголовок — lux */}
-        <h2 className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-6 sm:mb-8">
+        {/* Заголовок */}
+        <h2
+          id="pricing-title"
+          className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-6 sm:mb-8"
+        >
           Pricing
         </h2>
 
-        {/* ===== MOBILE (< md): ОБНОВЛЁН LUX ВИЗУАЛ, ЛОГИКА/АНИМАЦИИ КАК БЫЛИ ===== */}
+        {/* ===== MOBILE (< md) ===== */}
         <div className="md:hidden space-y-5">
           {/* Верх: две малые карточки */}
-          <div className="grid grid-cols-2 gap-4">
+          <motion.div
+            variants={containerVar}
+            initial={reduce ? undefined : 'hidden'}
+            whileInView={reduce ? undefined : 'show'}
+            viewport={{ once: true, amount: 0.4 }}
+            className="grid grid-cols-2 gap-4"
+          >
             {smallPlans.map((p) => (
-              <PlanCard key={p.id} plan={p} size="small" onClick={() => setActiveId(p.id)} />
+              <motion.div key={p.id} variants={itemVar}>
+                <PlanCard plan={p} size="small" onClick={() => setActiveId(p.id)} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Низ: крупная карточка (активный план) */}
-          <div
+          <motion.div
             key={activePlan.id}
-            className="transition-all duration-300 ease-out animate-in fade-in-0 zoom-in-95"
+            variants={itemVar}
+            initial={reduce ? undefined : 'hidden'}
+            whileInView={reduce ? undefined : 'show'}
+            viewport={{ once: false, amount: 0.4 }}
+            className="transition-all duration-300 ease-out"
           >
             <PlanCard plan={activePlan} size="large" />
-          </div>
+          </motion.div>
 
           <div className="pb-[env(safe-area-inset-bottom)]" />
         </div>
 
-        {/* ===== DESKTOP (>= md): ✨ LUX DESKTOP ✨ — БЕЗ ИЗМЕНЕНИЙ ===== */}
-        <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        {/* ===== DESKTOP (>= md) ===== */}
+        <motion.div
+          variants={containerVar}
+          initial={reduce ? undefined : 'hidden'}
+          whileInView={reduce ? undefined : 'show'}
+          viewport={{ once: true, amount: 0.35 }}
+          className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left"
+        >
           {plans.map((plan) => {
             const isFree = plan.id === 'free';
             const isLoading = loadingPlan === plan.id;
             const isDisabled = (!isLoggedIn && !isFree) || isLoading || (isFree && isLoggedIn);
 
             return (
-              <div
+              <motion.div
                 key={plan.id}
+                variants={itemVar}
                 className={`
                   group relative rounded-3xl bg-white/5 backdrop-blur
-                  ring-1 ring-white/10 p-8 text-left
+                  ring-1 ring-white/10 p-8
                   shadow-[0_10px_40px_rgba(0,0,0,0.35)]
-                  transition-transform duration-200 hover:-translate-y-1
-                  hover:shadow-[0_20px_60px_rgba(168,85,247,0.15)]
-                  ${plan.highlight ? 'ring-purple-300/30' : ''}
+                  transition-all duration-200
+                  hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(168,85,247,0.15)]
+                  ${plan.highlight ? 'ring-[#A855F7]/30' : ''}
                 `}
+                role="group"
+                aria-labelledby={`title-desktop-${plan.id}`}
               >
-                {/* светящаяся тонкая полоса сверху */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-purple-400/0 via-purple-400/60 to-purple-400/0 rounded-t-3xl" />
+                {/* верхняя HL/Accent */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent rounded-t-3xl" />
 
-                {/* бейдж на популярном плане */}
+                {/* бейдж */}
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-purple-500/15 text-purple-200 px-3 py-1 text-xs tracking-wide ring-1 ring-purple-300/20">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#A855F7]/15 text-[#E9D5FF] px-3 py-1 text-xs tracking-wide ring-1 ring-[#A855F7]/25">
                     Most popular
                   </div>
                 )}
 
-                <h3 className="text-xl font-semibold text-white tracking-tight">{plan.name}</h3>
+                <h3
+                  id={`title-desktop-${plan.id}`}
+                  className="text-xl font-semibold text-white tracking-tight uppercase"
+                >
+                  {plan.name}
+                </h3>
 
-                <div className="mt-1 text-3xl font-extrabold text-white">
-                  {plan.price}{' '}
+                <div className="mt-1 text-3xl font-extrabold">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-[#C4B5FD]">
+                    {plan.price}
+                  </span>{' '}
                   {!isFree && (
                     <span className="align-middle text-sm font-medium text-white/70">/4 weeks</span>
                   )}
@@ -292,12 +379,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                         fill="none"
                         aria-hidden
                       >
-                        <path
-                          d="M5 12l4 4 10-10"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="text-purple-300"
-                        />
+                        <path d="M5 12l4 4 10-10" stroke={ACCENT} strokeWidth="2" />
                       </svg>
                       <span className="text-white/80">{feature}</span>
                     </li>
@@ -316,28 +398,42 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                   }
                   className="
                     mt-8 w-full rounded-full px-6 py-4
-                    bg-purple-500/20 text-white
-                    ring-1 ring-purple-300/30
+                    text-white
+                    ring-1 ring-[#A855F7]/30
                     backdrop-blur
-                    transition-colors duration-200
-                    hover:bg-purple-500/30 hover:ring-purple-300/50
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60
+                    transition-[transform,box-shadow,background] duration-200
+                    hover:-translate-y-[1px]
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
                     disabled:opacity-60
                   "
+                  style={{
+                    backgroundImage: `
+                      radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
+                      linear-gradient(180deg, rgba(168,85,247,0.25), rgba(168,85,247,0.18))
+                    `,
+                    boxShadow: '0 12px 36px rgba(168,85,247,0.25)',
+                  }}
                   disabled={isDisabled}
                   title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
+                  aria-describedby={`title-desktop-${plan.id}`}
                 >
                   {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
                 </button>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
+        {/* нижняя нейтральная линия + подпись */}
         <p className="text-xs sm:text-sm text-[#E5E5E5] mt-6 sm:mt-8 max-w-3xl mx-auto leading-relaxed px-2">
           For individual professional advice, training, or API integration, please contact us
           through email.
         </p>
+
+        {/* aria-live для статуса редиректа */}
+        <span className="sr-only" aria-live="polite">
+          {loadingPlan ? 'Redirecting to checkout…' : ''}
+        </span>
       </div>
     </section>
   );

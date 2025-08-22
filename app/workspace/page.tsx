@@ -21,6 +21,28 @@ import { FaLinkedin } from 'react-icons/fa';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import SessionBridge from '@/app/components/SessionBridge';
 
+function AmbientBackdrop({ src }: { src: string }) {
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden"
+    >
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          src={src}
+          alt=""
+          className="w-[88vmin] max-w-[min(88vmin,1600px)] h-auto object-contain opacity-[0.005]"
+          style={{
+            filter: 'contrast(1.05)',
+            maskImage: 'radial-gradient(60% 60% at 50% 45%, #000 60%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(60% 60% at 50% 45%, #000 60%, transparent 100%)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 const LimitModal = dynamic(() => import('@/app/components/LimitModal'), { ssr: false });
 
 const Sidebar = dynamic(() => import('./Sidebar'), {
@@ -231,184 +253,190 @@ export default function WorkspacePage() {
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
       >
-        {isHelperOpen && (
-          <ErrorBoundary>
-            <SidebarHelper />
-          </ErrorBoundary>
-        )}
-        {isSidebarOpen && (
-          <ErrorBoundary>
-            <Sidebar packageType={packageType} refreshToken={refreshToken} />
-          </ErrorBoundary>
-        )}
+        {/* фон под всем */}
+        <AmbientBackdrop src="/images/ambient.png" />
+        {/* весь контент поверх */}
+        <div className="relative z-10 flex w-full">
+          {isHelperOpen && (
+            <ErrorBoundary>
+              <SidebarHelper />
+            </ErrorBoundary>
+          )}
+          {isSidebarOpen && (
+            <ErrorBoundary>
+              <Sidebar packageType={packageType} refreshToken={refreshToken} />
+            </ErrorBoundary>
+          )}
 
-        <HeaderBar
-          onLogout={handleLogoutConfirm}
-          onSaveProfiling={handleSaveClick}
-          disableSaveProfiling={isGenerating || messages.length === 0}
-        />
+          <HeaderBar
+            onLogout={handleLogoutConfirm}
+            onSaveProfiling={handleSaveClick}
+            disableSaveProfiling={isGenerating || messages.length === 0}
+          />
 
-        <div className="flex-1 flex flex-col justify-center items-center pb-[160px]">
-          <div
-            className="w-full max-w-3xl flex-1 overflow-y-auto pt-[72px] px-4 sm:px-6 md:px-8 no-scrollbar"
-            ref={scrollRef}
-          >
-            <div className="flex flex-col items-start justify-start py-4">
-              {errorMessage && !generationError && (
-                <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-lg text-sm flex justify-between w-full">
-                  <span>{errorMessage}</span>
-                  <button
-                    onClick={() => {
-                      setAttachmentError('');
-                      setInputValue('');
-                    }}
-                    className="text-red-700 hover:underline text-xs"
-                  >
-                    Close
-                  </button>
-                </div>
-              )}
-
-              {messages.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                  className="flex flex-col items-center justify-center text-center w-full py-12 px-4 mt-28"
-                >
-                  {/* Лого */}
-                  <img src="/images/logo.png" alt="Logo" className="w-10 h-10 mb-2" />
-
-                  {/* Основной текст */}
-                  <p className="text-[20px] font-semibold text-center text-gray-700 dark:text-[var(--text-primary)]">
-                    Advanced AI Discernment
-                  </p>
-
-                  {/* Подпись */}
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">By {userName}</p>
-                </motion.div>
-              )}
-
-              {messages.map((msg, i) => (
-                <React.Fragment key={`${msg.id}-${msg.timestamp}`}>
-                  <Suspense
-                    fallback={
-                      <div className="text-[var(--text-secondary)] text-xs">Loading message...</div>
-                    }
-                  >
-                    <ChatBubble
-                      index={i}
-                      role={msg.role}
-                      content={msg.content}
-                      messageId={msg.id}
-                      status={messageStatuses[msg.id]}
-                      rating={messageRatings[msg.id]}
-                      onRate={handleRate}
-                    />
-                  </Suspense>
-                  {generationError && generationError.index === i && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-sm my-2">
-                      An error occurred while generating the response.
-                      <button
-                        onClick={() => retryGeneration()}
-                        className="underline ml-2 text-red-600 hover:text-red-800"
-                      >
-                        Try again
-                      </button>
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
-
-              <div ref={bottomRef} />
-
-              {messages.length > 0 && (
-                <div className="w-full text-center my-4">
-                  <button
-                    onClick={() => setShowConfirm(true)}
-                    className="text-xs text-[var(--text-secondary)] opacity-60 hover:opacity-100 transition"
-                  >
-                    Clear history
-                  </button>
-                </div>
-              )}
-
-              {isGenerating && (
-                <div className="w-full text-left py-1 text-sm text-[var(--text-secondary)] animate-pulse">
-                  Analysing...
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="fixed bottom-3 w-full px-3 sm:px-4 md:px-6">
-            <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl">
-              {attachedFiles.length > 0 && (
-                <div className="flex gap-2 mb-2 flex-wrap">
-                  {attachedFiles.map((file, idx) => (
-                    <div
-                      key={idx}
-                      className="relative w-20 h-20 rounded-xl overflow-hidden max-w-full sm:max-w-[80px]"
-                    >
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`attachment ${idx}`}
-                        className="object-cover w-full h-full rounded-xl"
-                      />
-                      <button
-                        onClick={() => handleFileRemove(file)}
-                        className="absolute top-0 right-0 bg-black bg-opacity-60 rounded-full p-1 text-white hover:bg-opacity-80"
-                        aria-label="Remove attached file"
-                      >
-                        <X size={20} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex flex-col gap-0.5">
-                <textarea
-                  ref={textareaRef}
-                  rows={1}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask anything"
-                  disabled={isDragging}
-                  className="w-full px-4 py-2 text-[clamp(0.875rem,1vw,1rem)] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
-                />
-
-                <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] dark:bg-[var(--card-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
-                      <Plus size={16} className="text-[var(--text-primary)]" />
-                      <input
-                        type="file"
-                        className="hidden"
-                        multiple
-                        onChange={(e) => {
-                          handleFileChange(e);
-                          if (e.target.files && e.target.files.length > 0) {
-                            setIsImageActive(true);
-                            setIsChatActive(false);
-                            setChatMode('image');
-                            setProfilingMode(true);
-                          }
-                        }}
-                      />
-                    </label>
-
+          <div className="flex-1 flex flex-col justify-center items-center pb-[160px]">
+            <div
+              className="w-full max-w-3xl flex-1 overflow-y-auto pt-[72px] px-4 sm:px-6 md:px-8 no-scrollbar"
+              ref={scrollRef}
+            >
+              <div className="flex flex-col items-start justify-start py-4">
+                {errorMessage && !generationError && (
+                  <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-lg text-sm flex justify-between w-full">
+                    <span>{errorMessage}</span>
                     <button
-                      type="button"
                       onClick={() => {
-                        const next = !isImageActive;
-                        setIsImageActive(next);
-                        setChatMode(next ? 'image' : 'none');
-                        setIsChatActive(false);
-                        setProfilingMode(next);
+                        setAttachmentError('');
+                        setInputValue('');
                       }}
-                      className={`
+                      className="text-red-700 hover:underline text-xs"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+
+                {messages.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="flex flex-col items-center justify-center text-center w-full py-12 px-4 mt-28"
+                  >
+                    {/* Лого */}
+                    <img src="/images/logo.png" alt="Logo" className="w-10 h-10 mb-2" />
+
+                    {/* Основной текст */}
+                    <p className="text-[20px] font-semibold text-center text-gray-700 dark:text-[var(--text-primary)]">
+                      Advanced AI Discernment
+                    </p>
+
+                    {/* Подпись */}
+                    <p className="mt-1 text-sm text-[var(--text-secondary)]">By {userName}</p>
+                  </motion.div>
+                )}
+
+                {messages.map((msg, i) => (
+                  <React.Fragment key={`${msg.id}-${msg.timestamp}`}>
+                    <Suspense
+                      fallback={
+                        <div className="text-[var(--text-secondary)] text-xs">
+                          Loading message...
+                        </div>
+                      }
+                    >
+                      <ChatBubble
+                        index={i}
+                        role={msg.role}
+                        content={msg.content}
+                        messageId={msg.id}
+                        status={messageStatuses[msg.id]}
+                        rating={messageRatings[msg.id]}
+                        onRate={handleRate}
+                      />
+                    </Suspense>
+                    {generationError && generationError.index === i && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-sm my-2">
+                        An error occurred while generating the response.
+                        <button
+                          onClick={() => retryGeneration()}
+                          className="underline ml-2 text-red-600 hover:text-red-800"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+
+                <div ref={bottomRef} />
+
+                {messages.length > 0 && (
+                  <div className="w-full text-center my-4">
+                    <button
+                      onClick={() => setShowConfirm(true)}
+                      className="text-xs text-[var(--text-secondary)] opacity-60 hover:opacity-100 transition"
+                    >
+                      Clear history
+                    </button>
+                  </div>
+                )}
+
+                {isGenerating && (
+                  <div className="w-full text-left py-1 text-sm text-[var(--text-secondary)] animate-pulse">
+                    Analysing...
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="fixed bottom-3 w-full px-3 sm:px-4 md:px-6">
+              <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl">
+                {attachedFiles.length > 0 && (
+                  <div className="flex gap-2 mb-2 flex-wrap">
+                    {attachedFiles.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="relative w-20 h-20 rounded-xl overflow-hidden max-w-full sm:max-w-[80px]"
+                      >
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`attachment ${idx}`}
+                          className="object-cover w-full h-full rounded-xl"
+                        />
+                        <button
+                          onClick={() => handleFileRemove(file)}
+                          className="absolute top-0 right-0 bg-black bg-opacity-60 rounded-full p-1 text-white hover:bg-opacity-80"
+                          aria-label="Remove attached file"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-0.5">
+                  <textarea
+                    ref={textareaRef}
+                    rows={1}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask anything"
+                    disabled={isDragging}
+                    className="w-full px-4 py-2 text-[clamp(0.875rem,1vw,1rem)] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
+                  />
+
+                  <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] dark:bg-[var(--card-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
+                        <Plus size={16} className="text-[var(--text-primary)]" />
+                        <input
+                          type="file"
+                          className="hidden"
+                          multiple
+                          onChange={(e) => {
+                            handleFileChange(e);
+                            if (e.target.files && e.target.files.length > 0) {
+                              setIsImageActive(true);
+                              setIsChatActive(false);
+                              setChatMode('image');
+                              setProfilingMode(true);
+                            }
+                          }}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = !isImageActive;
+                          setIsImageActive(next);
+                          setChatMode(next ? 'image' : 'none');
+                          setIsChatActive(false);
+                          setProfilingMode(next);
+                        }}
+                        className={`
                       flex items-center gap-1 h-8 px-3
                       rounded-full shadow-sm transition
                       text-xs font-medium
@@ -418,100 +446,100 @@ export default function WorkspacePage() {
                           : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]'
                       }
                     `}
-                      aria-label="Toggle Image Mode"
-                    >
-                      <ImageIcon size={14} />
-                      Image
-                    </button>
+                        aria-label="Toggle Image Mode"
+                      >
+                        <ImageIcon size={14} />
+                        Image
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => alert('Currently not available.')}
-                      className="
-                        flex items-center gap-1 h-8 px-3
-                       rounded-full shadow-sm transition
-                       bg-[var(--button-bg)] text-[var(--text-primary)]
-                       hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
-                       text-xs font-medium
-                    "
-                      aria-label="LinkedIn Button"
-                    >
-                      <FaLinkedin className="w-3.5 h-3.5" />
-                      LinkedIn
-                    </button>
-
-                    <div className="relative">
                       <button
                         type="button"
-                        onClick={() => setShowMoreDropdown(!showMoreDropdown)}
-                        aria-label="More Button"
+                        onClick={() => alert('Currently not available.')}
                         className="
                         flex items-center gap-1 h-8 px-3
                        rounded-full shadow-sm transition
                        bg-[var(--button-bg)] text-[var(--text-primary)]
                        hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
                        text-xs font-medium
-                      "
+                    "
+                        aria-label="LinkedIn Button"
                       >
-                        More
-                        <ChevronDown
-                          size={14}
-                          className={`transition-transform duration-200 ${showMoreDropdown ? 'rotate-180' : ''}`}
-                        />
+                        <FaLinkedin className="w-3.5 h-3.5" />
+                        LinkedIn
                       </button>
 
-                      {showMoreDropdown && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          transition={{ duration: 0.2 }}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowMoreDropdown(!showMoreDropdown)}
+                          aria-label="More Button"
                           className="
+                        flex items-center gap-1 h-8 px-3
+                       rounded-full shadow-sm transition
+                       bg-[var(--button-bg)] text-[var(--text-primary)]
+                       hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
+                       text-xs font-medium
+                      "
+                        >
+                          More
+                          <ChevronDown
+                            size={14}
+                            className={`transition-transform duration-200 ${showMoreDropdown ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+
+                        {showMoreDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            transition={{ duration: 0.2 }}
+                            className="
                           absolute bottom-12 left-0 w-40 rounded-lg shadow-lg
                           bg-[var(--card-bg)] text-[var(--text-primary)]
                           border border-[var(--card-border)]
                           z-50
                         "
-                        >
-                          <button
-                            className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition ${
-                              isChatActive ? 'text-[#C084FC]' : ''
-                            }`}
-                            onClick={() => {
-                              const next = !isChatActive;
-                              setIsChatActive(next);
-                              setChatMode(next ? 'chat' : 'none');
-                              setIsImageActive(false);
-                              setShowMoreDropdown(false);
-                            }}
                           >
-                            💬 Chat
-                          </button>
-                          <button
-                            className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
-                            onClick={() => alert('Option 2 clicked')}
-                          >
-                            Option 2
-                          </button>
-                          <button
-                            className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
-                            onClick={() => alert('Option 3 clicked')}
-                          >
-                            Option 3
-                          </button>
-                        </motion.div>
-                      )}
+                            <button
+                              className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition ${
+                                isChatActive ? 'text-[#C084FC]' : ''
+                              }`}
+                              onClick={() => {
+                                const next = !isChatActive;
+                                setIsChatActive(next);
+                                setChatMode(next ? 'chat' : 'none');
+                                setIsImageActive(false);
+                                setShowMoreDropdown(false);
+                              }}
+                            >
+                              💬 Chat
+                            </button>
+                            <button
+                              className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
+                              onClick={() => alert('Option 2 clicked')}
+                            >
+                              Option 2
+                            </button>
+                            <button
+                              className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
+                              onClick={() => alert('Option 3 clicked')}
+                            >
+                              Option 3
+                            </button>
+                          </motion.div>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <button
-                    onClick={submit}
-                    disabled={
-                      limitReached ||
-                      (!inputValue.trim() && attachedFiles.length === 0) ||
-                      isGenerating
-                    }
-                    className={`
+                    <button
+                      onClick={submit}
+                      disabled={
+                        limitReached ||
+                        (!inputValue.trim() && attachedFiles.length === 0) ||
+                        isGenerating
+                      }
+                      className={`
                     w-9 h-9 flex items-center justify-center
                     rounded-full
                      bg-[var(--button-bg)] dark:bg-[var(--card-bg)]
@@ -527,130 +555,133 @@ export default function WorkspacePage() {
                         : ''
                     }
                   `}
-                    aria-label="Start Generation"
+                      aria-label="Start Generation"
+                    >
+                      {isGenerating ? (
+                        <Loader size={20} className="animate-spin" />
+                      ) : (
+                        <SendHorizonal size={20} />
+                      )}
+                    </button>
+                  </div>
+
+                  {hasErrors && <p className="text-xs text-[var(--danger)] px-2 pt-1">{error}</p>}
+                  {attachmentError && (
+                    <p className="text-xs text-[var(--danger)] px-2 pt-1">{attachmentError}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-2 text-center text-xs text-[var(--text-secondary)]">
+                H1NTED can make mistakes. See{' '}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-[var(--text-primary)]"
+                >
+                  Terms of Use
+                </a>{' '}
+                and{' '}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-[var(--text-primary)]"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </div>
+            </div>
+          </div>
+
+          {!isAtBottom && (
+            <button
+              onClick={scrollToBottom}
+              className="
+            absolute
+            right-2 sm:right-3 md:right-4
+            bottom-24 sm:bottom-28
+            w-11 h-11
+            rounded-full
+            bg-[var(--accent-bg)]
+            text-[var(--accent)]
+            shadow-[0_8px_24px_rgba(0,0,0,0.35)]
+            ring-1 ring-[var(--card-border)]
+            hover:brightness-110 hover:shadow-[0_8px_30px_rgba(168,85,247,0.25)]
+            transition
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]
+           "
+              aria-label="Scroll to latest message"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
+          )}
+
+          {showConfirm && (
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <div
+                ref={confirmRef}
+                className="bg-[var(--card-bg)] text-[var(--text-primary)] rounded-xl px-5 py-3 shadow-md border border-[var(--card-border)] max-w-[350px] w-full text-sm"
+              >
+                <p className="text-left mb-3">Are you sure you want to delete the history?</p>
+                <div className="flex justify-end gap-4">
+                  <button
+                    onClick={() => setShowConfirm(false)}
+                    className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   >
-                    {isGenerating ? (
-                      <Loader size={20} className="animate-spin" />
-                    ) : (
-                      <SendHorizonal size={20} />
-                    )}
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      clearMessages();
+                      setShowConfirm(false);
+                    }}
+                    className="text-sm text-[var(--text-primary)] hover:underline"
+                  >
+                    Yes
                   </button>
                 </div>
-
-                {hasErrors && <p className="text-xs text-[var(--danger)] px-2 pt-1">{error}</p>}
-                {attachmentError && (
-                  <p className="text-xs text-[var(--danger)] px-2 pt-1">{attachmentError}</p>
-                )}
               </div>
             </div>
+          )}
 
-            <div className="mt-2 text-center text-xs text-[var(--text-secondary)]">
-              H1NTED can make mistakes. See{' '}
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-[var(--text-primary)]"
-              >
-                Terms of Use
-              </a>{' '}
-              and{' '}
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-[var(--text-primary)]"
-              >
-                Privacy Policy
-              </a>
-              .
-            </div>
-          </div>
-        </div>
+          <ErrorBoundary>
+            <LimitModal show={showLimitModal} onClose={() => setShowLimitModal(false)} />
+          </ErrorBoundary>
 
-        {!isAtBottom && (
-          <button
-            onClick={scrollToBottom}
-            className="
-            fixed bottom-28 right-4 sm:right-8
-            p-2 rounded-full
-            bg-[var(--surface-secondary)]
-            hover:bg-[var(--surface)]
-            text-[var(--text-primary)]
-            shadow-lg
-            transition
-            focus:outline-none
-            focus-visible:ring
-            focus-visible:ring-blue-300
-            z-50
-          "
-            aria-label="Scroll to latest message"
-          >
-            <ChevronDown size={20} className="w-6 h-6" />
-          </button>
-        )}
+          <SaveProfileModal
+            open={showSaveModal}
+            onClose={() => setShowSaveModal(false)}
+            aiResponse={aiResponseToSave}
+            isNew={isNewProfile}
+            onSave={async (name, aiResponse, comments) => {
+              const userId = session?.user?.id;
+              if (!userId) {
+                alert('User not logged in');
+                return;
+              }
 
-        {showConfirm && (
-          <div className="absolute inset-0 flex items-center justify-center z-50">
-            <div
-              ref={confirmRef}
-              className="bg-[var(--card-bg)] text-[var(--text-primary)] rounded-xl px-5 py-3 shadow-md border border-[var(--card-border)] max-w-[350px] w-full text-sm"
-            >
-              <p className="text-left mb-3">Are you sure you want to delete the history?</p>
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    clearMessages();
-                    setShowConfirm(false);
-                  }}
-                  className="text-sm text-[var(--text-primary)] hover:underline"
-                >
-                  Yes
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+              await saveProfile({
+                user_id: userId,
+                profile_name: name,
+                chat_json: {
+                  ai_response: aiResponse || '',
+                  user_comments: comments,
+                },
+                saved_at: Date.now(),
+              });
 
-        <ErrorBoundary>
-          <LimitModal show={showLimitModal} onClose={() => setShowLimitModal(false)} />
-        </ErrorBoundary>
+              setShowSaveModal(false);
+              refetch?.();
+            }}
+            defaultProfileName={`Profiling #${Date.now()}`}
+          />
 
-        <SaveProfileModal
-          open={showSaveModal}
-          onClose={() => setShowSaveModal(false)}
-          aiResponse={aiResponseToSave}
-          isNew={isNewProfile}
-          onSave={async (name, aiResponse, comments) => {
-            const userId = session?.user?.id;
-            if (!userId) {
-              alert('User not logged in');
-              return;
-            }
-
-            await saveProfile({
-              user_id: userId,
-              profile_name: name,
-              chat_json: {
-                ai_response: aiResponse || '',
-                user_comments: comments,
-              },
-              saved_at: Date.now(),
-            });
-
-            setShowSaveModal(false);
-            refetch?.();
-          }}
-          defaultProfileName={`Profiling #${Date.now()}`}
-        />
-
-        {overlay}
+          {overlay}
+        </div>{' '}
+        {/* закрываем z-10 обёртку */}
       </div>
     </>
   );

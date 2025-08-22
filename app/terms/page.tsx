@@ -1,74 +1,113 @@
+// app/terms/page.tsx  (или ваш путь)
+
 export default function TermsPage() {
   return (
-    <main className="max-w-4xl mx-auto py-20 px-6 text-white">
-      <h1 className="text-4xl font-bold mb-10">Terms of Use</h1>
-      <div className="border border-gray-400 rounded-2xl p-6 text-black bg-white space-y-6 whitespace-pre-wrap">
-        <p>Effective Date: [Insert Date]</p>
+    <main
+      aria-labelledby="terms-title"
+      className="relative mx-auto max-w-4xl px-6 py-16 sm:py-20 text-white"
+    >
+      {/* Верхний мягкий глоу */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-6 -translate-x-1/2 h-[140px] w-[min(760px,92%)] rounded-[999px] bg-white/5 blur-2xl"
+      />
 
-        <p>
-          These Terms of Use ("Terms") govern your access to and use of [Insert Company Name]’s
-          AI-driven persona analysis platform, including our website and any associated services
-          ("Platform"). By registering or using our Platform, you agree to be bound by these Terms.
+      <h1
+        id="terms-title"
+        className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-6 sm:mb-8"
+      >
+        Terms of Use
+      </h1>
+
+      {/* Стеклянная карточка */}
+      <section
+        className="
+          relative rounded-3xl bg-white/5 backdrop-blur
+          ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+          px-5 sm:px-8 py-6 sm:py-8 space-y-6
+        "
+      >
+        {/* Тонкая светящаяся полоска сверху */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent"
+        />
+
+        <p className="text-sm text-white/70">Effective Date: [Insert Date]</p>
+
+        <p className="text-white/80">
+          These Terms of Use (&quot;Terms&quot;) govern your access to and use of [Insert Company
+          Name]’s AI-driven persona analysis platform, including our website and any associated
+          services (&quot;Platform&quot;). By registering or using our Platform, you agree to be
+          bound by these Terms.
         </p>
 
-        <h2 className="text-xl font-semibold">1. Age and Access Requirements</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          1. Age and Access Requirements
+        </h2>
+        <p className="text-white/80">
           This Platform is intended for users aged 16 years and older. By using our services, you
           represent that you meet this requirement. These Terms apply to all uses of the Platform,
           including any features or integrations.
         </p>
 
-        <h2 className="text-xl font-semibold">2. Description of Service</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          2. Description of Service
+        </h2>
+        <p className="text-white/80">
           Our Platform offers AI-generated persona analysis based on user-submitted content. The
           service provides behavioral and communication recommendations.
         </p>
-        <p>The service does not:</p>
-        <ul className="list-disc pl-6 space-y-1">
+        <p className="text-white/80">The service does not:</p>
+        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-white/80">
           <li>Guarantee accuracy or truth;</li>
           <li>Make decisions on behalf of users;</li>
           <li>Offer legal, HR, medical, or psychological advice.</li>
         </ul>
-        <p>
+        <p className="text-white/80">
           All insights are recommendations only, and you remain fully responsible for any actions
           taken based on them.
         </p>
 
-        <h2 className="text-xl font-semibold">3. Registration and Consent</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          3. Registration and Consent
+        </h2>
+        <p className="text-white/80">
           To use the Platform, you must create an account and explicitly agree to these Terms via
           checkbox during registration and login. Access is granted via Google sign-in or email
           verification code.
         </p>
 
-        <h2 className="text-xl font-semibold">4. Acceptable Use</h2>
-        <p>You agree to:</p>
-        <ul className="list-disc pl-6 space-y-1">
+        <h2 className="text-xl font-semibold tracking-tight text-white">4. Acceptable Use</h2>
+        <p className="text-white/80">You agree to:</p>
+        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-white/80">
           <li>Use the Platform lawfully and ethically;</li>
           <li>Never use it to harm others or yourself;</li>
           <li>Upload only legal, authorized, and public content.</li>
         </ul>
-        <p>
+        <p className="text-white/80">
           We reserve the right to suspend or terminate your access if we believe the service is
           being used in a harmful or malicious manner. No refunds will be issued in such cases.
         </p>
 
-        <h2 className="text-xl font-semibold">5. Nature of AI Output</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">5. Nature of AI Output</h2>
+        <p className="text-white/80">
           All outputs generated by the Platform are AI-generated recommendations, not factual or
           deterministic conclusions. We make no claim of accuracy or infallibility.
         </p>
-        <p>
+        <p className="text-white/80">
           Users must never interpret AI results as definitive for any legal, medical, employment, or
           personal decisions. All responsibility for action based on AI output lies with the user.
         </p>
 
-        <h2 className="text-xl font-semibold">6. Subscription and Payments</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          6. Subscription and Payments
+        </h2>
+        <p className="text-white/80">
           We offer several subscription tiers (Free, Smarter, Business), as described on our Pricing
           page.
         </p>
-        <ul className="list-disc pl-6 space-y-1">
+        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-white/80">
           <li>Subscriptions renew automatically every 4 weeks via Stripe.</li>
           <li>
             You may cancel at any time; your subscription remains active until the end of the
@@ -76,80 +115,97 @@ export default function TermsPage() {
           </li>
           <li>Payments are non-refundable once processed.</li>
         </ul>
-        <p>All payment processing is securely managed by Stripe.</p>
+        <p className="text-white/80">All payment processing is securely managed by Stripe.</p>
 
-        <h2 className="text-xl font-semibold">7. Support</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">7. Support</h2>
+        <p className="text-white/80">
           We offer email-based support. Users may contact us via [Insert Email]. Response time is up
           to 48 business hours.
         </p>
-        <p>
+        <p className="text-white/80">
           Occasional video sessions may be offered at our discretion and are not guaranteed. There
           is no prioritization of support by subscription tier.
         </p>
 
-        <h2 className="text-xl font-semibold">8. Account Deletion and Suspension</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          8. Account Deletion and Suspension
+        </h2>
+        <p className="text-white/80">
           You may delete your account at any time via your account settings. Deleted accounts may be
           recoverable within 24 hours.
         </p>
-        <p>
+        <p className="text-white/80">
           We reserve the right to disable accounts without notice in cases of policy violations,
           misuse, or abuse, without refund or liability.
         </p>
 
-        <h2 className="text-xl font-semibold">9. Intellectual Property</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          9. Intellectual Property
+        </h2>
+        <p className="text-white/80">
           All technology, analysis, design, content, and AI models provided through the Platform are
           the exclusive property of [Insert Company Name].
         </p>
-        <p>
+        <p className="text-white/80">
           You are granted a limited, non-transferable, non-exclusive license to use the Platform for
           lawful personal or business purposes.
         </p>
 
-        <h2 className="text-xl font-semibold">10. Limitation of Liability</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          10. Limitation of Liability
+        </h2>
+        <p className="text-white/80">
           We do not guarantee the accuracy of any AI output. Approximate accuracy indicators may be
           shown for illustrative purposes only.
         </p>
-        <p>
+        <p className="text-white/80">
           We are not liable for any direct, indirect, incidental, or consequential losses related to
           your use of the Platform. You use it entirely at your own risk.
         </p>
-        <p>
+        <p className="text-white/80">
           We are not responsible for any service interruptions or data loss due to force majeure,
           including but not limited to software errors, hosting issues, or third-party service
           outages. Repairs may take time.
         </p>
 
-        <h2 className="text-xl font-semibold">11. Governing Law and Jurisdiction</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          11. Governing Law and Jurisdiction
+        </h2>
+        <p className="text-white/80">
           These Terms are governed by the laws of Ireland. Any disputes shall be resolved
           exclusively by the courts of Ireland.
         </p>
 
-        <h2 className="text-xl font-semibold">12. Changes to These Terms</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          12. Changes to These Terms
+        </h2>
+        <p className="text-white/80">
           We may update these Terms. Users will be notified via email or on-site notifications.
           Continued use after notification constitutes acceptance.
         </p>
 
-        <h2 className="text-xl font-semibold">13. Language and Legal Effect</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          13. Language and Legal Effect
+        </h2>
+        <p className="text-white/80">
           These Terms are originally drafted in English. In the event of translation discrepancies,
           the English version shall prevail.
         </p>
 
-        <h2 className="text-xl font-semibold">14. No Agency or Tax Representation</h2>
-        <p>
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          14. No Agency or Tax Representation
+        </h2>
+        <p className="text-white/80">
           You acknowledge that use of the Platform does not create a partnership, agency, or joint
           venture. You are responsible for any taxes associated with your use of paid services.
         </p>
 
-        <h2 className="text-xl font-semibold">Contact</h2>
-        <p>For inquiries, contact us at: [Insert Email]</p>
-      </div>
+        <h2 className="text-xl font-semibold tracking-tight text-white">Contact</h2>
+        <p className="text-white/80">For inquiries, contact us at: [Insert Email]</p>
+
+        {/* Низ карточки */}
+        <div className="pt-4 mt-2 border-t border-white/10" />
+      </section>
     </main>
   );
 }

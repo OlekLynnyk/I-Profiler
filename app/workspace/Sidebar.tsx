@@ -69,7 +69,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
             <MonthlyUsage refreshToken={refreshToken} />
             <button
               onClick={() => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm')}
-              className="text-xs bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-xl w-full"
+              className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
             >
               Upgrade to Smarter
             </button>
@@ -118,27 +118,64 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
           className="space-y-2 text-sm text-[var(--text-primary)]"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Light */}
           <button
             onClick={() => setTheme('light')}
+            aria-pressed={theme === 'light'}
             className={cn(
-              'w-full px-3 py-1 rounded-xl flex items-center justify-between transition-colors',
+              'group relative w-full px-3 py-1 rounded-xl flex items-center justify-between transition-colors',
+              'ring-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--text-primary)]/20',
               theme === 'light'
-                ? 'bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--card-border)]'
-                : 'hover:bg-[var(--surface-secondary)]'
+                ? 'bg-[var(--surface)] text-[var(--text-primary)] ring-[var(--card-border)]'
+                : 'bg-transparent text-[var(--text-primary)] ring-[var(--card-border)] hover:bg-[var(--surface-secondary)]'
             )}
           >
-            Light 🌞
+            {/* === единственная правка: добавлен свотч цвета + текст === */}
+            <span className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="h-4 w-4 rounded-full border border-[var(--card-border)] bg-white"
+              />
+              <span>Classic Light</span>
+            </span>
+            <span
+              className={cn(
+                'text-[11px] transition-opacity',
+                theme === 'light' ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'
+              )}
+            >
+              ✓
+            </span>
           </button>
+
+          {/* Dark */}
           <button
             onClick={() => setTheme('dark')}
+            aria-pressed={theme === 'dark'}
             className={cn(
-              'w-full px-3 py-1 rounded-xl flex items-center justify-between transition-colors',
+              'group relative w-full px-3 py-1 rounded-xl flex items-center justify-between transition-colors',
+              'ring-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--text-primary)]/20',
               theme === 'dark'
-                ? 'bg-[var(--card-bg)] text-[var(--text-primary)] border border-[var(--card-border)]'
-                : 'hover:bg-[var(--surface-secondary)]'
+                ? 'bg-[var(--surface)] text-[var(--text-primary)] ring-[var(--card-border)]'
+                : 'bg-transparent text-[var(--text-primary)] ring-[var(--card-border)] hover:bg-[var(--surface-secondary)]'
             )}
           >
-            Dark 🌙
+            {/* === единственная правка: добавлен свотч цвета + текст === */}
+            <span className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="h-4 w-4 rounded-full border border-[var(--card-border)] bg-neutral-900"
+              />
+              <span>Midnight Dark</span>
+            </span>
+            <span
+              className={cn(
+                'text-[11px] transition-opacity',
+                theme === 'dark' ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'
+              )}
+            >
+              ✓
+            </span>
           </button>
         </div>
       ),

@@ -37,7 +37,14 @@ export default function HeaderBar({
   return (
     <div
       className="fixed top-0 left-0 right-0 z-30 h-14 sm:h-12 px-2 sm:px-4 flex items-center justify-between gap-2 bg-[var(--background)]/80 backdrop-blur overflow-x-auto whitespace-nowrap"
-      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        backgroundImage:
+          'linear-gradient(90deg, transparent, var(--hairline, rgba(128,128,128,0.18)) 35%, var(--hairline, rgba(128,128,128,0.18)) 65%, transparent)',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: '100% 1px',
+        backgroundPosition: 'left bottom',
+      }}
     >
       {/* Left buttons */}
       <div className="flex gap-2 items-center">

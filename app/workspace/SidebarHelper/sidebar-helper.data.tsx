@@ -5,34 +5,54 @@ import { useInjectPrompt } from '@/app/hooks/useInjectPrompt';
 import SavedProfileList from '@/app/components/SavedProfileList';
 import { BoxData } from './types';
 
+type Template = {
+  id: string;
+  title: string; // отображаем в сайдбаре
+  content: string; // подставляем в поле ввода (пока: "тест N")
+};
+
 export const getSidebarBoxes = (): BoxData[] => {
   const { plan } = useUserPlan();
   const isPro = plan === 'Smarter' || plan === 'Business';
 
   const injectPrompt = useInjectPrompt();
 
-  const promptTemplates: string[] = [
-    'Summarise this text in 3 bullet points.',
-    'What are the key insights from this content?',
-    'Explain this to a 10-year-old.',
-    'Translate this to simple English.',
-    'List action items based on this text.',
-    'Rewrite this more professionally.',
-    'What questions does this raise?',
-    'Provide counterarguments to this text.',
-    'Give a short summary with hashtags.',
-    'Generate a tweet based on this.',
+  // Заголовки от тебя + контент-заглушки "тест N"
+  const titles = [
+    'Communication Strategy for Negotiations',
+    'Improving Team Dynamics',
+    'Conflict Management Profiling',
+    'Personal Motivation Assessment',
+    'Targeted Communications',
+    'Motivation for ‘Go/No-Go’ Decisions',
+    'Talent Retention and Development Strategy',
+    'Decision-Making Style Assessment',
+    'Aligning Personal Drivers with Org. Goals',
+    'Customisation of Sales Pitches',
+    'Persuasive Proposals in Sales',
+    'Selection of C-Level Candidates',
+    'Innovation and Creativity Potential',
   ];
+
+  const templates: Template[] = titles.map((title, i) => ({
+    id: `tpl-${i + 1}`,
+    title,
+    content: `тест ${i + 1}`, // сюда потом подставим реальные большие промпты
+  }));
 
   const TemplatesContent = () => (
     <div className="flex flex-col gap-2 text-sm text-[var(--text-primary)]">
-      {promptTemplates.map((text) => (
+      {templates.map((t, idx) => (
         <div
-          key={text}
-          onClick={() => injectPrompt(text)}
+          key={t.id}
+          onClick={() => {
+            // Поведение: по клику подставляем большой промпт
+            // По умолчанию — замена содержимого поля ввода
+            injectPrompt(t.content);
+          }}
           className="cursor-pointer hover:text-[var(--accent)]"
         >
-          {text}
+          {`${idx + 1}. ${t.title}`}
         </div>
       ))}
     </div>
