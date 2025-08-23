@@ -34,7 +34,7 @@ function getServerSupabaseClient() {
   });
 }
 
-/** 📄 Логирование пользовательского действия в Supabase (сервер только) */
+/** 📄 Логирование пользовательского действия (изоморфно) */
 export async function logUserAction({
   userId,
   action,
@@ -44,8 +44,33 @@ export async function logUserAction({
   action: string;
   metadata?: Record<string, any> | null;
 }) {
-  const supabase = getServerSupabaseClient();
+  if (typeof window !== 'undefined') {
+    try {
+      const { createPagesBrowserClient } = await import('@supabase/auth-helpers-nextjs');
+      const supabase = createPagesBrowserClient<Database>({
+        supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
+        supabaseKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      });
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
+      await fetch('/api/user/log-generation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ userId, action, metadata }),
+        keepalive: true,
+      });
+    } catch (e) {
+      logWarn('Failed to send client log to API', { e, userId, action });
+    }
+    return;
+  }
+
+  const supabase = getServerSupabaseClient();
   const { error } = await supabase.from('user_log').insert([{ user_id: userId, action, metadata }]);
 
   if (error) {
