@@ -3,6 +3,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { PACKAGE_LIMITS, isValidPackageType } from '@/types/plan';
 import dayjs from 'dayjs';
+import { logUserAction } from '@/lib/logger';
 
 export async function GET() {
   const supabase = createServerComponentClient({ cookies: () => cookies() });
@@ -32,7 +33,6 @@ export async function GET() {
     .eq('user_id', user.id)
     .gte('created_at', startOfDay);
 
-  // 🔽 Добавляем получение месячных лимитов
   const { data: limits, error: limitsError } = await supabase
     .from('user_limits')
     .select('monthly_limit, used_monthly')
@@ -42,13 +42,23 @@ export async function GET() {
     console.warn('⚠️ Failed to fetch user_limits:', limitsError);
   }
 
-  return NextResponse.json({
+  const statsPayload = {
     plan,
     usedToday: requestsToday ?? 0,
     limit: planLimits.dailyGenerations,
-
-    // ✅ Добавлено:
     monthlyLimit: limits?.monthly_limit ?? planLimits.requestsPerMonth,
     usedMonthly: limits?.used_monthly ?? 0,
+  };
+
+  await logUserAction({
+    userId: user.id,
+    action: 'user_stats_fetched',
+    metadata: {
+      endpoint: '/app/api/user/stats',
+      ...statsPayload,
+      timestamp: new Date().toISOString(),
+    },
   });
+
+  return NextResponse.json(statsPayload);
 }

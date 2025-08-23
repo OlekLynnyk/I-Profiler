@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { env } from '@/env.server';
+import { logUserAction } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -82,6 +83,15 @@ export async function POST(req: NextRequest) {
 
   // ✅ Выходим из аккаунта
   // можно signOut вызывать на клиенте после успешного ответа
+
+  await logUserAction({
+    userId: user.id,
+    action: 'profile_soft_deleted',
+    metadata: {
+      endpoint: '/app/api/user/delete',
+      timestamp: new Date().toISOString(),
+    },
+  });
 
   return NextResponse.json({ success: true });
 }

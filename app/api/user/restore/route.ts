@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { env } from '@/env.server';
+import { logUserAction } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '');
@@ -35,6 +36,15 @@ export async function POST(req: NextRequest) {
     console.error('Restore error:', error);
     return NextResponse.json({ error: 'Restore failed' }, { status: 500 });
   }
+
+  await logUserAction({
+    userId: user.id,
+    action: 'profile_restored',
+    metadata: {
+      endpoint: '/app/api/user/restore',
+      timestamp: new Date().toISOString(),
+    },
+  });
 
   return NextResponse.json({ success: true });
 }

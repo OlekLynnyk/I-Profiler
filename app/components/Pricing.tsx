@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
-import { motion, useReducedMotion, type Easing } from 'framer-motion';
+import { motion, useReducedMotion, type Easing, LayoutGroup } from 'framer-motion';
 
 const supabase = createPagesBrowserClient();
 const easing: Easing = [0.22, 1, 0.36, 1];
-
 const ACCENT = '#A855F7';
 
 type Plan = {
@@ -101,8 +100,8 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     },
   ];
 
-  // ----- MOBILE STATE (оставляем как есть) -----
-  const [activeId, setActiveId] = useState<string>(plans[1].id); // по умолчанию Smarter
+  // ----- MOBILE STATE -----
+  const [activeId, setActiveId] = useState<string>(plans[1].id); // Smarter по умолчанию
   const activePlan = useMemo(() => plans.find((p) => p.id === activeId)!, [plans, activeId]);
   const smallPlans = useMemo(() => plans.filter((p) => p.id !== activeId), [plans, activeId]);
 
@@ -115,7 +114,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       transition: {
         staggerChildren: reduce ? 0 : 0.06,
         duration: 0.4,
-        ease: easing, // ✅ сюда подставляем переменную
+        ease: easing,
       },
     },
   };
@@ -126,14 +125,11 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: {
-        duration: 0.45,
-        ease: easing, // ✅ сюда тоже
-      },
+      transition: { duration: 0.45, ease: easing },
     },
   };
 
-  // ======= Универсальная карточка (Mobile визуал LUX) =======
+  // ======= Универсальная карточка (Mobile LUX) =======
   const PlanCard = ({
     plan,
     size,
@@ -145,32 +141,41 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
   }) => {
     const isFree = plan.id === 'free';
     const isLoading = loadingPlan === plan.id;
-    const isDisabled = (!isLoggedIn && !isFree) || isLoading || (isFree && isLoggedIn);
+    const isDisabled = (!isLoggedIn && !isFree) || (isFree && isLoggedIn) || isLoading;
 
+    // базовые стили карточек (крем на тёмном фоне)
     const baseCream = 'bg-[#F6F5ED] text-[#111827]';
     const ringBase = 'ring-1 ring-[#E7E5DD]';
     const radius = 'rounded-3xl';
     const luxShadow = 'shadow-[0_10px_30px_rgba(0,0,0,0.10)]';
     const highlightGlow = plan.highlight
-      ? `ring-1 ring-[${ACCENT}]/40 shadow-[0_12px_40px_rgba(168,85,247,0.28)]`
+      ? 'ring-1 ring-[#A855F7]/40 shadow-[0_12px_40px_rgba(168,85,247,0.28)]'
       : '';
 
+    const layoutId = `plan-${plan.id}`;
+
     if (size === 'small') {
+      // маленькая карточка — теперь не квадрат, больше воздуха
       return (
-        <button
+        <motion.button
           type="button"
+          layout
+          layoutId={layoutId}
+          whileTap={{ scale: 0.985 }}
+          transition={{ layout: { duration: 0.35, ease: easing } }}
           onClick={onClick}
           className={`
             ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
-            aspect-square w-full overflow-hidden
-            transition-[transform,box-shadow] duration-200 active:scale-[0.98]
+            w-full overflow-hidden text-left
+            px-5 py-4 min-h-[120px] flex items-start justify-between gap-3
+            transition-[transform,box-shadow] duration-200
             focus:outline-none focus-visible:ring-2 focus-visible:ring-[${ACCENT}]/60
           `}
           aria-label={`Activate ${plan.name} plan`}
         >
-          <div className="h-full w-full flex flex-col items-center justify-center p-4 text-center">
-            <h3 className="text-[15px] font-semibold uppercase tracking-wide">{plan.name}</h3>
-            <p className="mt-1 text-2xl">
+          <div className="flex-1">
+            <h3 className="text-[13px] font-semibold uppercase tracking-[0.12em]">{plan.name}</h3>
+            <p className="mt-1 text-[22px] font-extrabold">
               {plan.price}
               {!isFree && (
                 <span className="text-[11px] align-baseline text-[#4B5563]"> /4 weeks</span>
@@ -178,40 +183,60 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             </p>
             <p
               id={`desc-${plan.id}`}
-              className="mt-2 text-[#374151] text-[13px] leading-snug line-clamp-3"
+              className="mt-1 text-[#374151] text-[13px] leading-snug line-clamp-2"
             >
               {plan.description}
             </p>
           </div>
-        </button>
+          {/* chevron */}
+          <svg
+            className="mt-1 h-5 w-5 flex-none opacity-60"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden
+          >
+            <path d="M9 6l6 6-6 6" stroke="#111827" strokeWidth="2" />
+          </svg>
+        </motion.button>
       );
     }
 
-    // Large card
+    // Large card (главная карточка)
     return (
-      <div
+      <motion.div
+        layout
+        layoutId={layoutId}
+        transition={{ layout: { duration: 0.35, ease: easing } }}
         className={`
-          relative ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow} p-6
-          transition-transform duration-200 hover:-translate-y-[2px]
+          relative ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
+          p-6
         `}
         role="group"
         aria-labelledby={`title-${plan.id}`}
       >
-        {/* HL/Accent сверху */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent" />
+        {/* тонкая HL/Accent сверху */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/55 to-transparent" />
 
-        {/* бейдж */}
+        {/* бейдж (высокая контрастность, внутри карточки) */}
         {plan.highlight && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#A855F7]/15 text-[#3B145C] px-3 py-1 text-[11px] tracking-wide ring-1 ring-[#A855F7]/30">
+          <div
+            className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full
+                       px-3 py-1 text-[11px] tracking-wide
+                       bg-[#EDE7F6] text-[#4C1D95] ring-1 ring-[#C4B5FD]"
+            aria-label="Most popular plan"
+          >
             Most popular
           </div>
         )}
 
-        <h3 id={`title-${plan.id}`} className="text-[20px] font-semibold uppercase tracking-wide">
+        <h3
+          id={`title-${plan.id}`}
+          className="text-[13px] uppercase tracking-[0.14em] text-[#374151]"
+        >
           {plan.name}
         </h3>
 
-        <p className="mt-1 text-[32px] font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-[#1F2937] via-[#1F2937] to-[#6B21A8]">
+        <p className="mt-1 text-[clamp(26px,6vw,32px)] font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-[#1F2937] via-[#1F2937] to-[#6B21A8]">
           {plan.price}
           {!isFree && (
             <span className="align-baseline text-[12px] font-medium text-[#4B5563]"> /4 weeks</span>
@@ -238,13 +263,14 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           ))}
         </ul>
 
-        <button
+        <motion.button
+          whileTap={{ scale: 0.99 }}
           onClick={isFree ? (isLoggedIn ? undefined : plan.action) : () => handleCheckout(plan.id)}
           className="
-            mt-6 w-full min-h-11 rounded-full
+            mt-6 w-full min-h-11 rounded-2xl
             text-[#111827]
             transition-[background,ring,transform] duration-200
-            active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
           "
           style={{
             backgroundImage: `
@@ -259,22 +285,21 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           aria-describedby={`desc-${plan.id}`}
         >
           {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     );
   };
 
   return (
     <section className="pt-6 md:pt-8 pb-16 md:pb-24 bg-transparent" aria-labelledby="pricing-title">
       <div className="max-w-6xl mx-auto px-4 md:px-6 text-center relative">
-        {/* верхний мягкий глоу */}
+        {/* мягкий глоу сверху */}
         <div
           className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2
           h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl"
           aria-hidden
         />
 
-        {/* Заголовок */}
         <h2
           id="pricing-title"
           className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-6 sm:mb-8"
@@ -283,38 +308,41 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
         </h2>
 
         {/* ===== MOBILE (< md) ===== */}
-        <div className="md:hidden space-y-5">
-          {/* Верх: две малые карточки */}
-          <motion.div
-            variants={containerVar}
-            initial={reduce ? undefined : 'hidden'}
-            whileInView={reduce ? undefined : 'show'}
-            viewport={{ once: true, amount: 0.4 }}
-            className="grid grid-cols-2 gap-4"
-          >
-            {smallPlans.map((p) => (
-              <motion.div key={p.id} variants={itemVar}>
-                <PlanCard plan={p} size="small" onClick={() => setActiveId(p.id)} />
-              </motion.div>
-            ))}
-          </motion.div>
+        <LayoutGroup>
+          <div className="md:hidden space-y-5">
+            {/* КРУПНАЯ КАРТОЧКА — активный план */}
+            <motion.div
+              key={activePlan.id}
+              layout
+              variants={itemVar}
+              initial={false}
+              animate="show"
+              transition={{ layout: { duration: 0.35, ease: easing } }}
+              className="transition-all duration-300 ease-out"
+            >
+              <PlanCard plan={activePlan} size="large" />
+            </motion.div>
 
-          {/* Низ: крупная карточка (активный план) */}
-          <motion.div
-            key={activePlan.id}
-            variants={itemVar}
-            initial={reduce ? undefined : 'hidden'}
-            whileInView={reduce ? undefined : 'show'}
-            viewport={{ once: false, amount: 0.4 }}
-            className="transition-all duration-300 ease-out"
-          >
-            <PlanCard plan={activePlan} size="large" />
-          </motion.div>
+            {/* Остальные планы — стэком (по одному в ряд) */}
+            <motion.div
+              layout
+              variants={containerVar}
+              initial={false}
+              animate="show"
+              className="grid grid-cols-1 gap-5"
+            >
+              {smallPlans.map((p) => (
+                <motion.div key={p.id} layout variants={itemVar} initial={false} animate="show">
+                  <PlanCard plan={p} size="small" onClick={() => setActiveId(p.id)} />
+                </motion.div>
+              ))}
+            </motion.div>
 
-          <div className="pb-[env(safe-area-inset-bottom)]" />
-        </div>
+            <div className="pb-[calc(16px+env(safe-area-inset-bottom))]" />
+          </div>
+        </LayoutGroup>
 
-        {/* ===== DESKTOP (>= md) ===== */}
+        {/* ===== DESKTOP (>= md) — без изменений ===== */}
         <motion.div
           variants={containerVar}
           initial={reduce ? undefined : 'hidden'}
@@ -342,12 +370,9 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                 role="group"
                 aria-labelledby={`title-desktop-${plan.id}`}
               >
-                {/* верхняя HL/Accent */}
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent rounded-t-3xl" />
-
-                {/* бейдж */}
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#A855F7]/15 text-[#E9D5FF] px-3 py-1 text-xs tracking-wide ring-1 ring-[#A855F7]/25">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#EDE7F6] text-[#4C1D95] px-3 py-1 text-xs tracking-wide ring-1 ring-[#C4B5FD]">
                     Most popular
                   </div>
                 )}
@@ -413,24 +438,28 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                     `,
                     boxShadow: '0 12px 36px rgba(168,85,247,0.25)',
                   }}
-                  disabled={isDisabled}
+                  disabled={
+                    (!isLoggedIn && !isFree) || loadingPlan === plan.id || (isFree && isLoggedIn)
+                  }
                   title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
                   aria-describedby={`title-desktop-${plan.id}`}
                 >
-                  {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
+                  {loadingPlan === plan.id
+                    ? 'Redirecting...'
+                    : isFree
+                      ? 'Try Demo'
+                      : 'Go Executive'}
                 </button>
               </motion.div>
             );
           })}
         </motion.div>
 
-        {/* нижняя нейтральная линия + подпись */}
         <p className="text-xs sm:text-sm text-[#E5E5E5] mt-6 sm:mt-8 max-w-3xl mx-auto leading-relaxed px-2">
           For individual professional advice, training, or API integration, please contact us
           through email.
         </p>
 
-        {/* aria-live для статуса редиректа */}
         <span className="sr-only" aria-live="polite">
           {loadingPlan ? 'Redirecting to checkout…' : ''}
         </span>

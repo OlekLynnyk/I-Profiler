@@ -2,7 +2,7 @@ export const STANDARD_PROMPTS = {
   profiling: `
 --- END OF FORMULA ---
 
-# INSTRUCTIONS TO AI
+# INSTRUCTIONS TO AI 
 
 SUMMARY:
 - Follow the profiling formula step by step. Produce the final A–B–С output per the contract;
@@ -35,7 +35,7 @@ AUTHENTICITY CHECK
 - If profiling is not feasible (per Data Sufficiency), return the short insufficiency message instead of A–B–C.
 
 RESPONSE FORMAT:
-- Section headings must be exactly "A.", "B.", "C." in this order — no other headings or sections.
+- Section headings must be exactly: "A. {A_TITLE}", "B. {B_TITLE}", "C. {C_TITLE}" — no other headings or sections.
 - Do not include the characters # or * in the output (response must be clean).
 
 THE RESPONSE MUST BE:
@@ -45,7 +45,7 @@ THE RESPONSE MUST BE:
 - Free from fabricated details or assumptions not supported by the photo or user input.
 
 SELF-CHECK 
-- Output starts with "A.", then "B.", then "C."; numbering matches A:1–9, B:10–11 (11 only if a meaningful user question is present), C:12.
+- Output starts with "A. {A_TITLE}", then "B. {B_TITLE}", then "C. {C_TITLE}"; numbering matches A:1–9, B:10–11 (11 only if a meaningful user question is present), C:12.
 - No preamble and no method description; none of the forbidden tokens appear.
 - If there is no meaningful user question, item 11 is omitted.
 - Item 12 is present with the final recommendation; if AI suspicion applies, it is mentioned only inside item 12.

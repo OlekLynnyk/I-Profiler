@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { logUserAction } from '@/lib/logger';
 
 export async function POST(req: Request) {
   const supabase = createRouteHandlerClient({ cookies });
@@ -35,6 +36,16 @@ export async function POST(req: Request) {
     console.error('Error storing rating:', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
+
+  await logUserAction({
+    userId: user.id,
+    action: 'chat:rate_message',
+    metadata: {
+      messageId: message_id,
+      rating,
+      timestamp,
+    },
+  });
 
   return NextResponse.json({ success: true });
 }

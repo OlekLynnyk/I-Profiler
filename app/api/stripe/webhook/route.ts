@@ -7,6 +7,7 @@ import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import { syncSubscriptionWithSupabase } from '@/lib/subscription';
+import { logUserAction } from '@/lib/logger';
 
 import { env } from '@/env.server';
 
@@ -119,6 +120,15 @@ async function handleCheckoutCompleted(
   // Берём актуальную подписку из Stripe и синхронизируем единой функцией
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   await syncSubscriptionWithSupabase(supabase, userId, subscription);
+  await logUserAction({
+    userId,
+    action: 'stripe:webhook_checkout_completed',
+    metadata: {
+      subscriptionId,
+      customerId: subscription.customer,
+      status: subscription.status,
+    },
+  });
 }
 
 async function handleCheckoutExpired(
@@ -142,6 +152,11 @@ async function handleCheckoutExpired(
     console.error('❌ Не удалось очистить stripe_customer_id:', error);
   } else {
     console.log(`ℹ️ stripe_customer_id очищен для user_id=${userId}`);
+    await logUserAction({
+      userId,
+      action: 'stripe:webhook_checkout_expired',
+      metadata: {},
+    });
   }
 }
 
@@ -165,6 +180,14 @@ async function handleSubscriptionChange(
   // Защита от out-of-order: подтягиваем свежую подписку перед синком
   const fresh = await stripe.subscriptions.retrieve(incoming.id);
   await syncSubscriptionWithSupabase(supabase, data.user_id, fresh);
+  await logUserAction({
+    userId: data.user_id,
+    action: 'stripe:webhook_subscription_change',
+    metadata: {
+      subscriptionId: incoming.id,
+      customerId,
+    },
+  });
 }
 
 function extractCustomerId(event: Stripe.Event): string | undefined {

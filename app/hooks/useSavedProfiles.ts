@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { logUserAction } from '@/lib/logger'; // ✅ добавлено
 
 export interface SavedProfile {
   id: string;
@@ -46,6 +47,15 @@ export function useSavedProfiles() {
       return [];
     }
 
+    await logUserAction({
+      // ✅ добавлено
+      userId,
+      action: 'profile:getAll',
+      metadata: {
+        count: data?.length || 0,
+      },
+    });
+
     return (data || []).map((item) => ({
       ...item,
       chat_json: typeof item.chat_json === 'string' ? JSON.parse(item.chat_json) : item.chat_json,
@@ -57,6 +67,16 @@ export function useSavedProfiles() {
     setError(null);
 
     const { error } = await supabase.from('saved_chats').insert([profile]);
+
+    await logUserAction({
+      // ✅ добавлено
+      userId: profile.user_id,
+      action: 'profile:save',
+      metadata: {
+        profileName: profile.profile_name,
+        savedAt: profile.saved_at,
+      },
+    });
 
     setIsLoading(false);
 
@@ -73,6 +93,18 @@ export function useSavedProfiles() {
 
     const { error } = await supabase.from('saved_chats').update(data).eq('id', profileId);
 
+    if (data.user_id) {
+      await logUserAction({
+        // ✅ добавлено
+        userId: data.user_id,
+        action: 'profile:update',
+        metadata: {
+          profileId,
+          fields: Object.keys(data),
+        },
+      });
+    }
+
     setIsLoading(false);
 
     if (error) {
@@ -87,6 +119,13 @@ export function useSavedProfiles() {
     setError(null);
 
     const { error } = await supabase.from('saved_chats').delete().eq('id', profileId);
+
+    await logUserAction({
+      // ✅ добавлено
+      userId: '', // ❗ передай сюда user_id при вызове функции
+      action: 'profile:delete',
+      metadata: { profileId },
+    });
 
     setIsLoading(false);
 

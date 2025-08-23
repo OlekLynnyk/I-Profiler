@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { PACKAGE_LIMITS } from '@/types/plan';
 import { env } from '@/env.server';
+import { logUserAction } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
@@ -193,6 +194,16 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error('❌ user_subscription logic failed:', e);
   }
+
+  await logUserAction({
+    userId: user.id,
+    action: 'profile_initialized_or_updated',
+    metadata: {
+      endpoint: '/app/api/user/init',
+      agreedToTerms,
+      timestamp: new Date().toISOString(),
+    },
+  });
 
   return NextResponse.json({ success: true, initialized: true });
 }

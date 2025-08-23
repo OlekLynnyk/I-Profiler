@@ -6,6 +6,7 @@ import { useUserPlan } from '@/app/hooks/useUserPlan';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/app/context/AuthProvider';
 import { detectUserLanguage } from '@/scripts/detectUserLanguage';
+import { logUserAction } from '@/lib/logger';
 
 export type ChatMessage = {
   id: string;
@@ -191,6 +192,19 @@ export function useChatLogic(): UseChatLogicResult {
         },
       ]);
 
+      if (userId) {
+        await logUserAction({
+          userId,
+          action: 'chat:prompt_submitted',
+          metadata: {
+            messageId: userMessage.id,
+            profileId: activeProfileId,
+            profiling: profilingMode,
+            hasAttachment: !!attachments?.length,
+          },
+        });
+      }
+
       setMessageStatuses((prev) => ({
         ...prev,
         [userMessage.id]: 'pending',
@@ -281,6 +295,17 @@ export function useChatLogic(): UseChatLogicResult {
         },
       ]);
 
+      if (userId) {
+        await logUserAction({
+          userId,
+          action: 'chat:response_generated',
+          metadata: {
+            messageId: aiMessage.id,
+            profileId: activeProfileId,
+          },
+        });
+      }
+
       setMessageStatuses((prev) => ({
         ...prev,
         [aiMessage.id]: 'done',
@@ -327,6 +352,15 @@ export function useChatLogic(): UseChatLogicResult {
 
       if (!userId) return;
 
+      await logUserAction({
+        userId,
+        action: 'chat:message_rated',
+        metadata: {
+          messageId,
+          rating,
+        },
+      });
+
       await fetch('/api/messages/rate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -355,6 +389,14 @@ export function useChatLogic(): UseChatLogicResult {
         .delete()
         .eq('user_id', userId)
         .eq('profile_id', currentProfileId);
+
+      await logUserAction({
+        userId,
+        action: 'chat:history_cleared',
+        metadata: {
+          profileId: currentProfileId,
+        },
+      });
     }
   };
 

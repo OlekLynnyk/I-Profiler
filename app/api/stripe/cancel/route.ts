@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createServerClientForApi } from '@/lib/supabase/server';
+import { logUserAction } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
@@ -34,6 +35,14 @@ export async function POST(req: NextRequest) {
   try {
     await stripe.subscriptions.update(subRecord.stripe_subscription_id, {
       cancel_at_period_end: true,
+    });
+
+    await logUserAction({
+      userId: user.id,
+      action: 'stripe:subscription_cancel_requested',
+      metadata: {
+        subscriptionId: subRecord.stripe_subscription_id,
+      },
     });
 
     return NextResponse.json({

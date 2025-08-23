@@ -3,6 +3,7 @@ import { createServerClientForApi } from '@/lib/supabase/server';
 import Stripe from 'stripe';
 import type { Database } from '@/types/supabase';
 import { env } from '@/env.server';
+import { logUserAction } from '@/lib/logger';
 
 const stripeSecretKey = env.STRIPE_SECRET_KEY;
 const appUrl = env.NEXT_PUBLIC_APP_URL;
@@ -143,6 +144,16 @@ export async function POST(req: NextRequest) {
       success_url: `${appUrl}/?checkout=success`,
       cancel_url: `${appUrl}/?checkout=cancel`,
       metadata: { user_id: user.id },
+    });
+
+    await logUserAction({
+      userId: user.id,
+      action: 'stripe:checkout_session_created',
+      metadata: {
+        priceId,
+        customerId,
+        sessionId: session.id,
+      },
     });
 
     return NextResponse.json({ url: session.url });

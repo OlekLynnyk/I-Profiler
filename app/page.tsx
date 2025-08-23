@@ -51,7 +51,7 @@ export default function HomePage() {
 
       {/* ===== MOBILE HERO ===== */}
       <section className="md:hidden px-6 max-w-7xl mx-auto relative z-10">
-        <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-4">
+        <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-8">
           {/* Виньетка за H1 */}
           <div
             aria-hidden
@@ -64,7 +64,7 @@ export default function HomePage() {
           <div className="space-y-3 relative">
             {/* H1 */}
             <motion.h1
-              className="font-extrabold uppercase tracking-tight leading-[1.08] [text-wrap:balance] text-[clamp(2.75rem,10vw,4.25rem)]"
+              className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] text-[clamp(3.5rem,12vw,5rem)]"
               style={{ letterSpacing: '-0.02em' }}
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
@@ -83,7 +83,7 @@ export default function HomePage() {
 
             {/* Subtitle — как на десктопе, с «дыханием» */}
             <motion.div
-              className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(1rem,4.5vw,1.375rem)]"
+              className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(0.90rem,4vw,1.1rem)]"
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
               viewport={{ once: true, amount: 0.7 }}
@@ -261,7 +261,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ABOUT ===== */}
-      <section id="about" className="relative z-10 mx-auto max-w-5xl px-6 py-24 lg:py-28">
+      <section id="about" className="relative z-10 mx-auto max-w-5xl px-6 py-16 lg:py-28">
         <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-px w-[min(760px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         <motion.h2
           className="text-center text-3xl md:text-4xl font-extrabold tracking-tight text-white"
@@ -274,7 +274,7 @@ export default function HomePage() {
           About
         </motion.h2>
 
-        <div className="mt-8 space-y-6 max-w-3xl mx-auto text-base md:text-lg leading-relaxed md:leading-8 text-white/80 text-center">
+        <div className="mt-8 space-y-6 max-w-[42ch] mx-auto text-[15px] leading-7 md:text-lg md:leading-8 text-white/80 text-center">
           <motion.p
             lang="en"
             initial={reduce ? undefined : 'hidden'}
@@ -306,8 +306,10 @@ export default function HomePage() {
         </div>
 
         <div className="pointer-events-none absolute left-1/2 bottom-6 -translate-x-1/2 h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl" />
+
+        {/* нижний безопасный отступ под жестовую панель */}
+        <div className="pb-[calc(12px+env(safe-area-inset-bottom))]" />
       </section>
-      {/* ===== /ABOUT ===== */}
 
       {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}
       <Footer />

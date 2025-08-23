@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import { isValidPackageType } from '@/types/plan';
+import { logUserAction } from '@/lib/logger';
 
 type SubscriptionDTO = {
   plan: string;
@@ -155,6 +156,12 @@ export async function POST(req: NextRequest) {
       cancelAtPeriodEnd,
       paymentMethod,
     };
+
+    await logUserAction({
+      userId: user.id,
+      action: 'subscription:get',
+      metadata: dto,
+    });
 
     return NextResponse.json(dto);
   } catch (error) {

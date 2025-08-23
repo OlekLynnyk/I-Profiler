@@ -5,6 +5,7 @@ import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { PACKAGE_LIMITS, isValidPackageType, ValidPackageType } from '@/types/plan';
 import { Database } from '@/types/supabase';
 import { env } from '@/env.server';
+import { logUserAction } from '@/lib/logger';
 
 export function useUserPlan(refreshToken?: number) {
   const [plan, setPlan] = useState<ValidPackageType>('Freemium');
@@ -43,6 +44,17 @@ export function useUserPlan(refreshToken?: number) {
     setUsedMonthly(data.used_monthly ?? 0);
     setMonthlyLimit(data.monthly_limit ?? PACKAGE_LIMITS[currentPlan].requestsPerMonth);
     setLimitResetAt(data.limit_reset_at ? new Date(data.limit_reset_at) : null);
+    await logUserAction({
+      userId,
+      action: 'plan:fetch',
+      metadata: {
+        plan: currentPlan,
+        usedToday: data.used_today ?? 0,
+        dailyLimit: data.daily_limit ?? PACKAGE_LIMITS[currentPlan].dailyGenerations,
+        usedMonthly: data.used_monthly ?? 0,
+        monthlyLimit: data.monthly_limit ?? PACKAGE_LIMITS[currentPlan].requestsPerMonth,
+      },
+    });
   }, []);
 
   useEffect(() => {

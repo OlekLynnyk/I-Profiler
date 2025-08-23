@@ -2,6 +2,7 @@
 
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { useState } from 'react';
+import { logUserAction } from '@/lib/logger';
 
 export function useStripeCheckout() {
   const supabase = createPagesBrowserClient();
@@ -13,6 +14,7 @@ export function useStripeCheckout() {
     setError(null);
     try {
       const { data } = await supabase.auth.getSession();
+      const userId = data.session?.user.id;
       const token = data.session?.access_token;
 
       const res = await fetch('/api/stripe/create-checkout-session', {
@@ -31,6 +33,14 @@ export function useStripeCheckout() {
       }
 
       const { url } = await res.json();
+
+      if (userId) {
+        await logUserAction({
+          userId,
+          action: 'stripe:checkout:initiate',
+          metadata: { priceId },
+        });
+      }
       if (url) {
         window.location.href = url;
       } else {
