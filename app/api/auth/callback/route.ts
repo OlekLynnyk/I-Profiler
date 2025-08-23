@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'; // без кэша
 
 const OAUTH_STATE_COOKIE = 'oauth_state';
 const RETURN_TO_COOKIE = 'return_to';
-const SUCCESS_REDIRECT = '/auth/callback'; // твоя страница-UX
+const SUCCESS_REDIRECT = '/auth/callback';
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -18,7 +18,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/auth/callback?error=missing_code', url), 303);
   }
 
-  // cookies() теперь async
   const jar = await cookies();
   const expectedState = jar.get(OAUTH_STATE_COOKIE)?.value;
 
@@ -29,8 +28,8 @@ export async function GET(req: NextRequest) {
     return res;
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const supabase = createRouteHandlerClient({ cookies: async () => jar }); // ✅ async-функция
+  const { error } = await supabase.auth.exchangeCodeForSession(code); // ✅ передаём code
 
   const res = NextResponse.redirect(
     error
