@@ -5,6 +5,18 @@ import type { Database } from '@/types/supabase';
 import { env } from '@/env.server';
 import { logUserAction } from '@/lib/logger';
 
+// Безопасный парсинг JSON: если тела нет или контент-тайп другой — вернём null и не падём.
+async function safeJson(req: NextRequest): Promise<any | null> {
+  const ct = req.headers.get('content-type') || '';
+  if (!ct.toLowerCase().includes('application/json')) return null;
+  try {
+    const parsed = await req.json();
+    return typeof parsed === 'object' && parsed !== null ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
 
@@ -24,11 +36,22 @@ export async function POST(req: NextRequest) {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
+
   if (authError || !user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const userId = user.id;
+
+  // ⬇️ БЕЗОПАСНО: не бросаем 400, если тело пустое/невалидное — просто считаем его отсутствующим.
+  const body = await safeJson(req);
+  const action = body?.action as string | undefined;
+
+  // Прерываем — не увеличиваем лимит, если это не генерация
+  if (action && action !== 'profile_generation_incremented') {
+    await logUserAction({ userId, action, metadata: body?.metadata ?? null });
+    return NextResponse.json({ success: true, skippedIncrement: true });
+  }
 
   const { data: limits, error: limitsError } = await supabase
     .from('user_limits')
