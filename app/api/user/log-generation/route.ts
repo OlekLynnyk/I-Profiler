@@ -5,6 +5,8 @@ import type { Database } from '@/types/supabase';
 import { env } from '@/env.server';
 import { logUserAction } from '@/lib/logger';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 // Безопасный парсинг JSON: если тела нет или контент-тайп другой — вернём null и не падём.
 async function safeJson(req: NextRequest): Promise<any | null> {
   const ct = req.headers.get('content-type') || '';

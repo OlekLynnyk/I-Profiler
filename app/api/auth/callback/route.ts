@@ -10,7 +10,10 @@ const RETURN_TO_COOKIE = 'return_to';
 const SUCCESS_REDIRECT = '/auth/callback';
 
 export async function GET(req: NextRequest) {
-  const url = new URL(req.url);
+  // ✅ КЛЮЧЕВОЙ ФИКС: используем базовый абсолютный URL
+  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'http://localhost:3000';
+  const url = new URL(req.url, base);
+
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state') ?? '';
 
@@ -28,8 +31,8 @@ export async function GET(req: NextRequest) {
     return res;
   }
 
-  const supabase = createRouteHandlerClient({ cookies: async () => jar }); // ✅ async-функция
-  const { error } = await supabase.auth.exchangeCodeForSession(code); // ✅ передаём code
+  const supabase = createRouteHandlerClient({ cookies: async () => jar });
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   const res = NextResponse.redirect(
     error

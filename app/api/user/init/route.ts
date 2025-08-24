@@ -5,6 +5,8 @@ import { PACKAGE_LIMITS } from '@/types/plan';
 import { env } from '@/env.server';
 import { logUserAction } from '@/lib/logger';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
   const agreedHeader = req.headers.get('x-agreed-to-terms');

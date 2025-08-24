@@ -55,7 +55,7 @@ export async function logUserAction({
         data: { session },
       } = await supabase.auth.getSession();
 
-      await fetch('/api/user/log-generation', {
+      await fetch('/api/user/log', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
