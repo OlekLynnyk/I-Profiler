@@ -45,6 +45,7 @@ export async function logUserAction({
   metadata?: Record<string, any> | null;
 }) {
   if (typeof window !== 'undefined') {
+    // 🔹 Клиентская часть — всегда безопасная
     try {
       const { createPagesBrowserClient } = await import('@supabase/auth-helpers-nextjs');
       const supabase = createPagesBrowserClient<Database>({
@@ -70,12 +71,39 @@ export async function logUserAction({
     return;
   }
 
-  const supabase = getServerSupabaseClient();
-  const { error } = await supabase.from('user_log').insert([{ user_id: userId, action, metadata }]);
+  // 🔐 Серверная часть — теперь через try/catch
+  try {
+    const supabase = getServerSupabaseClient();
+    const { error } = await supabase
+      .from('user_log')
+      .insert([{ user_id: userId, action, metadata }]);
 
-  if (error) {
-    logWarn('Failed to insert user_log', { error });
-  } else {
-    logInfo(`User action logged: ${action}`, { userId, metadata });
+    if (error) {
+      logWarn('Failed to insert user_log', { error });
+    } else {
+      logInfo(`User action logged: ${action}`, { userId, metadata });
+    }
+  } catch (err) {
+    // ⚠️ Никогда не бросаем наружу — чтобы не уронить API
+    logWarn('logger: service-role client init failed, skip user_log write', {
+      message: err instanceof Error ? err.message : String(err),
+      action,
+    });
+  }
+}
+
+/** 🔹 Безопасная обёртка — вызывать там, где AI/инициализация критична */
+export async function tryLogUserAction(args: {
+  userId: string;
+  action: string;
+  metadata?: Record<string, any> | null;
+}) {
+  try {
+    await logUserAction(args);
+  } catch (e) {
+    logWarn('tryLogUserAction suppressed error', {
+      message: e instanceof Error ? e.message : String(e),
+      action: args.action,
+    });
   }
 }

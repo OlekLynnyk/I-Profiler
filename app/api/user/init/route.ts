@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { PACKAGE_LIMITS } from '@/types/plan';
 import { env } from '@/env.server';
-import { logUserAction } from '@/lib/logger';
+import { tryLogUserAction } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
     console.error('❌ user_subscription logic failed:', e);
   }
 
-  await logUserAction({
+  void tryLogUserAction({
     userId: user.id,
     action: 'profile_initialized_or_updated',
     metadata: {

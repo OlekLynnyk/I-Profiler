@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { env } from '@/env.server';
-import { logUserAction } from '@/lib/logger';
+import { tryLogUserAction } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
 // Безопасный парсинг JSON: если тела нет или контент-тайп другой — вернём null и не падём.
 async function safeJson(req: NextRequest): Promise<any | null> {
   const ct = req.headers.get('content-type') || '';
@@ -29,9 +30,7 @@ export async function POST(req: NextRequest) {
   const supabase = createClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    }
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
   const {
@@ -51,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   // Прерываем — не увеличиваем лимит, если это не генерация
   if (action && action !== 'profile_generation_incremented') {
-    await logUserAction({ userId, action, metadata: body?.metadata ?? null });
+    void tryLogUserAction({ userId, action, metadata: body?.metadata ?? null });
     return NextResponse.json({ success: true, skippedIncrement: true });
   }
 
@@ -128,7 +127,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to update limits' }, { status: 500 });
   }
 
-  await logUserAction({
+  void tryLogUserAction({
     userId,
     action: 'profile_generation_incremented',
     metadata: {
