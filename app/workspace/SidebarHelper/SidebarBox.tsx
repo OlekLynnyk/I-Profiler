@@ -31,7 +31,7 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
         ${
           isActive
             ? 'border-[var(--accent)] dark:bg-[var(--card-bg)] dark:backdrop-blur-md'
-            : 'border-[var(--card-border)] bg-[var(--card-bg)]'
+            : 'border-[var(--card-border)] bg-[var(--card-bg)] dark:backdrop-blur-md'
         }
         focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]
         ${disabled ? 'opacity-50' : 'cursor-default'}

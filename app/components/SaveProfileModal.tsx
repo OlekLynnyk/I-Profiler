@@ -6,6 +6,30 @@ import { X, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { createPortal } from 'react-dom'; // ✅ добавлено
 
+// ✅ Добавлено: AmbientBackdrop — ничего не выносится в отдельный файл
+function AmbientBackdrop({ src }: { src: string }) {
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden"
+    >
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img
+          src={src}
+          alt=""
+          className="w-[88vmin] max-w-[min(88vmin,1600px)] h-auto object-contain opacity-[0.0050]"
+          style={{
+            filter: 'contrast(1.05) brightness(0.95)',
+            mixBlendMode: 'multiply',
+            maskImage: 'radial-gradient(60% 60% at 50% 45%, #000 60%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(60% 60% at 50% 45%, #000 60%, transparent 100%)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 interface SaveProfileModalProps {
   open: boolean;
   onClose: () => void;
@@ -104,7 +128,7 @@ export default function SaveProfileModal({
               text-[var(--text-primary)]
               rounded-xl
               shadow-xl
-              w-[75vw] max-w-[750px]
+              w-[92vw] md:w-[75vw] max-w-[750px]
               max-h-[95vh]
               overflow-hidden
               p-6 sm:p-10
@@ -115,6 +139,9 @@ export default function SaveProfileModal({
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
           >
+            {/* ✅ Добавлено: фон с логотипом */}
+            <AmbientBackdrop src="/images/ambient.png" />
+
             <div className="flex justify-between items-center mb-5">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-normal text-[var(--text-secondary)]">Name:</span>

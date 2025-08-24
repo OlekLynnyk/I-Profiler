@@ -19,7 +19,6 @@ export default function Header({ onLoginClick }: HeaderProps) {
   const [active, setActive] = useState<'about' | 'pricing' | null>(null);
   const ioRef = useRef<IntersectionObserver | null>(null);
 
-  // «сжатие» без CLS: меняем фон/трансформацию контента, высоту хедера не трогаем
   useEffect(() => {
     const onScroll = () => setIsShrunk(window.scrollY > 80);
     onScroll();
@@ -27,7 +26,6 @@ export default function Header({ onLoginClick }: HeaderProps) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Подсветка активной секции (About / Pricing)
   useEffect(() => {
     if (pathname.startsWith('/workspace')) return;
 
@@ -44,7 +42,6 @@ export default function Header({ onLoginClick }: HeaderProps) {
 
     ioRef.current = new IntersectionObserver(
       (entries) => {
-        // берем самую «центральную» секцию
         const hit = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => (b.intersectionRatio || 0) - (a.intersectionRatio || 0))[0];
@@ -83,7 +80,6 @@ export default function Header({ onLoginClick }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      {/* стеклянная полоса (фон уплотняется при shrink) */}
       <div
         className={`
           relative transition-colors duration-200 motion-reduce:transition-none
@@ -93,7 +89,6 @@ export default function Header({ onLoginClick }: HeaderProps) {
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          {/* фиксируем высоту ряда, контент внутри «сжимается» трансформацией — без CLS */}
           <div
             className="h-14 sm:h-[60px] flex items-center justify-between"
             style={{
@@ -102,7 +97,6 @@ export default function Header({ onLoginClick }: HeaderProps) {
               transition: 'transform 220ms cubic-bezier(0.22,1,0.36,1)',
             }}
           >
-            {/* ЛЕВАЯ ЗОНА: логотип + навигация */}
             <div className="flex items-center gap-6">
               <button
                 onClick={confirmAndGoHome}
@@ -125,33 +119,37 @@ export default function Header({ onLoginClick }: HeaderProps) {
 
               {!pathname.startsWith('/workspace') && (
                 <nav className="hidden sm:flex items-center gap-6">
-                  {/* About */}
                   <button
                     onClick={() => scrollTo('about')}
                     aria-current={active === 'about' ? 'true' : undefined}
                     className={`
                       relative text-white/80 hover:text-white transition-colors
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1
-                      after:absolute after:left-1/2 after:-bottom-1 after:h-[2px] after:w-0
-                      after:rounded-full after:bg-[#A855F7] after:transition-[left,width] after:duration-200
-                      hover:after:w-full hover:after:left-0
-                      ${active === 'about' ? 'text-white after:w-full after:left-0' : ''}
+                      after:content-[''] after:pointer-events-none
+                      after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1
+                      after:h-[2px] after:w-0
+                      after:bg-gradient-to-r after:from-transparent after:via-[#A855F7]/65 after:to-transparent
+                      after:transition-[width] after:duration-200
+                      hover:after:w-[120px]
+                      ${active === 'about' ? 'text-white after:w-[160px]' : ''}
                     `}
                   >
                     About
                   </button>
 
-                  {/* Pricing */}
                   <button
                     onClick={() => scrollTo('pricing')}
                     aria-current={active === 'pricing' ? 'true' : undefined}
                     className={`
                       relative text-white/80 hover:text-white transition-colors
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1
-                      after:absolute after:left-1/2 after:-bottom-1 after:h-[2px] after:w-0
-                      after:rounded-full after:bg-[#A855F7] after:transition-[left,width] after:duration-200
-                      hover:after:w-full hover:after:left-0
-                      ${active === 'pricing' ? 'text-white after:w/full after:left-0' : ''}
+                      after:content-[''] after:pointer-events-none
+                      after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1
+                      after:h-[2px] after:w-0
+                      after:bg-gradient-to-r after:from-transparent after:via-[#A855F7]/65 after:to-transparent
+                      after:transition-[width] after:duration-200
+                      hover:after:w-[120px]
+                      ${active === 'pricing' ? 'text-white after:w-[160px]' : ''}
                     `}
                   >
                     Pricing
@@ -160,7 +158,6 @@ export default function Header({ onLoginClick }: HeaderProps) {
               )}
             </div>
 
-            {/* ПРАВАЯ ЗОНА: аутентификация */}
             <div className="flex items-center gap-4">
               {!isLoading && session && (
                 <Link
@@ -201,7 +198,6 @@ export default function Header({ onLoginClick }: HeaderProps) {
           </div>
         </div>
 
-        {/* нижний «волосок»-разделитель (чуть явнее при shrink) */}
         <div
           className={`
             pointer-events-none absolute inset-x-0 bottom-0 h-px

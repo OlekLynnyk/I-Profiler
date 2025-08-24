@@ -159,7 +159,7 @@ export default function ChatBubble({
 
         {/* ✅ CONTROLS */}
         {!isUser && (
-          <div className="flex gap-2 mt-1 text-[var(--text-secondary)] text-xs items-center">
+          <div className="flex gap-2 mt-1 ml-4 text-[var(--text-secondary)] text-xs items-center">
             {status === 'pending' && <span className="animate-pulse">...</span>}
             {status === 'error' && <span className="text-[var(--danger)]">Error</span>}
 
@@ -172,10 +172,14 @@ export default function ChatBubble({
                     tabIndex={0}
                     onClick={handleCopy}
                   >
-                    <ClipboardCopy size={14} />
+                    <ClipboardCopy size={16} />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-[var(--surface-tooltip)] text-[var(--text-tooltip)] text-xs px-2 py-1 rounded shadow">
+                <TooltipContent
+                  side="bottom"
+                  sideOffset={6}
+                  className="bg-[var(--surface-tooltip)] text-[var(--text-tooltip)] text-xs px-2 py-1 rounded shadow"
+                >
                   {copied ? 'Copied!' : 'Copy'}
                 </TooltipContent>
               </Tooltip>
@@ -190,10 +194,14 @@ export default function ChatBubble({
                     tabIndex={0}
                     onClick={() => handleRate('up')}
                   >
-                    <ThumbsUp size={14} />
+                    <ThumbsUp size={16} />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-[var(--surface-tooltip)] text-[var(--text-tooltip)] text-xs px-2 py-1 rounded shadow">
+                <TooltipContent
+                  side="bottom"
+                  sideOffset={6}
+                  className="bg-[var(--surface-tooltip)] text-[var(--text-tooltip)] text-xs px-2 py-1 rounded shadow"
+                >
                   {rating === 'up' ? 'Change rating' : 'Helpful'}
                 </TooltipContent>
               </Tooltip>
@@ -208,10 +216,14 @@ export default function ChatBubble({
                     tabIndex={0}
                     onClick={() => handleRate('down')}
                   >
-                    <ThumbsDown size={14} />
+                    <ThumbsDown size={16} />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-[var(--surface-tooltip)] text-[var(--text-tooltip)] text-xs px-2 py-1 rounded shadow">
+                <TooltipContent
+                  side="bottom"
+                  sideOffset={6}
+                  className="bg-[var(--surface-tooltip)] text-[var(--text-tooltip)] text-xs px-2 py-1 rounded shadow"
+                >
                   {rating === 'down' ? 'Change rating' : 'Not helpful'}
                 </TooltipContent>
               </Tooltip>

@@ -213,9 +213,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
             aria-controls={`${box.id}-content`}
             className={cn(
               'transition-all duration-300 cursor-pointer mb-4 rounded-xl border',
-              // закрыто: всё как было (ничего не меняем)
-              !isActive && 'border-[var(--card-border)] bg-[var(--card-bg)]',
-              // открыто: только эта карточка получает фон + локальный blur (только в dark)
+              !isActive && 'border-[var(--card-border)] bg-[var(--card-bg)] dark:backdrop-blur-md',
               isActive && 'border-[var(--accent)] dark:bg-[var(--card-bg)] dark:backdrop-blur-md',
               'hover:shadow-sm'
             )}

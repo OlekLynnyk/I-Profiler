@@ -9,11 +9,11 @@ export default function Footer() {
   const reduce = useReducedMotion();
 
   return (
-    <footer className="mt-2 sm:mt-4 px-4 sm:px-6 pt-12 sm:pt-20 pb-8 sm:pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
-      {/* Верхний hairline — ОСТАВЛЯЕМ */}
-      <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
+    <footer className="mt-2 sm:mt-4 px-4 sm:px-6 pt-12 sm:pt-20 pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
+      {/* верхний hairline — только на мобиле */}
+      <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent md:hidden" />
 
-      {/* Фоновый арт (осьминог) — ОСТАВЛЯЕМ. На мобиле делаем лёгкую версию */}
+      {/* осьминог — оставляем */}
       <motion.div
         aria-hidden
         className="absolute inset-0 opacity-[0.06] pointer-events-none bg-center bg-no-repeat
@@ -28,9 +28,8 @@ export default function Footer() {
         transition={reduce ? undefined : { duration: 10, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* === MOBILE (< md): компактный 3-строчный футер === */}
+      {/* ===== MOBILE (< md) ===== */}
       <div className="md:hidden relative z-10 max-w-6xl mx-auto flex flex-col items-center gap-4">
-        {/* 1. Email */}
         <p className="text-center text-[13px] leading-relaxed text-white/70">
           Questions or feedback? Email us at{' '}
           <a
@@ -41,12 +40,10 @@ export default function Footer() {
           </a>
         </p>
 
-        {/* 2. Адрес */}
         <p className="text-center text-[12px] text-white/60">
           123 Example Street, Dublin, Ireland, The British Isles.
         </p>
 
-        {/* 3. Навигация (пилюли + LinkedIn) */}
         <nav
           aria-label="Footer navigation"
           className="mt-1 w-full flex items-center justify-center gap-3"
@@ -86,75 +83,65 @@ export default function Footer() {
           </a>
         </nav>
 
-        {/* Разделитель (тонкая линия) */}
         <div className="w-full mt-6">
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
         </div>
 
-        {/* Копирайт */}
         <p className="pt-3 text-[12px] text-white/60 text-center">
           © {new Date().getFullYear()} H1NTED Ltd. All rights reserved.
         </p>
       </div>
 
-      {/* === DESKTOP (>= md): твоя исходная компоновка — без изменений === */}
+      {/* ===== DESKTOP (>= md) — столбик слева ===== */}
       <div className="hidden md:block relative z-10">
-        {/* Tier A */}
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
-          <div className="space-y-4 text-left">
-            <p className="text-sm text-white/70">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6">
+          {/* Левая часть — текст в столбик */}
+          <div className="flex flex-col gap-1.5 text-[13px] text-white/75">
+            <p>
               Questions or feedback? Email us at{' '}
-              <a href={`mailto:${EMAIL}`} style={{ color: '#A855F7' }} className="font-medium">
+              <a href={`mailto:${EMAIL}`} className="font-medium text-[#A855F7]">
                 {EMAIL}
               </a>
             </p>
-            <p className="text-[13px] text-white/60">
-              123 Example Street, Dublin, Ireland, The British Isles.
+            <p className="text-white/60">123 Example Street, Dublin, Ireland, The British Isles.</p>
+            <p className="pt-2 text-white/60 text-[12px]">
+              © {new Date().getFullYear()} H1NTED Ltd. All rights reserved.
             </p>
           </div>
 
-          <nav className="flex flex-col items-end gap-5 text-sm" aria-label="Footer navigation">
-            <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1"
-              >
-                Terms of Use
-              </a>
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1"
-              >
-                Privacy Policy
-              </a>
-              <a
-                href="https://www.linkedin.com/in/oleksandrlynnyk/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 ring-white/15 hover:ring-[#A855F7]/40 hover:bg-[#A855F7]/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60"
-              >
-                <FaLinkedin size={16} className="text-white/80" />
-              </a>
-            </div>
+          {/* Правая часть — навигация */}
+          <nav className="flex items-center gap-6 text-[13px]" aria-label="Footer navigation">
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/75 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1"
+            >
+              Terms of Use
+            </a>
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/75 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="https://www.linkedin.com/in/oleksandrlynnyk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-white/12 hover:ring-[#A855F7]/35 hover:bg-[#A855F7]/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60"
+            >
+              <FaLinkedin size={16} className="text-white/80" />
+            </a>
           </nav>
         </div>
 
-        {/* Divider */}
-        <div className="mt-12 max-w-6xl mx-auto">
+        {/* Разделительная линия — в самом низу */}
+        <div className="mt-4 max-w-6xl mx-auto">
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
-        </div>
-
-        {/* Tier B */}
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3 pt-4">
-          <p className="text-[13px] text-white/60">
-            © {new Date().getFullYear()} H1NTED Ltd. All rights reserved.
-          </p>
-          <div className="text-[13px] text-white/60" />
         </div>
       </div>
     </footer>

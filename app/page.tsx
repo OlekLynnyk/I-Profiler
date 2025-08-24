@@ -64,7 +64,7 @@ export default function HomePage() {
           <div className="space-y-3 relative">
             {/* H1 */}
             <motion.h1
-              className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] text-[clamp(3.5rem,12vw,5rem)]"
+              className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] text-[clamp(3.5rem,12vw,5rem)] hero-glow"
               style={{ letterSpacing: '-0.02em' }}
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
@@ -163,7 +163,7 @@ export default function HomePage() {
           />
           <div className="min-h-[4rem]">
             <motion.h1
-              className="font-extrabold uppercase tracking-tight leading-[1.02] [text-wrap:balance] text-[clamp(3.75rem,5vw+1rem,5.75rem)]"
+              className="font-extrabold uppercase tracking-tight leading-[1.02] [text-wrap:balance] text-[clamp(3.75rem,5vw+1rem,5.75rem)] hero-glow"
               style={{ letterSpacing: '-0.02em' }}
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
@@ -261,7 +261,10 @@ export default function HomePage() {
       </section>
 
       {/* ===== ABOUT ===== */}
-      <section id="about" className="relative z-10 mx-auto max-w-5xl px-6 py-16 lg:py-28">
+      <section
+        id="about"
+        className="relative z-10 mx-auto max-w-5xl lg:max-w-6xl px-6 py-16 lg:py-28"
+      >
         <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-px w-[min(760px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         <motion.h2
           className="text-center text-3xl md:text-4xl font-extrabold tracking-tight text-white"
@@ -274,7 +277,17 @@ export default function HomePage() {
           About
         </motion.h2>
 
-        <div className="mt-8 space-y-6 max-w-[42ch] mx-auto text-[15px] leading-7 md:text-lg md:leading-8 text-white/80 text-center">
+        {/* ⬇️ Мобильный вид НЕ меняем; для md+ расширяем колонку и увеличиваем межстрочник */}
+        <div
+          className="
+            mt-8 mx-auto text-white/80 text-center
+            max-w-[42ch] md:max-w-[58ch] lg:max-w-[66ch]
+            text-[15px] leading-7
+            md:text-[17px] md:leading-8
+            lg:text-[18px] lg:leading-[1.9]
+            space-y-6 lg:space-y-7
+          "
+        >
           <motion.p
             lang="en"
             initial={reduce ? undefined : 'hidden'}

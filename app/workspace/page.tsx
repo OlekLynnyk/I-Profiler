@@ -249,7 +249,7 @@ export default function WorkspacePage() {
       <SessionBridge />
 
       <div
-        className="flex h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-500 relative overflow-hidden"
+        className="flex h-[100dvh] bg-[var(--background)] text-[var(--foreground)] transition-colors duration-500 relative overflow-hidden"
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
       >
@@ -274,9 +274,11 @@ export default function WorkspacePage() {
             disableSaveProfiling={isGenerating || messages.length === 0}
           />
 
-          <div className="flex-1 flex flex-col justify-center items-center pb-[160px]">
+          <div
+            className={`flex-1 flex flex-col justify-center items-center ${messages.length === 0 ? 'pb-0' : 'pb-[135px]'}`}
+          >
             <div
-              className="w-full max-w-3xl flex-1 overflow-y-auto pt-[72px] px-4 sm:px-6 md:px-8 no-scrollbar"
+              className={`w-full max-w-3xl flex-1 pt-[72px] px-4 sm:px-6 md:px-8 no-scrollbar ${messages.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'}`}
               ref={scrollRef}
             >
               <div className="flex flex-col items-start justify-start py-4">
@@ -600,22 +602,23 @@ export default function WorkspacePage() {
             <button
               onClick={scrollToBottom}
               className="
-            absolute
-            right-2 sm:right-3 md:right-4
-            bottom-24 sm:bottom-28
-            w-11 h-11
-            rounded-full
-            bg-[var(--accent-bg)]
-            text-[var(--accent)]
-            shadow-[0_8px_24px_rgba(0,0,0,0.35)]
-            ring-1 ring-[var(--card-border)]
-            hover:brightness-110 hover:shadow-[0_8px_30px_rgba(168,85,247,0.25)]
-            transition
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]
-           "
+              absolute
+              right-3 md:right-4
+              bottom-24 sm:bottom-28
+              w-9 h-9
+              flex items-center justify-center
+              rounded-full
+              bg-[var(--card-bg)]
+              text-[var(--text-primary)]
+              ring-1 ring-[var(--card-border)]
+              shadow-md
+              hover:bg-[var(--button-hover-bg)]
+              transition
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]
+             "
               aria-label="Scroll to latest message"
             >
-              <ChevronDown className="w-5 h-5" />
+              <ChevronDown className="w-4 h-4 translate-y-[0.5px]" />
             </button>
           )}
 

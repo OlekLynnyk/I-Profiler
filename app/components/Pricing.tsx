@@ -129,6 +129,24 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     },
   };
 
+  // ======= Иконка замка (общая) =======
+  const LockIcon = ({ className = '' }: { className?: string }) => (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={`w-4 h-4 ${className}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="4.5" y="11" width="15" height="9" rx="2.5" />
+      <path d="M8 11V8.5a4 4 0 0 1 8 0V11" />
+      <circle cx="12" cy="15.5" r="1.2" />
+    </svg>
+  );
+
   // ======= Универсальная карточка (Mobile LUX) =======
   const PlanCard = ({
     plan,
@@ -155,7 +173,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     const layoutId = `plan-${plan.id}`;
 
     if (size === 'small') {
-      // маленькая карточка — теперь не квадрат, больше воздуха
+      // маленькая карточка — стейбильный блок под ценой
       return (
         <motion.button
           type="button"
@@ -183,7 +201,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             </p>
             <p
               id={`desc-${plan.id}`}
-              className="mt-1 text-[#374151] text-[13px] leading-snug line-clamp-2"
+              className="mt-1 text-[#374151] text-[13px] leading-snug line-clamp-2 min-h-[36px]" /* фикс высоты под 2 строки */
             >
               {plan.description}
             </p>
@@ -217,7 +235,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
         {/* тонкая HL/Accent сверху */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/55 to-transparent" />
 
-        {/* бейдж (высокая контрастность, внутри карточки) */}
+        {/* бейдж */}
         {plan.highlight && (
           <div
             className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full
@@ -243,7 +261,11 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           )}
         </p>
 
-        <p id={`desc-${plan.id}`} className="mt-3 text-[#374151] text-[15px] leading-relaxed">
+        {/* Стабильный блок описания — без «прыжков» */}
+        <p
+          id={`desc-${plan.id}`}
+          className="mt-3 text-[#374151] text-[15px] leading-relaxed line-clamp-3 min-h-[60px]"
+        >
           {plan.description}
         </p>
 
@@ -263,6 +285,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           ))}
         </ul>
 
+        {/* CTA — c замком при disabled */}
         <motion.button
           whileTap={{ scale: 0.99 }}
           onClick={isFree ? (isLoggedIn ? undefined : plan.action) : () => handleCheckout(plan.id)}
@@ -271,6 +294,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             text-[#111827]
             transition-[background,ring,transform] duration-200
             focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
+            disabled:cursor-not-allowed
           "
           style={{
             backgroundImage: `
@@ -284,7 +308,10 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
           aria-describedby={`desc-${plan.id}`}
         >
-          {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
+          <span className="inline-flex items-center justify-center gap-2">
+            {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
+            {isDisabled && !isLoading && <LockIcon className="opacity-80" />}
+          </span>
         </motion.button>
       </motion.div>
     );
@@ -323,7 +350,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               <PlanCard plan={activePlan} size="large" />
             </motion.div>
 
-            {/* Остальные планы — стэком (по одному в ряд) */}
+            {/* Остальные планы — стэком */}
             <motion.div
               layout
               variants={containerVar}
@@ -342,7 +369,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           </div>
         </LayoutGroup>
 
-        {/* ===== DESKTOP (>= md) — без изменений ===== */}
+        {/* ===== DESKTOP (>= md) ===== */}
         <motion.div
           variants={containerVar}
           initial={reduce ? undefined : 'hidden'}
@@ -411,6 +438,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                   ))}
                 </ul>
 
+                {/* CTA — с замком при disabled */}
                 <button
                   onClick={
                     isFree
@@ -429,7 +457,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                     transition-[transform,box-shadow,background] duration-200
                     hover:-translate-y-[1px]
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
-                    disabled:opacity-60
+                    disabled:opacity-60 disabled:cursor-not-allowed
                   "
                   style={{
                     backgroundImage: `
@@ -444,11 +472,19 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                   title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
                   aria-describedby={`title-desktop-${plan.id}`}
                 >
-                  {loadingPlan === plan.id
-                    ? 'Redirecting...'
-                    : isFree
-                      ? 'Try Demo'
-                      : 'Go Executive'}
+                  <span className="inline-flex items-center justify-center gap-2">
+                    {loadingPlan === plan.id
+                      ? 'Redirecting...'
+                      : isFree
+                        ? 'Try Demo'
+                        : 'Go Executive'}
+                    {!isLoggedIn && !isFree && loadingPlan !== plan.id && (
+                      <LockIcon className="opacity-85" />
+                    )}
+                    {isFree && isLoggedIn && loadingPlan !== plan.id && (
+                      <LockIcon className="opacity-85" />
+                    )}
+                  </span>
                 </button>
               </motion.div>
             );
