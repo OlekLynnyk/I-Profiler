@@ -217,6 +217,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
               isActive && 'border-[var(--accent)] dark:bg-[var(--card-bg)] dark:backdrop-blur-md',
               'hover:shadow-sm'
             )}
+            style={{ WebkitBackdropFilter: 'blur(12px)' }}
           >
             <div className="px-3 sm:px-4 py-3 flex justify-between items-center">
               {box.id === 'plan-box' ? (

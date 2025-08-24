@@ -37,6 +37,7 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
         ${disabled ? 'opacity-50' : 'cursor-default'}
         ${!disabled ? 'cursor-pointer' : ''}
       `}
+      style={{ WebkitBackdropFilter: 'blur(12px)' }}
     >
       {/* header */}
       <div className="px-4 py-3 flex justify-between items-center">
