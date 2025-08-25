@@ -15,6 +15,16 @@ export async function middleware(req: NextRequest) {
     return passthrough;
   }
 
+  // 🌐 0.1 Канонический хост: www -> apex (308 сохраняет метод/тело)
+  const host = req.headers.get('host') || url.host;
+  if (host === 'www.h1nted.com') {
+    const redirectUrl = url.clone();
+    redirectUrl.host = 'h1nted.com';
+    const redirectRes = NextResponse.redirect(redirectUrl, 308);
+    redirectRes.headers.set('x-trace-id', traceId);
+    return redirectRes;
+  }
+
   // ✅ 1) Нормальный поток
   const res = NextResponse.next();
   res.headers.set('x-trace-id', traceId);
@@ -35,7 +45,6 @@ export async function middleware(req: NextRequest) {
       ({
         data: { session },
       } = await supabase.auth.getSession().catch(() => ({ data: { session: null } as any })));
-
       if (session) break;
     }
   }

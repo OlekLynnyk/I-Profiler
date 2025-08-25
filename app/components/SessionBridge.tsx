@@ -34,7 +34,7 @@ export default function SessionBridge() {
         process.env.NODE_ENV === 'production'
           ? {
               name: 'sb',
-              domain: 'main.d3a9q3v3j43fq8.amplifyapp.com',
+              domain: 'h1nted.com',
               path: '/',
               sameSite: 'lax',
               secure: true,

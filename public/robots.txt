@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Host: h1nted.com
+Sitemap: https://h1nted.com/sitemap.xml
