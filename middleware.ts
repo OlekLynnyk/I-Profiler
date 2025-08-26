@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
   // ❌ 0) Пропускаем стримы и Stripe
   const isBypassedPath = path.startsWith('/api/ai/') || path.startsWith('/api/stripe/');
   if (isBypassedPath) {
-    const passthrough = NextResponse.next();
+    const passthrough = NextResponse.next({ request: { headers: req.headers } });
     passthrough.headers.set('x-trace-id', traceId);
     return passthrough;
   }
@@ -26,7 +26,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // ✅ 1) Нормальный поток
-  const res = NextResponse.next();
+  const res = NextResponse.next({ request: { headers: req.headers } });
   res.headers.set('x-trace-id', traceId);
 
   const supabase = createMiddlewareClient({ req, res });

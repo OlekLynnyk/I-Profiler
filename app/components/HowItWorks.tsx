@@ -41,12 +41,19 @@ const STEPS: Step[] = [
 export default function HowItWorks() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // ⬇︎ новые refs только для левой части
+  const monolithRef = useRef<HTMLDivElement | null>(null);
+  const notchRef = useRef<HTMLDivElement | null>(null);
+
   const railRef = useRef<HTMLDivElement | null>(null);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
+
   const [active, setActive] = useState<number>(1);
   const [showPoster, setShowPoster] = useState<boolean>(true);
   const [beamPath, setBeamPath] = useState<string>('');
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [edgePulse, setEdgePulse] = useState<boolean>(false);
 
   // Политики производительности
   const reduceMotion = useMemo(() => {
@@ -123,21 +130,34 @@ export default function HowItWorks() {
     else vid.pause();
   };
 
-  // Пересчёт «луча»
+  // === Луч: старт из "notch" на левом ребре монолита (если есть), иначе центр видео
   const recalcBeam = () => {
     const rail = railRef.current;
     const sec = sectionRef.current;
-    const vid = videoRef.current;
     const activeEl = stepRefs.current[active - 1];
-    if (!rail || !sec || !activeEl || !vid) return;
+    if (!rail || !sec || !activeEl) return;
 
     const secRect = sec.getBoundingClientRect();
     const railRect = rail.getBoundingClientRect();
     const aRect = activeEl.getBoundingClientRect();
-    const vidRect = vid.getBoundingClientRect();
 
-    const startX = (vidRect.left + vidRect.right) / 2 - secRect.left;
-    const startY = (vidRect.top + vidRect.bottom) / 2 - secRect.top;
+    // стартовая точка
+    let startX: number;
+    let startY: number;
+
+    const notchEl = notchRef.current;
+    if (notchEl) {
+      const n = notchEl.getBoundingClientRect();
+      startX = (n.left + n.right) / 2 - secRect.left;
+      startY = (n.top + n.bottom) / 2 - secRect.top;
+    } else {
+      const vid = videoRef.current;
+      if (!vid) return;
+      const v = vid.getBoundingClientRect();
+      startX = (v.left + v.right) / 2 - secRect.left;
+      startY = (v.top + v.bottom) / 2 - secRect.top;
+    }
+
     const endX = railRect.left - secRect.left + railRect.width / 2;
     const endY = aRect.top - secRect.top + aRect.height / 2;
 
@@ -158,6 +178,8 @@ export default function HowItWorks() {
     if (sectionRef.current) ro.observe(sectionRef.current);
     if (railRef.current) ro.observe(railRef.current);
     if (videoRef.current) ro.observe(videoRef.current);
+    if (monolithRef.current) ro.observe(monolithRef.current);
+    if (notchRef.current) ro.observe(notchRef.current);
 
     window.addEventListener('scroll', onScrollOrResize, { passive: true });
     window.addEventListener('resize', onScrollOrResize);
@@ -170,16 +192,61 @@ export default function HowItWorks() {
     };
   }, [active]);
 
+  // Edge pulse при смене шага — короткий импульс подсветки фаски у “стыка”
+  useEffect(() => {
+    if (reduceMotion || saveData || lowCPU) return;
+    setEdgePulse(true);
+    const t = setTimeout(() => setEdgePulse(false), 200);
+    return () => clearTimeout(t);
+  }, [active, reduceMotion, saveData, lowCPU]);
+
+  // Micro-tilt: движение мыши → варьируем rotateX/rotateY (макс ≈2°)
+  const handleTilt = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (reduceMotion || saveData || lowCPU) return;
+    const el = monolithRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width; // 0..1
+    const y = (e.clientY - r.top) / r.height; // 0..1
+    const rx = (x - 0.5) * 4; // -2..2
+    const ry = (0.5 - y) * 4; // -2..2
+    el.style.setProperty('--rx', `${rx.toFixed(2)}deg`);
+    el.style.setProperty('--ry', `${ry.toFixed(2)}deg`);
+  };
+  const resetTilt = () => {
+    const el = monolithRef.current;
+    if (!el) return;
+    el.style.setProperty('--rx', `0deg`);
+    el.style.setProperty('--ry', `0deg`);
+  };
+
   return (
     <section ref={sectionRef} className="bg-transparent text-white relative overflow-hidden">
       <div className="w-full relative px-4">
         {/* ===== MOBILE ===== */}
         <div className="lg:hidden w-full mx-auto max-w-[520px]">
-          {/* Телефон */}
+          {/* Optic Monolith — mobile (упрощённый) */}
           <div className="relative h-[80svh] w-full flex items-center justify-center">
-            <div className="relative w-[88vw] max-w-[380px] aspect-[9/19.5] rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden bg-white/5 backdrop-blur">
-              {!showPoster ? (
-                <>
+            <div className="relative w-[88vw] max-w-[380px] aspect-[9/19.5]">
+              {/* Ambient Halo */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-5 -z-10 rounded-[56px] blur-2xl"
+                style={{
+                  background:
+                    'radial-gradient(120% 120% at 50% 50%, rgba(168,85,247,0.16) 0%, rgba(168,85,247,0) 60%)',
+                }}
+              />
+              {/* Backplate (Titanium) */}
+              <div
+                className="absolute inset-0 rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.55)]"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.38))',
+                }}
+              />
+              {/* Video */}
+              <div className="absolute inset-[6px] rounded-[34px] overflow-hidden bg-black/30">
+                {!showPoster ? (
                   <video
                     ref={videoRef}
                     className="absolute inset-0 h-full w-full object-cover"
@@ -192,18 +259,7 @@ export default function HowItWorks() {
                   >
                     <source src="/videos/how-it-works-1080p-h264.mp4" type="video/mp4" />
                   </video>
-
-                  {/* Рамка поверх мобильного видео */}
-                  <Image
-                    src="/images/howitworks-poster.jpg"
-                    alt="Phone frame"
-                    fill
-                    className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
-                    priority
-                  />
-                </>
-              ) : (
-                <>
+                ) : (
                   <Image
                     src="/images/howitworks-poster.jpg"
                     alt="Preview of product flow"
@@ -211,29 +267,43 @@ export default function HowItWorks() {
                     className="object-cover"
                     priority
                   />
-                  {/* Рамка поверх мобильного постера */}
-                  <Image
-                    src="/images/howitworks-poster.jpg"
-                    alt="Phone frame"
-                    fill
-                    className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
-                    priority
-                  />
-                </>
-              )}
-              {/* мягкое свечение */}
+                )}
+
+                {/* Внутренняя виньетка */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background:
+                      'radial-gradient(120% 120% at 50% 50%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.22) 100%)',
+                  }}
+                />
+              </div>
+
+              {/* Optic Glass (стеклянная крышка + фаска + блик) */}
               <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-[44px] ring-1 ring-[#A855F7]/20"
+                className="absolute inset-0 rounded-[40px] pointer-events-none"
+                style={{
+                  background:
+                    'conic-gradient(from 310deg at 18% 8%, rgba(255,255,255,0.28), rgba(255,255,255,0) 60%)',
+                }}
               />
+              {/* Длинный мягкий блик */}
               <div
                 aria-hidden
-                className="pointer-events-none absolute -inset-6 -z-10 rounded-[56px] bg-[#A855F7]/10 blur-2xl"
+                className="pointer-events-none absolute rounded-[40px]"
+                style={{
+                  inset: '10% 8% 30% 8%',
+                  transform: 'rotate(12deg)',
+                  background:
+                    'linear-gradient(90deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04))',
+                  opacity: 0.35,
+                }}
               />
             </div>
           </div>
 
-          {/* Тексты шагов */}
+          {/* Тексты шагов (без изменений) */}
           <div className="px-2 pb-[env(safe-area-inset-bottom)] space-y-8">
             <h3 className="text-center text-white text-[clamp(1.5rem,6vw,1.875rem)] font-extrabold tracking-tight">
               How it works
@@ -256,39 +326,46 @@ export default function HowItWorks() {
         {/* ===== DESKTOP ===== */}
         <div className="hidden lg:block pt-20 pb-20">
           <div className="w-full relative grid items-center gap-12 lg:grid-cols-[0.95fr_0.05fr_1fr]">
-            {/* ЛЕВАЯ КОЛОНКА — телефон */}
+            {/* ЛЕВАЯ КОЛОНКА — Optic Monolith */}
             <div className="relative mx-auto w-[360px]">
-              {/* Фоновая виньетка за телефоном */}
+              {/* Ambient Halo за монолитом */}
               <div
                 aria-hidden
-                className="pointer-events-none absolute -z-10 -left-10 -top-12 w-[460px] h-[760px] rounded-[72px] blur-3xl"
+                className="pointer-events-none absolute -z-10 -left-10 -top-14 w-[460px] h-[760px] rounded-[72px] blur-3xl"
                 style={{
                   background:
-                    'radial-gradient(120% 120% at 30% 30%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%)',
+                    'radial-gradient(120% 120% at 30% 30%, rgba(168,85,247,0.16) 0%, rgba(168,85,247,0) 60%)',
                 }}
               />
-              {/* Декор под углом (оставляем как было) */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -left-8 -top-8 hidden rotate-3 opacity-60 blur-[0.5px] xl:block"
-              >
-                <Image
-                  src="/images/phone-static.png"
-                  alt=""
-                  width={320}
-                  height={640}
-                  className="rounded-[40px] ring-1 ring-white/5"
-                  priority
-                />
-              </div>
 
-              {/* Рамка + экран */}
-              <div className="relative w-[360px] h-[640px] rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden bg-white/5 backdrop-blur">
-                {!showPoster ? (
-                  <>
+              {/* Монолит */}
+              <div
+                ref={monolithRef}
+                onMouseMove={handleTilt}
+                onMouseLeave={resetTilt}
+                className="relative w-[360px] h-[640px] [transform-style:preserve-3d] will-change-transform"
+                style={{
+                  transform: 'perspective(1200px) rotateX(var(--ry,0deg)) rotateY(var(--rx,0deg))',
+                  transition:
+                    reduceMotion || saveData || lowCPU
+                      ? 'none'
+                      : 'transform 320ms cubic-bezier(0.22,1,0.36,1)',
+                }}
+              >
+                {/* Backplate (Titanium) */}
+                <div
+                  className="absolute inset-0 rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.60)]"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(0,0,0,0.45))',
+                  }}
+                />
+
+                {/* Video cavity */}
+                <div className="absolute inset-[8px] rounded-[36px] overflow-hidden bg-black/30">
+                  {!showPoster ? (
                     <video
                       ref={videoRef}
-                      className="absolute inset-0 w-full h-full object-cover rounded-[40px] cursor-pointer"
+                      className="absolute inset-0 w-full h-full object-cover cursor-pointer"
                       poster="/images/howitworks-poster.jpg"
                       muted
                       playsInline
@@ -299,68 +376,104 @@ export default function HowItWorks() {
                     >
                       <source src="/videos/how-it-works-1080p-h264.mp4" type="video/mp4" />
                     </video>
-
-                    {/* Рамка поверх десктоп-видео */}
-                    <Image
-                      src="/images/howitworks-poster.jpg"
-                      alt="Phone frame"
-                      fill
-                      className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
-                      priority
-                    />
-
-                    {/* Кнопка-оверлей */}
-                    <button
-                      type="button"
-                      onClick={togglePlay}
-                      aria-label={isPaused ? 'Play video' : 'Pause video'}
-                      aria-pressed={!isPaused}
-                      className={`absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-black/35 backdrop-blur-sm flex items-center justify-center transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 ${isPaused ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                    >
-                      {isPaused ? (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      ) : (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-                        </svg>
-                      )}
-                    </button>
-                  </>
-                ) : (
-                  <>
+                  ) : (
                     <Image
                       src="/images/howitworks-poster.jpg"
                       alt="Preview of product flow"
                       fill
-                      className="object-cover rounded-[40px]"
+                      className="object-cover"
                       priority
                     />
-                    {/* Рамка поверх десктоп-постера */}
-                    <Image
-                      src="/images/howitworks-poster.jpg"
-                      alt="Phone frame"
-                      fill
-                      className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
-                      priority
-                    />
-                  </>
+                  )}
+
+                  {/* Внутренняя виньетка и периметральная тень */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background:
+                        'radial-gradient(120% 120% at 50% 50%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.24) 100%), linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0) 18%, rgba(0,0,0,0) 82%, rgba(0,0,0,0.14))',
+                    }}
+                  />
+                </div>
+
+                {/* Optic Glass: фаска + конусный хайлайт */}
+                <div
+                  className={`absolute inset-0 rounded-[40px] pointer-events-none ring-1 ${edgePulse ? 'ring-[rgba(168,85,247,0.28)]' : 'ring-white/10'}`}
+                  style={{
+                    background:
+                      'conic-gradient(from 312deg at 18% 10%, rgba(255,255,255,0.28), rgba(255,255,255,0) 60%)',
+                    boxShadow: edgePulse
+                      ? '0 0 24px rgba(168,85,247,0.35)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+                    transition: 'box-shadow 200ms ease, ring-color 200ms ease',
+                  }}
+                />
+
+                {/* Длинный мягкий блик по стеклу (едва «дышит») */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute rounded-[40px]"
+                  style={{
+                    inset: '12% 10% 30% 10%',
+                    transform: 'rotate(14deg)',
+                    background:
+                      'linear-gradient(90deg, rgba(255,255,255,0.24), rgba(255,255,255,0.06))',
+                    opacity: reduceMotion ? 0.28 : 0.34,
+                    animation: reduceMotion ? 'none' : 'glassBreath 28s ease-in-out infinite',
+                  }}
+                />
+
+                {/* Notch — стыковка луча с левым ребром */}
+                <div
+                  ref={notchRef}
+                  aria-hidden
+                  className="absolute left-[-2px] top-1/2 -translate-y-1/2 h-6 w-[6px] rounded-[999px] bg-[#A855F7]/30 blur-[1px] shadow-[0_0_16px_rgba(168,85,247,0.55)]"
+                />
+
+                {/* Pearl кнопка Play/Pause */}
+                {!showPoster && (
+                  <button
+                    type="button"
+                    onClick={togglePlay}
+                    aria-label={isPaused ? 'Play video' : 'Pause video'}
+                    aria-pressed={!isPaused}
+                    className={`absolute bottom-3 right-3 z-20 h-10 w-10 rounded-full backdrop-blur-md flex items-center justify-center transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 ${isPaused ? 'opacity-100' : 'opacity-80 hover:opacity-100'}`}
+                    style={{
+                      background:
+                        'radial-gradient(120% 120% at 30% 30%, rgba(168,85,247,0.22), rgba(168,85,247,0.08))',
+                      boxShadow:
+                        'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 0 1px rgba(255,255,255,0.06), 0 10px 28px rgba(0,0,0,0.45)',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                    }}
+                  >
+                    {isPaused ? (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="opacity-90"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="opacity-90"
+                      >
+                        <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                      </svg>
+                    )}
+                  </button>
                 )}
               </div>
-
-              {/* Периметральное мягкое свечение */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-[44px] ring-1 ring-[#A855F7]/20"
-              />
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -inset-6 -z-10 rounded-[56px] bg-[#A855F7]/10 blur-2xl"
-              />
             </div>
 
-            {/* СЕРЕДИНА — «рейка» */}
+            {/* СЕРЕДИНА — «рейка» (без изменений) */}
             <div ref={railRef} className="relative mx-auto h-full w-[2px] bg-white/12 rounded">
               <div
                 aria-hidden
@@ -374,7 +487,7 @@ export default function HowItWorks() {
               />
             </div>
 
-            {/* ПРАВАЯ КОЛОНКА — шаги */}
+            {/* ПРАВАЯ КОЛОНКА — шаги (не трогаем) */}
             <div className="max-w-[480px] ml-0 mr-auto">
               <h2 className="mb-10 text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
                 How it works
@@ -428,7 +541,7 @@ export default function HowItWorks() {
               </div>
             </div>
 
-            {/* SVG-луч */}
+            {/* SVG-луч — теперь стартует из notch */}
             <svg
               className="pointer-events-none absolute inset-0"
               xmlns="http://www.w3.org/2000/svg"
@@ -439,6 +552,14 @@ export default function HowItWorks() {
                   <stop offset="45%" stopColor="rgba(168,85,247,0.65)" />
                   <stop offset="100%" stopColor="rgba(168,85,247,0.0)" />
                 </linearGradient>
+                {/* keyframes для "дыхания" блика */}
+                <style>{`
+                  @keyframes glassBreath {
+                    0% { opacity: 0.30; transform: rotate(14deg) translateX(0px); }
+                    50% { opacity: 0.36; transform: rotate(14deg) translateX(6px); }
+                    100% { opacity: 0.30; transform: rotate(14deg) translateX(0px); }
+                  }
+                `}</style>
               </defs>
               <path d={beamPath} stroke="url(#beam)" strokeWidth="2" fill="none" />
             </svg>
