@@ -56,6 +56,10 @@ const SidebarHelper = dynamic(() => import('./SidebarHelper'), {
 });
 
 export default function WorkspacePage() {
+  useEffect(() => {
+    document.title = 'H1NTED · Workspace';
+  }, []);
+
   const { session, user, isLoading } = useAuth();
   const router = useRouter();
 

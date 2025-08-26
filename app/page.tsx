@@ -34,6 +34,8 @@ export default function HomePage() {
   const reduce = useReducedMotion();
 
   useEffect(() => {
+    document.title = 'H1NTED · Main';
+
     if (session) setIsAuthModalOpen(false);
   }, [session]);
 
@@ -321,7 +323,7 @@ export default function HomePage() {
         <div className="pointer-events-none absolute left-1/2 bottom-6 -translate-x-1/2 h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl" />
 
         {/* нижний безопасный отступ под жестовую панель */}
-        <div className="pb-[calc(12px+env(safe-area-inset-bottom))]" />
+        <div className="pb-[calc(12px+env(safe-area-inset-bottom))] md:pb-0" />
       </section>
 
       {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}

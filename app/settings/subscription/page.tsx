@@ -20,6 +20,10 @@ export default function SubscriptionSettings() {
   const reduce = useReducedMotion();
 
   useEffect(() => {
+    document.title = 'H1NTED · Subscription';
+  }, []);
+
+  useEffect(() => {
     const fetchBillingHistory = async () => {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;

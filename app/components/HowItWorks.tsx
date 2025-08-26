@@ -46,7 +46,7 @@ export default function HowItWorks() {
   const [active, setActive] = useState<number>(1);
   const [showPoster, setShowPoster] = useState<boolean>(true);
   const [beamPath, setBeamPath] = useState<string>('');
-  const DISABLE_VIDEO = true; // временно отключаем видео, всегда показываем постер
+  const [isPaused, setIsPaused] = useState<boolean>(false);
 
   // Политики производительности
   const reduceMotion = useMemo(() => {
@@ -64,16 +64,15 @@ export default function HowItWorks() {
     typeof (navigator as any)?.hardwareConcurrency === 'number' &&
     (navigator as any).hardwareConcurrency < 4;
 
-  // Правильный выбор: видео vs постер
   useEffect(() => {
     setShowPoster(reduceMotion || saveData || lowCPU);
   }, [reduceMotion, saveData, lowCPU]);
 
-  // Авто play/pause в зоне видимости
+  // Авто play/pause
   useEffect(() => {
     const vid = videoRef.current;
     const el = sectionRef.current;
-    if (!vid || !el || showPoster || DISABLE_VIDEO) return;
+    if (!vid || !el || showPoster) return;
 
     const io = new IntersectionObserver(
       (entries) =>
@@ -84,10 +83,22 @@ export default function HowItWorks() {
     return () => io.disconnect();
   }, [showPoster]);
 
-  // Активный шаг по таймкоду
   useEffect(() => {
     const vid = videoRef.current;
-    if (!vid || showPoster || DISABLE_VIDEO) return;
+    if (!vid) return;
+    const onPlay = () => setIsPaused(false);
+    const onPause = () => setIsPaused(true);
+    vid.addEventListener('play', onPlay);
+    vid.addEventListener('pause', onPause);
+    return () => {
+      vid.removeEventListener('play', onPlay);
+      vid.removeEventListener('pause', onPause);
+    };
+  }, []);
+
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid || showPoster) return;
     const onTime = () => {
       const t = vid.currentTime;
       const step = STEPS.find((s) => t >= s.start && t < s.end) ?? STEPS[0];
@@ -100,12 +111,19 @@ export default function HowItWorks() {
   const seekTo = (s: Step) => {
     setActive(s.id);
     const vid = videoRef.current;
-    if (!vid || showPoster || DISABLE_VIDEO) return;
+    if (!vid || showPoster) return;
     vid.currentTime = s.start + 0.05;
     vid.play().catch(() => {});
   };
 
-  // Пересчёт «луча» (HL/Accent) без таймеров
+  const togglePlay = () => {
+    const vid = videoRef.current;
+    if (!vid || showPoster) return;
+    if (vid.paused) vid.play().catch(() => {});
+    else vid.pause();
+  };
+
+  // Пересчёт «луча»
   const recalcBeam = () => {
     const rail = railRef.current;
     const sec = sectionRef.current;
@@ -118,13 +136,11 @@ export default function HowItWorks() {
     const aRect = activeEl.getBoundingClientRect();
     const vidRect = vid.getBoundingClientRect();
 
-    // старт — центр экрана телефона, финиш — центр активного шага (по рейке)
     const startX = (vidRect.left + vidRect.right) / 2 - secRect.left;
     const startY = (vidRect.top + vidRect.bottom) / 2 - secRect.top;
     const endX = railRect.left - secRect.left + railRect.width / 2;
     const endY = aRect.top - secRect.top + aRect.height / 2;
 
-    // контрольная точка — выше прямой для «дорогой» дуги
     const cpx = (startX + endX) / 2;
     const cpy = startY - 80;
     setBeamPath(`M ${startX},${startY} Q ${cpx},${cpy} ${endX},${endY}`);
@@ -138,7 +154,6 @@ export default function HowItWorks() {
       raf = requestAnimationFrame(recalcBeam);
     };
 
-    // точный ресайз без setInterval
     const ro = new ResizeObserver(onScrollOrResize);
     if (sectionRef.current) ro.observe(sectionRef.current);
     if (railRef.current) ro.observe(railRef.current);
@@ -163,28 +178,48 @@ export default function HowItWorks() {
           {/* Телефон */}
           <div className="relative h-[80svh] w-full flex items-center justify-center">
             <div className="relative w-[88vw] max-w-[380px] aspect-[9/19.5] rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden bg-white/5 backdrop-blur">
-              {!showPoster && !DISABLE_VIDEO ? (
-                <video
-                  ref={videoRef}
-                  className="absolute inset-0 h-full w-full object-cover"
-                  poster="/images/howitworks-poster.jpg"
-                  muted
-                  playsInline
-                  loop
-                  preload="metadata"
-                  autoPlay
-                >
-                  <source src="/videos/howitworks-720p-vp9.webm" type="video/webm" />
-                  <source src="/videos/howitworks-720p-h264.mp4" type="video/mp4" />
-                </video>
+              {!showPoster ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    poster="/images/howitworks-poster.jpg"
+                    muted
+                    playsInline
+                    loop
+                    preload="metadata"
+                    autoPlay
+                  >
+                    <source src="/videos/how-it-works-1080p-h264.mp4" type="video/mp4" />
+                  </video>
+
+                  {/* Рамка поверх мобильного видео */}
+                  <Image
+                    src="/images/howitworks-poster.jpg"
+                    alt="Phone frame"
+                    fill
+                    className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
+                    priority
+                  />
+                </>
               ) : (
-                <Image
-                  src="/images/howitworks-poster.jpg"
-                  alt="Preview of product flow"
-                  fill
-                  className="object-cover"
-                  priority
-                />
+                <>
+                  <Image
+                    src="/images/howitworks-poster.jpg"
+                    alt="Preview of product flow"
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                  {/* Рамка поверх мобильного постера */}
+                  <Image
+                    src="/images/howitworks-poster.jpg"
+                    alt="Phone frame"
+                    fill
+                    className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
+                    priority
+                  />
+                </>
               )}
               {/* мягкое свечение */}
               <div
@@ -232,7 +267,7 @@ export default function HowItWorks() {
                     'radial-gradient(120% 120% at 30% 30%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%)',
                 }}
               />
-              {/* Декор под углом (как было) */}
+              {/* Декор под углом (оставляем как было) */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute -left-8 -top-8 hidden rotate-3 opacity-60 blur-[0.5px] xl:block"
@@ -248,30 +283,69 @@ export default function HowItWorks() {
               </div>
 
               {/* Рамка + экран */}
-              <div className="relative rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden bg-white/5 backdrop-blur">
-                {!showPoster && !DISABLE_VIDEO ? (
-                  <video
-                    ref={videoRef}
-                    className="block h-[640px] w-full object-cover"
-                    poster="/images/howitworks-poster.jpg"
-                    muted
-                    playsInline
-                    loop
-                    preload="metadata"
-                    autoPlay
-                  >
-                    <source src="/videos/howitworks-720p-vp9.webm" type="video/webm" />
-                    <source src="/videos/howitworks-720p-h264.mp4" type="video/mp4" />
-                  </video>
+              <div className="relative w-[360px] h-[640px] rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden bg-white/5 backdrop-blur">
+                {!showPoster ? (
+                  <>
+                    <video
+                      ref={videoRef}
+                      className="absolute inset-0 w-full h-full object-cover rounded-[40px] cursor-pointer"
+                      poster="/images/howitworks-poster.jpg"
+                      muted
+                      playsInline
+                      loop
+                      preload="metadata"
+                      autoPlay
+                      onClick={togglePlay}
+                    >
+                      <source src="/videos/how-it-works-1080p-h264.mp4" type="video/mp4" />
+                    </video>
+
+                    {/* Рамка поверх десктоп-видео */}
+                    <Image
+                      src="/images/howitworks-poster.jpg"
+                      alt="Phone frame"
+                      fill
+                      className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
+                      priority
+                    />
+
+                    {/* Кнопка-оверлей */}
+                    <button
+                      type="button"
+                      onClick={togglePlay}
+                      aria-label={isPaused ? 'Play video' : 'Pause video'}
+                      aria-pressed={!isPaused}
+                      className={`absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-black/35 backdrop-blur-sm flex items-center justify-center transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 ${isPaused ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                    >
+                      {isPaused ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                        </svg>
+                      )}
+                    </button>
+                  </>
                 ) : (
-                  <Image
-                    src="/images/howitworks-poster.jpg"
-                    alt="Preview of product flow"
-                    width={360}
-                    height={640}
-                    className="block h-[640px] w-full object-cover"
-                    priority
-                  />
+                  <>
+                    <Image
+                      src="/images/howitworks-poster.jpg"
+                      alt="Preview of product flow"
+                      fill
+                      className="object-cover rounded-[40px]"
+                      priority
+                    />
+                    {/* Рамка поверх десктоп-постера */}
+                    <Image
+                      src="/images/howitworks-poster.jpg"
+                      alt="Phone frame"
+                      fill
+                      className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
+                      priority
+                    />
+                  </>
                 )}
               </div>
 
@@ -286,9 +360,8 @@ export default function HowItWorks() {
               />
             </div>
 
-            {/* СЕРЕДИНА — стеклянная «рейка» (HL/Rail) */}
+            {/* СЕРЕДИНА — «рейка» */}
             <div ref={railRef} className="relative mx-auto h-full w-[2px] bg-white/12 rounded">
-              {/* Активная точка (glow dot) */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute -left-[3px] top-0 h-2 w-2 -translate-y-1/2 rounded-full bg-[#A855F7] shadow-[0_0_16px_rgba(168,85,247,0.55)] transition-transform duration-300"
@@ -313,7 +386,7 @@ export default function HowItWorks() {
                     <li
                       role="listitem"
                       key={s.id}
-                      ref={(el: HTMLLIElement | null) => {
+                      ref={(el) => {
                         stepRefs.current[idx] = el;
                       }}
                       className="group"
@@ -334,10 +407,8 @@ export default function HowItWorks() {
                             {s.title}
                           </span>
                         </div>
-                        {/* HL/Accent под заголовком (только когда активен/hover) */}
                         <div
-                          className={`h-[2px] mt-1 w-0 transition-all duration-200 bg-gradient-to-r from-transparent via-[#A855F7]/65 to-transparent
-                          ${isActive ? 'w-[180px]' : 'group-hover:w-[120px]'}`}
+                          className={`h-[2px] mt-1 w-0 transition-all duration-200 bg-gradient-to-r from-transparent via-[#A855F7]/65 to-transparent ${isActive ? 'w-[180px]' : 'group-hover:w-[120px]'}`}
                         />
                         <p className="mt-2 max-w-prose text-base leading-relaxed text-white/70">
                           {s.desc}
@@ -348,7 +419,6 @@ export default function HowItWorks() {
                 })}
               </ol>
 
-              {/* Низ: подпись-метод + HL/Neutral */}
               <div className="mt-20 pt-8 mx-auto text-center max-w-[300px] space-y-4">
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-white/18 to-transparent" />
                 <p className="text-base tracking-widest text-white/70 uppercase font-light">
@@ -358,7 +428,7 @@ export default function HowItWorks() {
               </div>
             </div>
 
-            {/* SVG-луч (HL/Accent) */}
+            {/* SVG-луч */}
             <svg
               className="pointer-events-none absolute inset-0"
               xmlns="http://www.w3.org/2000/svg"

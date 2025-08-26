@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import Link from 'next/link';
 
 const ACCENT = '#A855F7';
 
@@ -9,13 +8,11 @@ export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  // Показываем баннер, если нет согласия; НЕ блокируем скролл и не блюрим фон
   useEffect(() => {
     const consent = localStorage.getItem('cookieConsent');
     if (!consent) setVisible(true);
   }, []);
 
-  // Фокус на баннер при показе
   useEffect(() => {
     if (visible && bannerRef.current) bannerRef.current.focus();
   }, [visible]);
@@ -30,9 +27,6 @@ export default function CookieBanner() {
 
   return (
     <>
-      {/* Больше НЕТ фуллскрин-блюра. Никакой overlay, который мешает. */}
-
-      {/* Cookie Banner */}
       <div
         ref={bannerRef}
         tabIndex={-1}
@@ -40,7 +34,6 @@ export default function CookieBanner() {
         aria-label="Cookie notice"
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[min(96vw,880px)] outline-none"
       >
-        {/* Подложка-свечение (локально под карточкой, не на весь экран) */}
         <div
           aria-hidden
           className="pointer-events-none absolute -inset-8 mx-auto rounded-[48px] blur-3xl"
@@ -57,18 +50,19 @@ export default function CookieBanner() {
             text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4
           "
         >
-          {/* Верхний hairline на карточке */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-2xl bg-gradient-to-r from-transparent via-white/18 to-transparent" />
 
           <div className="max-w-[60ch] text-sm leading-relaxed text-white/90">
             We use cookies to improve your experience. See our{' '}
-            <Link
+            <a
               href="/cookies"
+              target="_blank"
+              rel="noopener noreferrer"
               className="underline decoration-purple-300/40 underline-offset-4 hover:text-white
                          focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded"
             >
               Cookie Notice
-            </Link>
+            </a>
             .
           </div>
 
@@ -116,7 +110,6 @@ export default function CookieBanner() {
           </div>
         </div>
 
-        {/* Низ карточки: тонкая нижняя тень/выпуклость */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-4 -bottom-3 h-6 rounded-[999px] bg-black/30 blur-xl"

@@ -9,7 +9,7 @@ export default function Footer() {
   const reduce = useReducedMotion();
 
   return (
-    <footer className="mt-2 sm:mt-4 px-4 sm:px-6 pt-12 sm:pt-20 pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
+    <footer className="mt-2 sm:mt-4 px-4 sm:px-6 pt-12 sm:pt-12 pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
       {/* верхний hairline — только на мобиле */}
       <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent md:hidden" />
 
@@ -94,19 +94,20 @@ export default function Footer() {
 
       {/* ===== DESKTOP (>= md) — столбик слева ===== */}
       <div className="hidden md:block relative z-10">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6">
-          {/* Левая часть — текст в столбик */}
-          <div className="flex flex-col gap-1.5 text-[13px] text-white/75">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6 items-start">
+          {/* Левая часть — унифицированный стиль и интервалы */}
+          <div className="flex flex-col gap-2 text-[13px] leading-6 text-white/75">
             <p>
               Questions or feedback? Email us at{' '}
-              <a href={`mailto:${EMAIL}`} className="font-medium text-[#A855F7]">
+              <a
+                href={`mailto:${EMAIL}`}
+                className="text-[#A855F7] transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+              >
                 {EMAIL}
               </a>
             </p>
-            <p className="text-white/60">123 Example Street, Dublin, Ireland, The British Isles.</p>
-            <p className="pt-2 text-white/60 text-[12px]">
-              © {new Date().getFullYear()} H1NTED Ltd. All rights reserved.
-            </p>
+            <p>123 Example Street, Dublin, Ireland, The British Isles.</p>
+            <p>© {new Date().getFullYear()} H1NTED Ltd. All rights reserved.</p>
           </div>
 
           {/* Правая часть — навигация */}

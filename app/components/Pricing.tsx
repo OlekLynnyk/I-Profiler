@@ -491,7 +491,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           })}
         </motion.div>
 
-        <p className="text-xs sm:text-sm text-[#E5E5E5] mt-6 sm:mt-8 max-w-3xl mx-auto leading-relaxed px-2">
+        <p className="text-[13px] leading-6 text-white/75 mt-6 sm:mt-8 max-w-3xl mx-auto text-center px-2">
           For individual professional advice, training, or API integration, please contact us
           through email.
         </p>
