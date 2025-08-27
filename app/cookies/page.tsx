@@ -4,10 +4,6 @@
 import { useEffect } from 'react';
 
 export default function CookiePolicyPage() {
-  useEffect(() => {
-    document.title = 'H1NTED · Cookies Policy';
-  }, []);
-
   return (
     <main
       aria-labelledby="cookies-title"

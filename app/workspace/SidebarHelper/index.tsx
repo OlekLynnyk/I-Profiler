@@ -39,7 +39,7 @@ export default function SidebarHelper() {
         p-4
         transition-all duration-500 ease-in-out
         ${openSidebar.left ? 'left-0' : '-left-full'}
-        max-h-[calc(100vh-160px)]
+        max-h-[calc(100vh-85px)]
         overflow-y-auto
         no-scrollbar
       `}

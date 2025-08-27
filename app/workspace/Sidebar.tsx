@@ -193,7 +193,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         p-4
         transition-transform duration-500 ease-in-out
         ${openSidebar.right ? 'translate-x-0' : 'translate-x-full'}
-        max-h-[calc(100vh-160px)]
+        max-h-[calc(100vh-85px)]
         overflow-y-auto
         scrollbar-thin scrollbar-track-transparent scrollbar-thumb-transparent
       `}

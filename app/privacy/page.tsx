@@ -4,10 +4,6 @@
 import { useEffect } from 'react';
 
 export default function PrivacyPage() {
-  useEffect(() => {
-    document.title = 'H1NTED · Privacy Policy';
-  }, []);
-
   return (
     <main
       aria-labelledby="privacy-title"

@@ -67,18 +67,28 @@ export default function CookieBanner() {
           </div>
 
           <div className="flex flex-row items-center gap-2 shrink-0">
+            {/* ——— ТОЛЬКО ЭТУ КНОПКУ ИЗМЕНИЛ ——— */}
             <button
               onClick={() => handleConsent('rejected')}
               className="
-                rounded-full px-5 py-2.5 text-sm text-white
-                bg-white/[0.06] backdrop-blur-md ring-1 ring-white/10
-                transition-[background,transform,ring] duration-200
-                hover:bg-white/[0.10] hover:-translate-y-[1px] focus:outline-none
+                relative rounded-full px-5 py-2.5 text-sm text-white
+                transition-[transform,ring] duration-200
+                hover:-translate-y-[1px] focus:outline-none
                 focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
+                backdrop-blur-md
               "
+              style={{
+                backgroundImage: `
+                  radial-gradient(110% 110% at 50% 0%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 60%),
+                  linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))
+                `,
+                border: '1px solid rgba(255,255,255,0.10)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+              }}
             >
               Reject all
             </button>
+            {/* ——— /ИЗМЕНЕНИЯ ЗАКОНЧИЛИСЬ ——— */}
 
             <button
               onClick={() => handleConsent('accepted')}

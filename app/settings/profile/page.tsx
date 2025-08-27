@@ -32,10 +32,6 @@ export default function ProfileSettingsPage() {
   const reduce = useReducedMotion();
 
   useEffect(() => {
-    document.title = 'H1NTED · Profile Settings';
-  }, []);
-
-  useEffect(() => {
     const fetchProfile = async () => {
       const { data, error } = await supabase
         .from('profiles')

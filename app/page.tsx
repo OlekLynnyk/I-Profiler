@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from './components/Header';
 import HowItWorks from './components/HowItWorks';
@@ -11,6 +11,10 @@ import AuthModal from './components/AuthModal';
 import BlackCognitiveSand from '@/components/effects/BlackCognitiveSand';
 import dynamic from 'next/dynamic';
 import { motion, useReducedMotion } from 'framer-motion';
+
+// ▶️ добавлено
+import HowItWorksVideoMobile from './components/HowItWorksVideoMobile';
+import { useScrollDirectorMobile } from './hooks/useScrollDirectorMobile';
 
 const CubeCanvas = dynamic(() => import('./components/CubeCanvas'), {
   ssr: false,
@@ -33,11 +37,9 @@ export default function HomePage() {
   const router = useRouter();
   const reduce = useReducedMotion();
 
-  useEffect(() => {
-    document.title = 'H1NTED · Main';
-
-    if (session) setIsAuthModalOpen(false);
-  }, [session]);
+  // ▶️ refs для дирижёра скролла (мобайл)
+  const heroSectionRef = useRef<HTMLElement | null>(null);
+  const videoSectionRef = useRef<HTMLElement | null>(null);
 
   // мягкий hotspot под курсором
   const hotspotMove = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -46,110 +48,132 @@ export default function HomePage() {
     e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
   };
 
+  // ▶️ активируем «режиссируемый» скролл только на мобайле
+  useScrollDirectorMobile({
+    heroRef: heroSectionRef,
+    videoRef: videoSectionRef,
+    enabled: !isAuthModalOpen,
+  });
+
   return (
     <div className="min-h-screen flex flex-col font-inter text-[#E5E5E5] relative overflow-hidden bg-[#1A1E23] no-scrollbar">
       <BlackCognitiveSand />
       <Header onLoginClick={() => setIsAuthModalOpen(true)} />
 
-      {/* ===== MOBILE HERO ===== */}
-      <section className="md:hidden px-6 max-w-7xl mx-auto relative z-10">
-        <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-8">
-          {/* Виньетка за H1 */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -z-10 left-0 top-6 w-[85%] h-[220px] rounded-[56px] blur-2xl"
-            style={{
-              background:
-                'radial-gradient(120% 120% at 20% 20%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%)',
-            }}
-          />
-          <div className="space-y-3 relative">
-            {/* H1 */}
-            <motion.h1
-              className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] text-[clamp(3.5rem,12vw,5rem)] hero-glow"
-              style={{ letterSpacing: '-0.02em' }}
-              initial={reduce ? undefined : 'hidden'}
-              whileInView={reduce ? undefined : 'show'}
-              viewport={{ once: true, amount: 0.6 }}
-            >
-              <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={0}>
-                We Unlock Insights With
-              </motion.span>
-              <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={1}>
-                Advanced Profiling
-              </motion.span>
-            </motion.h1>
-
-            {/* «Полка»-блик под H1 */}
-            <div className="mt-3 h-px w-[min(560px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-            {/* Subtitle — как на десктопе, с «дыханием» */}
-            <motion.div
-              className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(0.90rem,4vw,1.1rem)]"
-              initial={reduce ? undefined : 'hidden'}
-              whileInView={reduce ? undefined : 'show'}
-              viewport={{ once: true, amount: 0.7 }}
-              variants={fadeUp}
-              custom={2}
-              animate={reduce ? undefined : { opacity: [0.94, 1, 0.94] }}
-              transition={reduce ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <div>FROM A GLIMPSE OF FLEETING DETAIL</div>
-              <div>TO SEE WHAT OTHERS NEVER GRASP</div>
-            </motion.div>
-
-            {/* Description */}
-            <motion.p
-              className="mt-5 text-[13px] leading-snug text-white/70 max-w-[36ch]"
-              initial={reduce ? undefined : 'hidden'}
-              whileInView={reduce ? undefined : 'show'}
-              viewport={{ once: true, amount: 0.7 }}
-              variants={fadeUp}
-              custom={3}
-            >
-              In seconds, you gain the rarest advantage — discerning people through signals they
-              cannot conceal, knowing what words will never reveal
-            </motion.p>
-          </div>
-
-          {/* CTA */}
-          {!session && (
-            <motion.button
-              onMouseMove={hotspotMove}
-              onClick={() => setIsAuthModalOpen(true)}
-              className="relative inline-flex items-center justify-center w-fit rounded-full px-6 py-3 font-semibold tracking-wide text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] hover:-translate-y-[1px]"
+      {/* ===== MOBILE INTRO (Hero → Fullscreen Video) ===== */}
+      <section
+        className="md:hidden max-w-7xl mx-auto relative z-10"
+        style={{ overscrollBehaviorY: 'contain' }}
+      >
+        {/* --- HERO (как было), только обёрнут и добавлен ref --- */}
+        <section ref={heroSectionRef} className="px-6">
+          <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-8">
+            {/* Виньетка за H1 */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -z-10 left-0 top-6 w-[85%] h-[220px] rounded-[56px] blur-2xl"
               style={{
-                backgroundImage: `
-                  radial-gradient(140px 140px at var(--mx, 50%) var(--my, 0%), rgba(168,85,247,0.24), rgba(168,85,247,0) 60%),
-                  linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))
-                `,
-                boxShadow:
-                  'inset 0 2px 0 rgba(255,255,255,0.08), inset 0 1px 0 rgba(0,0,0,0.30), 0 8px 24px rgba(0,0,0,0.45)',
-                WebkitTextStroke: 'transparent',
-                borderColor: 'rgba(255,255,255,0.12)',
+                background:
+                  'radial-gradient(120% 120% at 20% 20%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%)',
               }}
-              initial={reduce ? undefined : { opacity: 0, y: 10 }}
-              whileInView={
-                reduce
-                  ? undefined
-                  : { opacity: 1, y: 0, transition: { duration: 0.6, ease: easing, delay: 0.24 } }
-              }
-              viewport={{ once: true, amount: 0.7 }}
-            >
-              <span
-                aria-hidden
-                className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[6px]"
+            />
+            <div className="space-y-3 relative">
+              {/* H1 */}
+              <motion.h1
+                className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] text-[clamp(3.5rem,12vw,5rem)] hero-glow"
+                style={{ letterSpacing: '-0.02em' }}
+                initial={reduce ? undefined : 'hidden'}
+                whileInView={reduce ? undefined : 'show'}
+                viewport={{ once: true, amount: 0.6 }}
+              >
+                <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={0}>
+                  We Unlock Insights With
+                </motion.span>
+                <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={1}>
+                  Advanced Profiling
+                </motion.span>
+              </motion.h1>
+
+              {/* «Полка»-блик под H1 */}
+              <div className="mt-3 h-px w-[min(560px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+              {/* Subtitle — как на десктопе, с «дыханием» */}
+              <motion.div
+                className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(0.90rem,4vw,1.1rem)]"
+                initial={reduce ? undefined : 'hidden'}
+                whileInView={reduce ? undefined : 'show'}
+                viewport={{ once: true, amount: 0.7 }}
+                variants={fadeUp}
+                custom={2}
+                animate={reduce ? undefined : { opacity: [0.94, 1, 0.94] }}
+                transition={
+                  reduce ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut' }
+                }
+              >
+                <div>FROM A GLIMPSE OF FLEETING DETAIL</div>
+                <div>TO SEE WHAT OTHERS NEVER GRASP</div>
+              </motion.div>
+
+              {/* Description */}
+              <motion.p
+                className="mt-5 text-[13px] leading-snug text-white/70 max-w-[36ch]"
+                initial={reduce ? undefined : 'hidden'}
+                whileInView={reduce ? undefined : 'show'}
+                viewport={{ once: true, amount: 0.7 }}
+                variants={fadeUp}
+                custom={3}
+              >
+                In seconds, you gain the rarest advantage — discerning people through signals they
+                cannot conceal, knowing what words will never reveal
+              </motion.p>
+            </div>
+
+            {/* CTA */}
+            {!session && (
+              <motion.button
+                onMouseMove={hotspotMove}
+                onClick={() =>
+                  videoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+                className="relative inline-flex items-center justify-center w-fit rounded-full px-6 py-3 font-semibold tracking-wide text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] hover:-translate-y-[1px]"
                 style={{
-                  background:
-                    'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
+                  backgroundImage: `
+                    radial-gradient(140px 140px at var(--mx, 50%) var(--my, 0%), rgba(168,85,247,0.24), rgba(168,85,247,0) 60%),
+                    linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))
+                  `,
+                  boxShadow:
+                    'inset 0 2px 0 rgba(255,255,255,0.08), inset 0 1px 0 rgba(0,0,0,0.30), 0 8px 24px rgba(0,0,0,0.45)',
+                  WebkitTextStroke: 'transparent',
+                  borderColor: 'rgba(255,255,255,0.12)',
                 }}
-              />
-              <span className="relative z-[1]">ACCESS NOW</span>
-            </motion.button>
-          )}
-        </div>
+                initial={reduce ? undefined : { opacity: 0, y: 10 }}
+                whileInView={
+                  reduce
+                    ? undefined
+                    : { opacity: 1, y: 0, transition: { duration: 0.6, ease: easing, delay: 0.24 } }
+                }
+                viewport={{ once: true, amount: 0.7 }}
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[6px]"
+                  style={{
+                    background:
+                      'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
+                  }}
+                />
+                <span className="relative z-[1]">ACCESS NOW</span>
+              </motion.button>
+            )}
+          </div>
+        </section>
+
+        {/* --- ПОЛНОЭКРАННОЕ ВИДЕО --- */}
+        <section ref={videoSectionRef} className="scroll-mt-14">
+          <HowItWorksVideoMobile />
+        </section>
       </section>
-      {/* ===== /MOBILE HERO ===== */}
+      {/* ===== /MOBILE INTRO ===== */}
 
       {/* ===== DESKTOP HERO ===== */}
       <main className="hidden md:flex lg:flex-row items-center justify-between flex-grow text-left px-6 mt-8 gap-12 max-w-7xl mx-auto relative z-10">
@@ -254,7 +278,7 @@ export default function HomePage() {
       </main>
       {/* ===== /DESKTOP HERO ===== */}
 
-      <section className="mt-10 relative z-10">
+      <section id="hiw" className="mt-10 relative z-10 scroll-mt-14">
         <HowItWorks />
       </section>
 
@@ -279,7 +303,6 @@ export default function HomePage() {
           About
         </motion.h2>
 
-        {/* ⬇️ Мобильный вид НЕ меняем; для md+ расширяем колонку и увеличиваем межстрочник */}
         <div
           className="
             mt-8 mx-auto text-white/80 text-center
@@ -322,7 +345,6 @@ export default function HomePage() {
 
         <div className="pointer-events-none absolute left-1/2 bottom-6 -translate-x-1/2 h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl" />
 
-        {/* нижний безопасный отступ под жестовую панель */}
         <div className="pb-[calc(12px+env(safe-area-inset-bottom))] md:pb-0" />
       </section>
 

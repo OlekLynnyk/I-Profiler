@@ -50,7 +50,7 @@ export default function HowItWorks() {
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   const [active, setActive] = useState<number>(1);
-  const [showPoster, setShowPoster] = useState<boolean>(true);
+  const [showPoster, setShowPoster] = useState<boolean>(false);
   const [beamPath, setBeamPath] = useState<string>('');
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [edgePulse, setEdgePulse] = useState<boolean>(false);
@@ -71,19 +71,27 @@ export default function HowItWorks() {
     typeof (navigator as any)?.hardwareConcurrency === 'number' &&
     (navigator as any).hardwareConcurrency < 4;
 
-  useEffect(() => {
-    setShowPoster(reduceMotion || saveData || lowCPU);
-  }, [reduceMotion, saveData, lowCPU]);
-
   // Авто play/pause
+  // Авто play/pause — ТОЛЬКО ДЕСКТОП (lg+)
   useEffect(() => {
+    const isDesktop =
+      typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)')?.matches === true;
+    if (!isDesktop) return;
+
     const vid = videoRef.current;
     const el = sectionRef.current;
     if (!vid || !el || showPoster) return;
 
     const io = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => (e.isIntersecting ? vid.play().catch(() => {}) : vid.pause())),
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            vid.play().catch(() => {});
+          } else {
+            vid.pause();
+          }
+        });
+      },
       { threshold: 0.35 }
     );
     io.observe(el);
@@ -225,104 +233,24 @@ export default function HowItWorks() {
       <div className="w-full relative px-4">
         {/* ===== MOBILE ===== */}
         <div className="lg:hidden w-full mx-auto max-w-[520px]">
-          {/* Optic Monolith — mobile (упрощённый) */}
-          <div className="relative h-[80svh] w-full flex items-center justify-center">
-            <div className="relative w-[88vw] max-w-[380px] aspect-[9/19.5]">
-              {/* Ambient Halo */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -inset-5 -z-10 rounded-[56px] blur-2xl"
-                style={{
-                  background:
-                    'radial-gradient(120% 120% at 50% 50%, rgba(168,85,247,0.16) 0%, rgba(168,85,247,0) 60%)',
-                }}
-              />
-              {/* Backplate (Titanium) */}
-              <div
-                className="absolute inset-0 rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.55)]"
-                style={{
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.38))',
-                }}
-              />
-              {/* Video */}
-              <div className="absolute inset-[6px] rounded-[34px] overflow-hidden bg-black/30">
-                {!showPoster ? (
-                  <video
-                    ref={videoRef}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    poster="/images/howitworks-poster.jpg"
-                    muted
-                    playsInline
-                    loop
-                    preload="metadata"
-                    autoPlay
-                  >
-                    <source src="/videos/how-it-works-1080p-h264.mp4" type="video/mp4" />
-                  </video>
-                ) : (
-                  <Image
-                    src="/images/howitworks-poster.jpg"
-                    alt="Preview of product flow"
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                )}
-
-                {/* Внутренняя виньетка */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    background:
-                      'radial-gradient(120% 120% at 50% 50%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.22) 100%)',
-                  }}
-                />
-              </div>
-
-              {/* Optic Glass (стеклянная крышка + фаска + блик) */}
-              <div
-                className="absolute inset-0 rounded-[40px] pointer-events-none"
-                style={{
-                  background:
-                    'conic-gradient(from 310deg at 18% 8%, rgba(255,255,255,0.28), rgba(255,255,255,0) 60%)',
-                }}
-              />
-              {/* Длинный мягкий блик */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute rounded-[40px]"
-                style={{
-                  inset: '10% 8% 30% 8%',
-                  transform: 'rotate(12deg)',
-                  background:
-                    'linear-gradient(90deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04))',
-                  opacity: 0.35,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Тексты шагов (без изменений) */}
-          <div className="px-2 pb-[env(safe-area-inset-bottom)] space-y-8">
-            <h3 className="text-center text-white text-[clamp(1.5rem,6vw,1.875rem)] font-extrabold tracking-tight">
+          {/* Только тексты, типографика как на десктопе */}
+          <div className="px-4 pb-[env(safe-area-inset-bottom)] space-y-8">
+            <h3 className="text-center text-white text-3xl font-extrabold tracking-tight">
               How it works
             </h3>
-            <ol role="list" className="space-y-8 max-w-[420px] mx-auto text-left">
+
+            <ol role="list" className="space-y-8 max-w-[480px] mx-auto text-left">
               {STEPS.map((s) => (
                 <li role="listitem" key={s.id} className="space-y-2">
-                  <div className="text-[11px] uppercase tracking-widest text-[#CDB4FF]">
-                    {s.tagline}
-                  </div>
-                  <div className="text-[18px] font-bold text-white leading-tight">{s.title}</div>
-                  <p className="text-[14px] text-white/70 leading-relaxed">{s.desc}</p>
+                  <div className="text-sm uppercase tracking-wider text-[#CDB4FF]">{s.tagline}</div>
+                  <div className="text-xl font-semibold text-white leading-tight">{s.title}</div>
+                  <p className="text-base text-white/70 leading-relaxed">{s.desc}</p>
                 </li>
               ))}
             </ol>
           </div>
         </div>
         {/* ===== /MOBILE ===== */}
-
         {/* ===== DESKTOP ===== */}
         <div className="hidden lg:block pt-20 pb-20">
           <div className="w-full relative grid items-center gap-12 lg:grid-cols-[0.95fr_0.05fr_1fr]">
@@ -366,7 +294,6 @@ export default function HowItWorks() {
                     <video
                       ref={videoRef}
                       className="absolute inset-0 w-full h-full object-cover cursor-pointer"
-                      poster="/images/howitworks-poster.jpg"
                       muted
                       playsInline
                       loop
@@ -374,7 +301,16 @@ export default function HowItWorks() {
                       autoPlay
                       onClick={togglePlay}
                     >
-                      <source src="/videos/how-it-works-1080p-h264.mp4" type="video/mp4" />
+                      <source
+                        src="https://h1nted-video.s3.eu-west-1.amazonaws.com/how-it-works-mobile.MP4"
+                        type="video/mp4"
+                        media="(max-width: 1023px)"
+                      />
+                      <source
+                        src="https://h1nted-video.s3.eu-west-1.amazonaws.com/how-it-works-desktop.MP4"
+                        type="video/mp4"
+                        media="(min-width: 1024px)"
+                      />
                     </video>
                   ) : (
                     <Image
@@ -438,7 +374,7 @@ export default function HowItWorks() {
                     onClick={togglePlay}
                     aria-label={isPaused ? 'Play video' : 'Pause video'}
                     aria-pressed={!isPaused}
-                    className={`absolute bottom-3 right-3 z-20 h-10 w-10 rounded-full backdrop-blur-md flex items-center justify-center transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 ${isPaused ? 'opacity-100' : 'opacity-80 hover:opacity-100'}`}
+                    className="absolute bottom-3 right-5 z-20 h-10 w-10 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 opacity-80 hover:opacity-100 hover:bg-[rgba(168,85,247,0.18)]"
                     style={{
                       background:
                         'radial-gradient(120% 120% at 30% 30%, rgba(168,85,247,0.22), rgba(168,85,247,0.08))',

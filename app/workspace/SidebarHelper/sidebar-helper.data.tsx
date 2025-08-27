@@ -1,3 +1,4 @@
+// sidebar-helper.data.tsx
 'use client';
 
 import { useUserPlan } from '@/app/hooks/useUserPlan';
@@ -8,7 +9,7 @@ import { BoxData } from './types';
 type Template = {
   id: string;
   title: string; // отображаем в сайдбаре
-  content: string; // подставляем в поле ввода (пока: "тест N")
+  content: string; // подставляем в поле ввода
 };
 
 export const getSidebarBoxes = (): BoxData[] => {
@@ -17,27 +18,41 @@ export const getSidebarBoxes = (): BoxData[] => {
 
   const injectPrompt = useInjectPrompt();
 
-  // Заголовки от тебя + контент-заглушки "тест N"
+  // 12 темплейтов (13-й удалён)
   const titles = [
-    'Communication Strategy for Negotiations',
+    'Hidden Drivers and Risks',
+    'Communication Approach',
+    'Decision-Making Style',
     'Improving Team Dynamics',
-    'Conflict Management Profiling',
-    'Personal Motivation Assessment',
-    'Targeted Communications',
-    'Motivation for ‘Go/No-Go’ Decisions',
-    'Talent Retention and Development Strategy',
-    'Decision-Making Style Assessment',
-    'Aligning Personal Drivers with Org. Goals',
-    'Customisation of Sales Pitches',
-    'Persuasive Proposals in Sales',
-    'Selection of C-Level Candidates',
-    'Innovation and Creativity Potential',
+    'Conflict Management',
+    '‘Go/No-Go’ Assistance',
+    'Intrinsic Motivation to address',
+    'C-level Recruitment',
+    'Talent R&D planning',
+    'Inner Drivers vs Business',
+    'Sales Pitches',
+    'Creativity Potential',
+  ];
+
+  const contents = [
+    'From what the appearance/accessories project about this person: what hidden drivers and collaboration risks should I expect, and how should I collaborate effectively?',
+    'From what the appearance/accessories project about this person: which negotiation approach is most likely to work? What words are better to use, and what Intrinsic motivation to address?',
+    'From what the appearance/accessories project about this person: what decision-making style is this person most likely to use unconsciously?',
+    'From what the appearance/accessories reveal about this person: what is the best role per the Nine Belbin Team Roles, and how should I use this person in the team to improve dynamics?',
+    'From what the appearance/accessories project about this person: which conflict-handling approach should I use, including the best opening words and the person’s hidden command and motivation?',
+    'From what the appearance/accessories project about this person and based on the most self-projected trait, the hidden command, and the basic unbalanced contradiction, is this person a good fit for ... [your situation] ?',
+    'From what the appearance/accessories reveal about this person: which primary motivators should I address in this person, and list all relevant Intrinsic motivators?',
+    'From what the appearance/accessories project about this person: does this person fit a C-level role (yes/no), and what are the hiring risks?',
+    'From what the appearance/accessories reveal about this person: what approach, words, and motivators would keep this person engaged and developing?',
+    'From what the appearance/accessories reveal about this person: how can I align this person’s likely drivers and Basic Unbalanced Contradiction with business goals and approaches?',
+    'From what the appearance/accessories project about this person: how should I tailor a sales pitch — words, approach, style, motivators for a ‘Yes’, and the proof types that will convince this person?',
+    'From what the appearance/accessories project about this person: what signals indicate innovation/creativity level, and how should I engage it?',
   ];
 
   const templates: Template[] = titles.map((title, i) => ({
     id: `tpl-${i + 1}`,
     title,
-    content: `тест ${i + 1}`, // сюда потом подставим реальные большие промпты
+    content: contents[i],
   }));
 
   const TemplatesContent = () => (
@@ -46,8 +61,7 @@ export const getSidebarBoxes = (): BoxData[] => {
         <div
           key={t.id}
           onClick={() => {
-            // Поведение: по клику подставляем большой промпт
-            // По умолчанию — замена содержимого поля ввода
+            // По клику подставляем соответствующий промпт
             injectPrompt(t.content);
           }}
           className="cursor-pointer hover:text-[var(--accent)]"

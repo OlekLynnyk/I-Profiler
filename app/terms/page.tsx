@@ -4,10 +4,6 @@
 import { useEffect } from 'react';
 
 export default function TermsPage() {
-  useEffect(() => {
-    document.title = 'H1NTED · Terms';
-  }, []);
-
   return (
     <main
       aria-labelledby="terms-title"
