@@ -71,18 +71,17 @@ export default function CookieBanner() {
             <button
               onClick={() => handleConsent('rejected')}
               className="
-                relative rounded-full px-5 py-2.5 text-sm text-white
-                transition-[transform,ring] duration-200
-                hover:-translate-y-[1px] focus:outline-none
-                focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
-                backdrop-blur-md
+                relative rounded-full px-5 py-2.5 text-sm
+                text-white/90 bg-black/30 ring-1 ring-white/15
+                transition-[background,transform,ring] duration-200
+                hover:bg-black/40 hover:-translate-y-[1px]
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
               "
               style={{
                 backgroundImage: `
                   radial-gradient(110% 110% at 50% 0%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 60%),
                   linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))
                 `,
-                border: '1px solid rgba(255,255,255,0.10)',
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
               }}
             >

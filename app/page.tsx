@@ -170,7 +170,10 @@ export default function HomePage() {
 
         {/* --- ПОЛНОЭКРАННОЕ ВИДЕО --- */}
         <section ref={videoSectionRef} className="scroll-mt-14">
-          <HowItWorksVideoMobile />
+          <HowItWorksVideoMobile
+            src="https://h1nted-video.s3.eu-west-1.amazonaws.com/how-it-works-mobile.MP4"
+            poster="/images/howitworks-poster.jpg"
+          />
         </section>
       </section>
       {/* ===== /MOBILE INTRO ===== */}

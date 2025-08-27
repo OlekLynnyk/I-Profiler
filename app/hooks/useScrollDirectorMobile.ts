@@ -1,10 +1,10 @@
 'use client';
 
-import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { RefObject, useEffect, useMemo, useRef, useState } from 'react';
 
 type Opts = {
-  heroRef: MutableRefObject<HTMLElement | null>;
-  videoRef: MutableRefObject<HTMLElement | null>;
+  heroRef: RefObject<HTMLElement | null>;
+  videoRef: RefObject<HTMLElement | null>;
   enabled?: boolean;
 };
 
@@ -40,7 +40,7 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
     return window.matchMedia?.('(max-width: 767.98px)')?.matches ?? true;
   }, []);
 
-  const active = enabled && !detached && isMobile && !(reduceMotion || saveData || lowCPU);
+  const active = enabled && !detached && isMobile && !(reduceMotion || saveData);
 
   useEffect(() => {
     if (!active) return;
@@ -86,6 +86,7 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       // Состояние: мы в зоне Hero → свайп вниз
       if (scrollY < heroBottom - 24 && d > SNAP_THRESHOLD && !snappedToVideo) {
         scrollToEl(videoEl);
+        requestAnimationFrame(() => scrollToEl(videoEl)); // подстраховка от инерции iOS
         setSnappedToVideo(true);
         return;
       }
