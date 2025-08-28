@@ -3,11 +3,11 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
 const ContentSecurityPolicy = `
-  default-src 'self';
+  default-src 'self' https: data: blob:;
   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https:;
   style-src 'self' 'unsafe-inline' https:;
   img-src * blob: data: https://h1nted-video.s3.eu-west-1.amazonaws.com;
-  media-src 'self' blob: data: https://h1nted-video.s3.eu-west-1.amazonaws.com;
+  media-src 'self' https: blob: data: https://h1nted-video.s3.eu-west-1.amazonaws.com https://*.s3.eu-west-1.amazonaws.com;
   connect-src *;
   font-src 'self';
   frame-src https:;
@@ -17,7 +17,9 @@ const ContentSecurityPolicy = `
 const securityHeaders = [
   {
     key: 'Content-Security-Policy',
-    value: ContentSecurityPolicy.replace(/\n/g, ''),
+    value: ContentSecurityPolicy.replace(/\n/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim(),
   },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-Frame-Options', value: 'DENY' },

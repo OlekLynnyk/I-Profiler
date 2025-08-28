@@ -78,6 +78,13 @@ body {
 /* Глобальное скрытие скроллбаров */
 html {
   scrollbar-width: none; /* Firefox */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html::-webkit-scrollbar {
@@ -103,4 +110,30 @@ html::-webkit-scrollbar {
     0 1px 2px rgba(255, 255, 255, 0.15),
     0 0 8px rgba(168, 85, 247, 0.25),
     0 0 18px rgba(168, 85, 247, 0.18);
+}
+
+/* iOS/Android: предотвращаем авто-зум при фокусе на инпутах */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select, button {
+    font-size: 16px;
+  }
+}
+
+/* === iOS: не зумить инпуты, позволить выделение в формах === */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important; /* ключ к отключению zoom */
+  }
+}
+
+/* Вернём выделение текста внутри форм, даже если выше стоит user-select: none */
+input, textarea, select, button, label {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* На всякий: корректная текстовая автоподгонка в Safari */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }

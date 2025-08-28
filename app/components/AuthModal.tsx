@@ -25,7 +25,13 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    emailRef.current?.focus();
+    const isTouch =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(hover: none) and (pointer: coarse)')?.matches === true;
+    // Фокусируем email только на десктопе, чтобы на мобиле не открывалась клавиатура
+    if (!isTouch) {
+      setTimeout(() => emailRef.current?.focus(), 0);
+    }
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -155,7 +161,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-xl bg-white/[0.06] ring-1 ring-white/10
-                       px-4 py-3 text-sm placeholder-white/50
+                       px-4 py-3 text-base sm:text-sm placeholder-white/50
                        focus:outline-none focus:ring-2 focus:ring-purple-300/60"
           />
           <input
@@ -164,7 +170,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl bg-white/[0.06] ring-1 ring-white/10
-                       px-4 py-3 text-sm placeholder-white/50
+                       px-4 py-3 text-base sm:text-sm placeholder-white/50
                        focus:outline-none focus:ring-2 focus:ring-purple-300/60"
           />
 
