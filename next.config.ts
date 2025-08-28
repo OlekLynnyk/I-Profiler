@@ -6,8 +6,8 @@ const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https:;
   style-src 'self' 'unsafe-inline' https:;
-  img-src * blob: data:;
-  media-src 'self' blob: https:;
+  img-src * blob: data: https://h1nted-video.s3.eu-west-1.amazonaws.com;
+  media-src 'self' blob: data: https://h1nted-video.s3.eu-west-1.amazonaws.com;
   connect-src *;
   font-src 'self';
   frame-src https:;
