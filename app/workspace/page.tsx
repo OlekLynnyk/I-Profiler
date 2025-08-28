@@ -371,7 +371,7 @@ export default function WorkspacePage() {
               </div>
             </div>
 
-            <div className="fixed bottom-3 w-full px-3 sm:px-4 md:px-6">
+            <div className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe">
               <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl">
                 {attachedFiles.length > 0 && (
                   <div className="flex gap-2 mb-2 flex-wrap">
