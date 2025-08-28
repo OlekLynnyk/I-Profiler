@@ -56,6 +56,12 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
     };
 
     const onTouchStart = (e: TouchEvent) => {
+      // 🔒 если нажали на кнопку с data-stop-snap — не обрабатываем
+      const target = e.target as Element | null;
+      if (target && target.closest('[data-stop-snap]')) {
+        return;
+      }
+
       lastTouchY.current = e.touches[0]?.clientY ?? null;
       lastTouchX.current = e.touches[0]?.clientX ?? null;
       deltaY.current = 0;

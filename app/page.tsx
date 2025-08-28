@@ -131,10 +131,13 @@ export default function HomePage() {
             {/* CTA */}
             {!session && (
               <motion.button
+                type="button"
+                data-stop-snap
                 onMouseMove={hotspotMove}
-                onClick={() =>
-                  videoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsAuthModalOpen(true);
+                }}
                 className="relative inline-flex items-center justify-center w-fit rounded-full px-6 py-3 font-semibold tracking-wide text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] hover:-translate-y-[1px]"
                 style={{
                   backgroundImage: `
@@ -170,10 +173,7 @@ export default function HomePage() {
 
         {/* --- ПОЛНОЭКРАННОЕ ВИДЕО --- */}
         <section ref={videoSectionRef} className="scroll-mt-14">
-          <HowItWorksVideoMobile
-            src="https://h1nted-video.s3.eu-west-1.amazonaws.com/how-it-works-mobile.MP4"
-            poster="/images/howitworks-poster.jpg"
-          />
+          <HowItWorksVideoMobile />
         </section>
       </section>
       {/* ===== /MOBILE INTRO ===== */}

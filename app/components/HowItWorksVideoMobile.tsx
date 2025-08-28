@@ -8,8 +8,11 @@ type Props = {
   className?: string;
 };
 
+const VIDEO_BASE = process.env.NEXT_PUBLIC_VIDEO_BASE_URL ?? '';
+const MOBILE_VIDEO = `${VIDEO_BASE}/how-it-works-mobile.MP4`;
+
 export default function HowItWorksVideoMobile({
-  src = '/videos/how-it-works-1080p-h264.mp4',
+  src = MOBILE_VIDEO,
   poster = '/images/howitworks-poster.jpg',
   className = '',
 }: Props) {

@@ -38,6 +38,10 @@ const STEPS: Step[] = [
   },
 ];
 
+const VIDEO_BASE = process.env.NEXT_PUBLIC_VIDEO_BASE_URL ?? '';
+const DESKTOP_VIDEO = `${VIDEO_BASE}/how-it-works-desktop.MP4`;
+const MOBILE_VIDEO = `${VIDEO_BASE}/how-it-works-mobile.MP4`;
+
 export default function HowItWorks() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -300,17 +304,10 @@ export default function HowItWorks() {
                       preload="metadata"
                       autoPlay
                       onClick={togglePlay}
+                      crossOrigin="anonymous"
                     >
-                      <source
-                        src="https://h1nted-video.s3.eu-west-1.amazonaws.com/how-it-works-mobile.MP4"
-                        type="video/mp4"
-                        media="(max-width: 1023px)"
-                      />
-                      <source
-                        src="https://h1nted-video.s3.eu-west-1.amazonaws.com/how-it-works-desktop.MP4"
-                        type="video/mp4"
-                        media="(min-width: 1024px)"
-                      />
+                      <source src={MOBILE_VIDEO} type="video/mp4" media="(max-width: 1023px)" />
+                      <source src={DESKTOP_VIDEO} type="video/mp4" media="(min-width: 1024px)" />
                     </video>
                   ) : (
                     <Image

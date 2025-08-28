@@ -9,7 +9,7 @@ export default function Footer() {
   const reduce = useReducedMotion();
 
   return (
-    <footer className="mt-2 sm:mt-4 px-4 sm:px-6 pt-12 sm:pt-12 pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
+    <footer className="mt-2 sm:mt-4 px-4 sm:px-6 pt-12 sm:pt-12 pb-5 md:pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
       {/* верхний hairline — только на мобиле */}
       <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent md:hidden" />
 
@@ -17,7 +17,7 @@ export default function Footer() {
       <motion.div
         aria-hidden
         className="absolute inset-0 opacity-[0.06] pointer-events-none bg-center bg-no-repeat
-                   bg-[length:18px_auto] sm:bg-[length:45px_auto] md:bg-[length:85px_auto] lg:bg-[length:125px_auto]"
+                   bg-[length:26px_auto] sm:bg-[length:45px_auto] md:bg-[length:65px_auto] lg:bg-[length:100px_auto]"
         style={{
           backgroundImage: "url('/images/footer-art.png')",
           maskImage: 'radial-gradient(circle at 50% 60%, white 32%, transparent 78%)',
@@ -40,7 +40,7 @@ export default function Footer() {
           </a>
         </p>
 
-        <p className="text-center text-[12px] text-white/60">
+        <p className="text-center text-[13px] leading-relaxed text-white/70">
           123 Example Street, Dublin, Ireland, The British Isles.
         </p>
 
@@ -53,8 +53,7 @@ export default function Footer() {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center h-10 px-4 rounded-full
-                       text-[13px] text-white/80 ring-1 ring-white/15
-                       hover:ring-[#A855F7]/40 hover:bg-[#A855F7]/10 transition-colors
+                       text-[13px] text-white/80 hover:bg-[#A855F7]/10 transition-colors
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60"
           >
             Terms of Use
@@ -64,8 +63,7 @@ export default function Footer() {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center h-10 px-4 rounded-full
-                       text-[13px] text-white/80 ring-1 ring-white/15
-                       hover:ring-[#A855F7]/40 hover:bg-[#A855F7]/10 transition-colors
+                       text-[13px] text-white/80 hover:bg-[#A855F7]/10 transition-colors
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60"
           >
             Privacy Policy
@@ -83,19 +81,18 @@ export default function Footer() {
           </a>
         </nav>
 
-        <div className="w-full mt-6">
+        <div className="w-full mt-2">
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
         </div>
 
-        <p className="pt-3 text-[12px] text-white/60 text-center">
+        <p className="pt-2 text-[13px] leading-relaxed text-white/70 text-center">
           © {new Date().getFullYear()} H1NTED Ltd. All rights reserved.
         </p>
       </div>
 
-      {/* ===== DESKTOP (>= md) — столбик слева ===== */}
+      {/* ===== DESKTOP (>= md) — без изменений ===== */}
       <div className="hidden md:block relative z-10">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6 items-start">
-          {/* Левая часть — унифицированный стиль и интервалы */}
           <div className="flex flex-col gap-2 text-[13px] leading-6 text-white/75">
             <p>
               Questions or feedback? Email us at{' '}
@@ -110,7 +107,6 @@ export default function Footer() {
             <p>© {new Date().getFullYear()} H1NTED Ltd. All rights reserved.</p>
           </div>
 
-          {/* Правая часть — навигация */}
           <nav className="flex items-center gap-6 text-[13px]" aria-label="Footer navigation">
             <a
               href="/terms"
@@ -140,7 +136,6 @@ export default function Footer() {
           </nav>
         </div>
 
-        {/* Разделительная линия — в самом низу */}
         <div className="mt-4 max-w-6xl mx-auto">
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
         </div>
