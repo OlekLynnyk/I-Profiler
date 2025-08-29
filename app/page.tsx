@@ -67,7 +67,15 @@ export default function HomePage() {
       >
         {/* --- HERO (как было), только обёрнут и добавлен ref --- */}
         <section ref={heroSectionRef} className="px-6">
-          <div className="flex flex-col justify-between min-h-[90svh] pb-[env(safe-area-inset-bottom)] pt-8">
+          <div
+            className="flex flex-col justify-between min-h-[100svh] pb-[env(safe-area-inset-bottom)] pt-8"
+            style={{
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+              overscrollBehaviorY: 'contain',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
             {/* Виньетка за H1 */}
             <div
               aria-hidden
@@ -138,7 +146,7 @@ export default function HomePage() {
                   e.preventDefault();
                   setIsAuthModalOpen(true);
                 }}
-                className="relative inline-flex items-center justify-center w-fit rounded-full px-6 py-3 font-semibold tracking-wide text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] hover:-translate-y-[1px]"
+                className="relative inline-flex items-center justify-center w-fit rounded-full px-6 py-3 font-semibold tracking-wide text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] md:hover:-translate-y-[1px] transform-gpu will-change-transform"
                 style={{
                   backgroundImage: `
                     radial-gradient(140px 140px at var(--mx, 50%) var(--my, 0%), rgba(168,85,247,0.24), rgba(168,85,247,0) 60%),

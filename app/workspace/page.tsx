@@ -171,58 +171,6 @@ export default function WorkspacePage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // --- отключаем iOS авто-зум только на время фокуса в textarea ---
-  const viewportMetaRef = useRef<HTMLMetaElement | null>(null);
-  const viewportOriginalRef = useRef<string>('');
-
-  // инициируем meta[name=viewport] и запомним исходный content
-  useEffect(() => {
-    const existing = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
-    if (existing) {
-      viewportMetaRef.current = existing;
-    } else {
-      const m = document.createElement('meta');
-      m.name = 'viewport';
-      m.content = 'width=device-width, initial-scale=1';
-      document.head.appendChild(m);
-      viewportMetaRef.current = m;
-    }
-    viewportOriginalRef.current = viewportMetaRef.current!.content;
-
-    return () => {
-      if (viewportMetaRef.current) {
-        viewportMetaRef.current.content = viewportOriginalRef.current;
-      }
-    };
-  }, []);
-
-  const disableFocusZoom = () => {
-    // iOS / iPadOS детект
-    const isIOS =
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (/Mac/.test(navigator.userAgent) && 'ontouchend' in window);
-    if (!isIOS) return;
-
-    const meta = viewportMetaRef.current;
-    if (!meta) return;
-
-    // берём исходный content и добавляем ограничения только на время фокуса
-    const base = viewportOriginalRef.current || 'width=device-width, initial-scale=1';
-    const parts = base
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .filter((s) => !/^maximum-scale=/i.test(s) && !/^user-scalable=/i.test(s));
-
-    meta.content = [...parts, 'maximum-scale=1', 'user-scalable=no'].join(', ');
-  };
-
-  const restoreZoom = () => {
-    const meta = viewportMetaRef.current;
-    if (meta) meta.content = viewportOriginalRef.current;
-  };
-  // --- конец блока про фокус-зум ---
-
   const { isDragging, overlay, setIsDragging } = useDragOverlay();
 
   const { isAtBottom } = useScrollObserver(bottomRef, scrollRef, historyLoaded);
@@ -527,8 +475,6 @@ export default function WorkspacePage() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    onFocus={disableFocusZoom}
-                    onBlur={restoreZoom}
                     placeholder="Ask anything"
                     disabled={isDragging}
                     className="w-full px-4 py-2 text-sm placeholder:text-sm placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"

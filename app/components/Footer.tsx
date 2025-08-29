@@ -9,7 +9,7 @@ export default function Footer() {
   const reduce = useReducedMotion();
 
   return (
-    <footer className="mt-2 sm:mt-4 px-4 sm:px-6 pt-12 sm:pt-12 pb-5 md:pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
+    <footer className="mt-1 sm:mt-2 px-4 sm:px-6 pt-12 sm:pt-12 pb-5 md:pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
       {/* верхний hairline — только на мобиле */}
       <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent md:hidden" />
 
@@ -17,7 +17,7 @@ export default function Footer() {
       <motion.div
         aria-hidden
         className="absolute inset-0 opacity-[0.06] pointer-events-none bg-center bg-no-repeat
-                   bg-[length:26px_auto] sm:bg-[length:45px_auto] md:bg-[length:65px_auto] lg:bg-[length:100px_auto]"
+                   bg-[length:26px_auto] sm:bg-[length:45px_auto] md:bg-[length:65px_auto] lg:bg-[length:75px_auto]"
         style={{
           backgroundImage: "url('/images/footer-art.png')",
           maskImage: 'radial-gradient(circle at 50% 60%, white 32%, transparent 78%)',

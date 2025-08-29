@@ -18,10 +18,15 @@ export default function HowItWorksVideoMobile({
 }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
   const [showPoster, setShowPoster] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Политики производительности
+  // --- НОВОЕ: прогресс «стыка» 0..1 (для визуального плавного перехода)
+  const [handoff, setHandoff] = useState(0); // 0..1
+  const SEAM_ZONE = 140; // высота зоны, где проявляется шов
+
+  // Политики производительности (как было)
   const reduceMotion = useMemo(() => {
     if (typeof window !== 'undefined') {
       return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
@@ -37,7 +42,7 @@ export default function HowItWorksVideoMobile({
     typeof (navigator as any)?.hardwareConcurrency === 'number' &&
     (navigator as any).hardwareConcurrency < 4;
 
-  // Авто play/pause по видимости
+  // Авто play/pause по видимости (как было)
   useEffect(() => {
     const vid = videoRef.current;
     const el = sectionRef.current;
@@ -60,11 +65,12 @@ export default function HowItWorksVideoMobile({
     return () => io.disconnect();
   }, [showPoster]);
 
-  // Тригерим постер при экономии/редьюс-моушен/низком CPU
+  // Триггерим постер при экономии/редьюс-моушен/низком CPU (как было)
   useEffect(() => {
     if (reduceMotion || saveData || lowCPU) setShowPoster(true);
   }, [reduceMotion, saveData, lowCPU]);
 
+  // Состояние play/pause (как было)
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -85,58 +91,120 @@ export default function HowItWorksVideoMobile({
     else vid.pause();
   };
 
+  // --- НОВОЕ: расчёт handoff (насколько низ секции приблизился к низу вьюпорта)
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    let raf = 0;
+
+    const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
+
+    const calc = () => {
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      // 0 когда низ секции = низу экрана; 1 — когда прошли зону SEAM_ZONE
+      const raw = (vh - r.bottom) / SEAM_ZONE;
+      const p = clamp01(raw);
+      setHandoff(p);
+      // Прокидываем как CSS-переменную — дешево для слоёв
+      el.style.setProperty('--handoff', p.toFixed(3));
+    };
+
+    const onScrollOrResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(calc);
+    };
+
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+    calc();
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <section
       ref={sectionRef}
       className={`md:hidden relative w-full min-h-[100svh] overflow-hidden ${className}`}
       style={{
+        // CSS-переменная шва по умолчанию
+        ['--handoff' as any]: 0,
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
         overscrollBehaviorY: 'contain',
       }}
       aria-label="How it works — intro video"
     >
-      {/* Halo */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -z-10 inset-0 rounded-[56px] blur-2xl"
-        style={{
-          background:
-            'radial-gradient(120% 120% at 50% 50%, rgba(168,85,247,0.16) 0%, rgba(168,85,247,0) 60%)',
-        }}
-      />
+      {/* ⛔️ УДАЛЕНО: тяжёлый Halo — на мобиле лишний, мешает «чистому» виду */}
+
       {/* ВИДЕО на весь экран */}
       <div className="absolute inset-0">
         {!showPoster ? (
-          <video
-            ref={videoRef}
-            className="absolute inset-0 w-full h-full object-cover"
-            muted
-            playsInline
-            loop
-            preload="metadata"
-            autoPlay
-            onClick={togglePlay}
-            crossOrigin="anonymous"
+          <div
+            className="absolute inset-0 will-change-transform"
+            // микро-релаксация масштаба к моменту шва (еле заметно, не ломает компоновку)
+            style={{
+              transform:
+                reduceMotion || saveData ? 'none' : 'scale(calc(1 - (var(--handoff) * 0.010)))',
+              transition: reduceMotion || saveData ? 'none' : 'transform 100ms linear',
+            }}
           >
-            <source src={src} type="video/mp4" />
-          </video>
+            <video
+              ref={videoRef}
+              className="absolute inset-0 w-full h-full object-cover"
+              muted
+              playsInline
+              loop
+              preload="metadata"
+              autoPlay
+              onClick={togglePlay}
+              crossOrigin="anonymous"
+            >
+              <source src={src} type="video/mp4" />
+            </video>
+          </div>
         ) : (
           <Image src={poster} alt="Preview of product flow" fill className="object-cover" />
         )}
 
-        {/* лёгкая виньетка */}
+        {/* Внутренняя лёгкая виньетка — оставляем, но тонкая (не «шумит») */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(120% 120% at 50% 50%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.22) 100%)',
+              'radial-gradient(120% 120% at 50% 50%, rgba(0,0,0,0) 66%, rgba(0,0,0,0.18) 100%)',
+          }}
+        />
+
+        {/* ✅ Верхний scrim — мягкая стыковка со статусбаром, без рамок */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-16"
+          style={{
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.44), rgba(0,0,0,0))',
+          }}
+        />
+
+        {/* ✅ Нижний «seam» — бесшовный переход к следующей секции (только визуальный слой) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+          style={{
+            // Ничего не перехватываем: чистый визуальный слой
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(10,10,12,0.60) 64%, rgba(10,10,12,0.92) 100%)',
+            opacity: 'var(--handoff)',
+            transition: reduceMotion || saveData ? 'none' : 'opacity 80ms linear',
           }}
         />
       </div>
 
-      {/* Play/Pause — «жемчужина» */}
+      {/* Play/Pause — как было (никаких новых правил) */}
       {!showPoster && (
         <button
           type="button"
