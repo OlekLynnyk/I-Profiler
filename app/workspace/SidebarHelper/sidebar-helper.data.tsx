@@ -5,6 +5,7 @@ import { useUserPlan } from '@/app/hooks/useUserPlan';
 import { useInjectPrompt } from '@/app/hooks/useInjectPrompt';
 import SavedProfileList from '@/app/components/SavedProfileList';
 import { BoxData } from './types';
+import { flushSync } from 'react-dom';
 
 type Template = {
   id: string;
@@ -61,8 +62,9 @@ export const getSidebarBoxes = (): BoxData[] => {
         <div
           key={t.id}
           onClick={() => {
-            // По клику подставляем соответствующий промпт
-            injectPrompt(t.content);
+            flushSync(() => {
+              injectPrompt(t.content);
+            });
           }}
           className="cursor-pointer hover:text-[var(--accent)]"
         >

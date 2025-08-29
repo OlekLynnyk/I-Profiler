@@ -44,6 +44,7 @@ function AmbientBackdrop({ src }: { src: string }) {
 }
 
 const LimitModal = dynamic(() => import('@/app/components/LimitModal'), { ssr: false });
+const DayLimitModal = dynamic(() => import('@/app/components/DayLimitModal'), { ssr: false });
 
 const Sidebar = dynamic(() => import('./Sidebar'), {
   loading: () => <div className="p-8 text-[var(--text-secondary)]">Loading Sidebar...</div>,
@@ -57,6 +58,7 @@ const SidebarHelper = dynamic(() => import('./SidebarHelper'), {
 
 export default function WorkspacePage() {
   const { session, user, isLoading } = useAuth();
+  const [refreshToken, setRefreshToken] = useState(0);
   const router = useRouter();
 
   const userName = user?.user_metadata?.full_name || user?.email || 'User';
@@ -77,19 +79,79 @@ export default function WorkspacePage() {
     setProfilingMode,
   } = useChatLogic();
 
-  const [refreshToken, setRefreshToken] = useState(0);
   const {
     plan: packageType,
-    used: demoAttempts,
-    hasReachedLimit: limitReached,
-    hasReachedMonthlyLimit,
+    used: usedDaily, // ⬅️ дневное использование
+    limits, // ⬅️ { dailyGenerations, monthlyGenerations }
+    hasReachedLimit: limitReached, // (осталось)
+    hasReachedDailyLimit, // ⬅️ дневной лимит достигнут?
+    hasReachedMonthlyLimit, // (было)
+    limitResetAt, // ⬅️ время последнего ресета (из БД)
     refetch,
   } = useUserPlan(refreshToken);
 
+  const shownMonthlyOnceRef = useRef(false);
+
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [showDailyModal, setShowDailyModal] = useState(false);
+  const shownDailyOnceRef = useRef(false);
+
+  const dailyResetLabel = React.useMemo(() => {
+    const now = new Date();
+    const next = new Date(now);
+    next.setHours(24, 0, 0, 0);
+    try {
+      return next.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '00:00';
+    }
+  }, [limitResetAt, hasReachedDailyLimit]);
+
+  useEffect(() => {
+    if (hasReachedMonthlyLimit && !shownMonthlyOnceRef.current) {
+      setShowLimitModal(true);
+      shownMonthlyOnceRef.current = true;
+    }
+    if (!hasReachedMonthlyLimit) {
+      shownMonthlyOnceRef.current = false;
+    }
+  }, [hasReachedMonthlyLimit]);
+
+  useEffect(() => {
+    if (
+      hasReachedDailyLimit &&
+      !hasReachedMonthlyLimit && // ⬅️ добавили проверку
+      !shownDailyOnceRef.current
+    ) {
+      setShowDailyModal(true);
+      shownDailyOnceRef.current = true;
+    }
+    if (!hasReachedDailyLimit) {
+      shownDailyOnceRef.current = false;
+    }
+  }, [hasReachedDailyLimit, hasReachedMonthlyLimit]);
+
+  useEffect(() => {
+    if (showDailyModal && !hasReachedDailyLimit) {
+      setShowDailyModal(false);
+    }
+  }, [showDailyModal, hasReachedDailyLimit]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isHelperOpen, setIsHelperOpen] = useState(false);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const sessionId = url.searchParams.get('session_id');
+    const checkoutSuccess = url.searchParams.get('checkout') === 'success';
+
+    if (sessionId || checkoutSuccess) {
+      fetch('/api/internal/sync-subscriptions').finally(() => {
+        refetch()?.catch(console.error);
+        setRefreshToken((t) => t + 1);
+      });
+    }
+  }, []);
 
   const {
     inputValue,
@@ -108,6 +170,58 @@ export default function WorkspacePage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // --- отключаем iOS авто-зум только на время фокуса в textarea ---
+  const viewportMetaRef = useRef<HTMLMetaElement | null>(null);
+  const viewportOriginalRef = useRef<string>('');
+
+  // инициируем meta[name=viewport] и запомним исходный content
+  useEffect(() => {
+    const existing = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
+    if (existing) {
+      viewportMetaRef.current = existing;
+    } else {
+      const m = document.createElement('meta');
+      m.name = 'viewport';
+      m.content = 'width=device-width, initial-scale=1';
+      document.head.appendChild(m);
+      viewportMetaRef.current = m;
+    }
+    viewportOriginalRef.current = viewportMetaRef.current!.content;
+
+    return () => {
+      if (viewportMetaRef.current) {
+        viewportMetaRef.current.content = viewportOriginalRef.current;
+      }
+    };
+  }, []);
+
+  const disableFocusZoom = () => {
+    // iOS / iPadOS детект
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (/Mac/.test(navigator.userAgent) && 'ontouchend' in window);
+    if (!isIOS) return;
+
+    const meta = viewportMetaRef.current;
+    if (!meta) return;
+
+    // берём исходный content и добавляем ограничения только на время фокуса
+    const base = viewportOriginalRef.current || 'width=device-width, initial-scale=1';
+    const parts = base
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .filter((s) => !/^maximum-scale=/i.test(s) && !/^user-scalable=/i.test(s));
+
+    meta.content = [...parts, 'maximum-scale=1', 'user-scalable=no'].join(', ');
+  };
+
+  const restoreZoom = () => {
+    const meta = viewportMetaRef.current;
+    if (meta) meta.content = viewportOriginalRef.current;
+  };
+  // --- конец блока про фокус-зум ---
 
   const { isDragging, overlay, setIsDragging } = useDragOverlay();
 
@@ -193,6 +307,15 @@ export default function WorkspacePage() {
     const hasFiles = attachedFiles.length > 0;
     if (chatMode === 'none') {
       alert('Please select how you want to interact: Chat or Profiling.');
+      return;
+    }
+
+    if (hasReachedMonthlyLimit) {
+      setShowLimitModal(true);
+      return; // ⬅️ НЕ даём дневному появиться
+    }
+    if (hasReachedDailyLimit) {
+      setShowDailyModal(true);
       return;
     }
 
@@ -404,6 +527,8 @@ export default function WorkspacePage() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
+                    onFocus={disableFocusZoom}
+                    onBlur={restoreZoom}
                     placeholder="Ask anything"
                     disabled={isDragging}
                     className="w-full px-4 py-2 text-sm placeholder:text-sm placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
@@ -652,6 +777,16 @@ export default function WorkspacePage() {
 
           <ErrorBoundary>
             <LimitModal show={showLimitModal} onClose={() => setShowLimitModal(false)} />
+          </ErrorBoundary>
+
+          <ErrorBoundary>
+            <DayLimitModal
+              show={showDailyModal}
+              onClose={() => setShowDailyModal(false)}
+              used={usedDaily}
+              limit={limits.dailyGenerations}
+              dailyResetsAtLabel={dailyResetLabel}
+            />
           </ErrorBoundary>
 
           <SaveProfileModal

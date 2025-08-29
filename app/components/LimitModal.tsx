@@ -59,7 +59,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
   const buttonClasses = 'text-xs px-5 py-2 rounded-xl min-w-[120px] text-center';
 
   return (
-    <div className="fixed bottom-[100px] w-full flex justify-center px-2 sm:px-4 z-50">
+    <div className="fixed bottom-[145px] w-full flex justify-center px-2 sm:px-4 z-50">
       <AnimatePresence mode="wait">
         <motion.div
           key={expanded ? 'expanded' : 'compact'}
@@ -102,7 +102,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
               </div>
             </div>
           ) : (
-            <div className="relative px-4 py-5 sm:px-6 sm:py-5 rounded-2xl overflow-hidden">
+            <div className="relative px-4 py-5 sm:px-6 sm:py-5 rounded-2xl overflow-y-auto max-h-[80vh]">
               <h2 className="text-center text-sm text-gray-300 mb-6">
                 Your subscription limit has been reached 🚀
               </h2>
