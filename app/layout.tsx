@@ -21,11 +21,22 @@ export const metadata: Metadata = {
   description: 'A scalable AI profiling assistant',
   metadataBase: new URL(BASE_URL),
 
-  // ✅ универсальный набор линков для десктопа/мобилок
+  // ✅ ДОБАВЛЕНИЯ ТОЛЬКО ПО ПУНКТАМ (ничего не удалено)
   icons: [
+    // существующие
     { rel: 'icon', url: '/favicon.ico' },
     { rel: 'shortcut icon', url: '/favicon.ico' },
     { rel: 'apple-touch-icon', url: '/apple-icon.png' }, // public/apple-icon.png
+
+    // 🔹 для обычной вкладки в Safari/других (PNG с размерами)
+    { rel: 'icon', url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    { rel: 'icon', url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+
+    // 🔹 явное указание размера для apple-touch (иногда помогает Safari)
+    { rel: 'apple-touch-icon', url: '/apple-icon.png', sizes: '180x180' },
+
+    // 🔹 pinned tab в Safari (монохромный SVG; Safari перекрашивает сам)
+    { rel: 'mask-icon', url: '/safari-pinned-tab.svg', color: '#111111' },
   ],
 
   // ✅ для Android/Chrome и PWA-контекстов
