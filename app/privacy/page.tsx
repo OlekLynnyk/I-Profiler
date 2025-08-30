@@ -39,23 +39,22 @@ export default function PrivacyPage() {
         {/* Контент */}
         <p className="text-sm text-white/70">Effective Date: 1 September 2025</p>
 
-        {/* Вступление: разбито на 3 абзаца */}
+        {/* Вступление */}
         <p className="text-white/80">
-          This Privacy Policy explains how H1NTED Ltd. (“H1NTED”, “we”, “us”, “our”) processes
-          personal data in connection with our AI-driven persona analysis platform, website and
-          associated services (the “Platform”).
+          This Privacy Policy explains how H1NTED (“H1NTED”, “we”, “us”, “our”) processes personal
+          data in connection with our AI-driven persona analysis platform, website and associated
+          services (the “Platform”).
         </p>
         <p className="text-white/80">
-          H1NTED Ltd. is (or will be) incorporated in Ireland under the Companies Act 2014 (Company
-          Number: [CRN]), with registered office at [Registered Address], VAT IE[VAT].
+          Provider details. H1NTED (pre-incorporation), Ireland (correspondence: [Address]).
         </p>
         <p className="text-white/80">
           Contact:{' '}
-          <a href="mailto:privacy@[your-domain]" className="underline">
-            privacy@[your-domain]
-          </a>{' '}
-          / [Insert Contact Email]. This Policy should be read together with our Terms of Use and
-          Cookies Policy. Capitalised terms have the meanings given in the Terms.
+          <a href="mailto:olek.lynnyk@gmail.com" className="underline">
+            olek.lynnyk@gmail.com
+          </a>
+          . This Policy should be read together with our Terms of Use and Cookies Policy.
+          Capitalised terms have the meanings given in the Terms.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white mt-4">
@@ -116,7 +115,7 @@ export default function PrivacyPage() {
           knowingly collect children’s data.
         </p>
 
-        {/* ===== 4) TABLE (no borders/lines), визуально выделена контейнером ===== */}
+        {/* ===== 4) TABLE ===== */}
         <h2 className="text-xl font-semibold tracking-tight text-white">
           4) Purposes and lawful bases
         </h2>
@@ -318,8 +317,8 @@ export default function PrivacyPage() {
           Where H1NTED is controller (account, billing, website, support), you may exercise rights
           of access, rectification, erasure, restriction, objection, portability, and withdrawal of
           consent (for marketing/cookies) by contacting{' '}
-          <a href="mailto:privacy@[your-domain]" className="underline">
-            privacy@[your-domain]
+          <a href="mailto:olek.lynnyk@gmail.com" className="underline">
+            olek.lynnyk@gmail.com
           </a>
           .
         </p>
@@ -383,16 +382,15 @@ export default function PrivacyPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">16) Contact</h2>
         <div className="text-white/80 space-y-1">
-          <p>H1NTED Ltd.</p>
-          <p>Registered office: [Registered Address]</p>
+          <p>H1NTED (pre-incorporation), Ireland</p>
+          <p>Correspondence: [Address]</p>
           <p>
             Email:{' '}
-            <a href="mailto:privacy@[your-domain]" className="underline">
-              privacy@[your-domain]
-            </a>{' '}
-            / [Insert Contact Email]
+            <a href="mailto:olek.lynnyk@gmail.com" className="underline">
+              olek.lynnyk@gmail.com
+            </a>
           </p>
-          <p>Company Number: [CRN] &nbsp;|&nbsp; VAT: IE[VAT]</p>
+          {/* CRN/VAT и “Ltd.” убраны до регистрации */}
         </div>
 
         {/* Низ карточки: едва заметная разделительная линия */}

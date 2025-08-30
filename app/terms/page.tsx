@@ -44,11 +44,23 @@ export default function TermsPage() {
           integrations and APIs (collectively, the &quot;Platform&quot;). By registering for,
           accessing or using the Platform, you agree to be bound by these Terms.
         </p>
+
+        {/* Provider details — pre-incorporation (EU/Ireland) */}
         <p className="text-white/80">
-          Provider details. H1NTED Ltd., a company incorporated in Ireland under the Companies Act
-          2014 (Company Number: [CRN]), with registered office at [Registered Address], VAT No:
-          IE[VAT].
+          Provider details. H1NTED (pre-incorporation), Ireland (correspondence: [Address]).
         </p>
+
+        {/* 0A) Pre-incorporation & Novation */}
+        <h2 className="text-xl font-semibold tracking-tight text-white">
+          0A) Pre-incorporation &amp; Novation
+        </h2>
+        <p className="text-white/80">
+          These Terms are entered into by the promoters of H1NTED (pre-incorporation) acting on
+          behalf of the future Irish entity. Upon incorporation of H1NTED Ltd. (Ireland), all rights
+          and obligations under these Terms shall automatically novate to H1NTED Ltd., and you
+          consent to such novation.
+        </p>
+
         <p className="text-white/80">
           These Terms sit alongside our Privacy Policy and Cookies Policy. If you use paid services,
           the billing terms below also apply.
@@ -221,10 +233,10 @@ export default function TermsPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">9) Support</h2>
         <p className="text-white/80">
-          We offer email-based support via [Insert Email]. Target response time is up to 48 business
-          hours. Occasional video sessions may be offered at our discretion and are not guaranteed.
-          Unless expressly agreed, no SLA or uptime commitment applies and support priority is not
-          tier-based.
+          We offer email-based support via olek.lynnyk@gmail.com. Target response time is up to 48
+          business hours. Occasional video sessions may be offered at our discretion and are not
+          guaranteed. Unless expressly agreed, no SLA or uptime commitment applies and support
+          priority is not tier-based.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -255,6 +267,76 @@ export default function TermsPage() {
           Platform and to use Outputs for your internal business purposes in accordance with these
           Terms. Except for the limited licence above, no IP rights are transferred. You must not
           reverse engineer, decompile or create derivative works of the Platform.
+        </p>
+
+        {/* === INSERTED per assignment: 11A–11G and 11H === */}
+        <h3 className="text-lg font-semibold tracking-tight text-white mt-4">
+          11A) Proprietary Technology Notice
+        </h3>
+        <p className="text-white/80">
+          The Platform (including prompts, rules, datasets, models, designs, software and know-how)
+          is proprietary to H1NTED and protected by copyright, database and trade-secret laws. No
+          rights are granted except the limited right to use the Platform as set out in these Terms.
+        </p>
+
+        <h3 className="text-lg font-semibold tracking-tight text-white">11B) Restricted Conduct</h3>
+        <p className="text-white/80">You must not (and must not allow others to):</p>
+        <ul className="list-[lower-roman] marker:text-[#A855F7] pl-6 space-y-1 text-white/80">
+          <li>reverse-engineer, decompile, disassemble or derive source code;</li>
+          <li>scrape, mine, harvest or bulk-export data or outputs;</li>
+          <li>
+            benchmark, publish comparative tests, or use the Platform or outputs to build or train
+            any competing or substitute product or service;
+          </li>
+          <li>
+            bypass, remove or circumvent rate limits, access controls or usage caps, including by
+            key sharing, rotating accounts or automation.
+          </li>
+        </ul>
+
+        <h3 className="text-lg font-semibold tracking-tight text-white">11C) No Model Training</h3>
+        <p className="text-white/80">
+          You may not use the Platform, its data or outputs to train, fine-tune, evaluate or improve
+          machine-learning or AI models.
+        </p>
+
+        <h3 className="text-lg font-semibold tracking-tight text-white">
+          11D) Storage &amp; Caching
+        </h3>
+        <p className="text-white/80">
+          Unless expressly permitted in writing, you may not store, aggregate or index outputs to
+          create datasets, profiles or shadow databases. Ephemeral caching solely to display results
+          to an end user is permitted.
+        </p>
+
+        <h3 className="text-lg font-semibold tracking-tight text-white">
+          11E) Deletion on Request; Audit
+        </h3>
+        <p className="text-white/80">
+          On our written request you will promptly delete any stored outputs or data derived from
+          the Platform and certify deletion. We may reasonably request evidence of compliance with
+          this Clause.
+        </p>
+
+        <h3 className="text-lg font-semibold tracking-tight text-white">11F) Equitable Relief</h3>
+        <p className="text-white/80">
+          You agree that breach of Clauses 11A–11E may cause irreparable harm and that H1NTED is
+          entitled to seek injunctive relief in addition to any other remedies.
+        </p>
+
+        <h3 className="text-lg font-semibold tracking-tight text-white">11G) API Terms</h3>
+        <p className="text-white/80">
+          Keep API keys confidential; no sharing, resale or embedding in client-side code. We may
+          throttle or revoke keys at any time. Do not exceed or circumvent published rate limits.
+          API responses are subject to Clauses 11C–11E.
+        </p>
+
+        <h3 className="text-lg font-semibold tracking-tight text-white">11H) Feedback</h3>
+        <p className="text-white/80">
+          You grant H1NTED a perpetual, irrevocable, worldwide, royalty-free licence to use, copy,
+          modify and create derivative works from any suggestions, ideas or feedback you provide,
+          with no obligation to compensate you. Feedback shall not be deemed your Confidential
+          Information.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -354,9 +436,10 @@ export default function TermsPage() {
           19) Notices and Communications
         </h2>
         <p className="text-white/80">
-          Notices may be given by email to your registered address and to H1NTED at [Insert Email].
-          Electronic notices are deemed received on the day sent, if sent on a business day. We sell
-          exclusively to businesses. The EU Online Dispute Resolution platform does not apply.
+          Notices may be given by email to your registered address and to H1NTED at{' '}
+          olek.lynnyk@gmail.com. Electronic notices are deemed received on the day sent, if sent on
+          a business day. We sell exclusively to businesses. The EU Online Dispute Resolution
+          platform does not apply.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -416,10 +499,10 @@ export default function TermsPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">Contact</h2>
         <div className="text-white/80 space-y-1">
-          <p>H1NTED Ltd.</p>
-          <p>Registered office: [Registered Address]</p>
-          <p>Email: [Insert Email]</p>
-          <p>Company Number: [CRN] &nbsp;|&nbsp; VAT: IE[VAT]</p>
+          <p>H1NTED (pre-incorporation), Ireland</p>
+          <p>Correspondence: [Address]</p>
+          <p>Email: olek.lynnyk@gmail.com</p>
+          {/* Убраны CRN/VAT и “Ltd.” до регистрации — по заданию */}
         </div>
 
         {/* Низ карточки */}

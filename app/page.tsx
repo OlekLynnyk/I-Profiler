@@ -98,7 +98,7 @@ export default function HomePage() {
                   We Unlock Insights With
                 </motion.span>
                 <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={1}>
-                  Advanced Profiling
+                  Advanced AI Discernment
                 </motion.span>
               </motion.h1>
 
@@ -210,7 +210,8 @@ export default function HomePage() {
                 We Unlock Insights With
               </motion.span>
               <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={1}>
-                Advanced Profiling
+                Advanced AI{' '}
+                <span className="text-[clamp(4.75rem,5.75vw,5.75rem)]">Discernment</span>
               </motion.span>
             </motion.h1>
 

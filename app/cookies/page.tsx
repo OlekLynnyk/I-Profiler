@@ -39,8 +39,8 @@ export default function CookiePolicyPage() {
         <p className="text-sm text-white/70">Effective Date: 26 August 2025</p>
 
         <p className="text-white/80">
-          This Cookies Policy explains how H1NTED Ltd. (“H1NTED”, “we”, “us”, “our”) uses cookies
-          and similar technologies on our website, web dashboard and associated services (the
+          This Cookies Policy explains how H1NTED (“H1NTED”, “we”, “us”, “our”) uses cookies and
+          similar technologies on our website, web dashboard and associated services (the
           “Platform”). Read this together with our{' '}
           <a
             href="/privacy"
@@ -62,8 +62,7 @@ export default function CookiePolicyPage() {
           .
         </p>
         <p className="text-white/80">
-          Provider details. H1NTED Ltd., incorporated in Ireland (Company Number [CRN]), registered
-          office [Registered Address], VAT IE[VAT].
+          Provider details. H1NTED (pre-incorporation), Ireland (correspondence: [Address]).
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -355,16 +354,15 @@ export default function CookiePolicyPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">10) Contact</h2>
         <div className="text-white/80 space-y-1">
-          <p>H1NTED Ltd.</p>
-          <p>Registered office: [Registered Address]</p>
+          <p>H1NTED (pre-incorporation), Ireland</p>
+          <p>Correspondence: [Address]</p>
           <p>
             Email:{' '}
-            <a href="mailto:privacy@[your-domain]" className="underline">
-              privacy@[your-domain]
-            </a>{' '}
-            / [Insert Contact Email]
+            <a href="mailto:olek.lynnyk@gmail.com" className="underline">
+              olek.lynnyk@gmail.com
+            </a>
           </p>
-          <p>Company Number: [CRN] &nbsp;|&nbsp; VAT IE[VAT]</p>
+          {/* CRN/VAT и “Ltd.” убраны до регистрации */}
         </div>
 
         <div className="pt-4 mt-2 border-t border-white/10" />

@@ -85,15 +85,46 @@ export default function Footer() {
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
         </div>
 
-        <p className="pt-2 text-[13px] leading-relaxed text-white/70 text-center">
-          © {new Date().getFullYear()} H1NTED Ltd. All rights reserved.
-        </p>
+        {/* Юридический блок — узкий и с отдельной строкой для ссылок */}
+        <div className="w-full">
+          <div className="max-w-[46ch] text-left">
+            <p className="pt-2 text-[13px] leading-relaxed text-white/70">
+              © 2025 H1NTED. Proprietary technology protected by IP and trade-secret laws.
+            </p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-white/60">
+              No reverse engineering, scraping, automated extraction, benchmarking, or training AI
+              models on our data or outputs.
+            </p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-white/60">
+              See{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+              >
+                Terms
+              </a>{' '}
+              &{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+              >
+                Privacy
+              </a>
+              .
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* ===== DESKTOP (>= md) — без изменений ===== */}
+      {/* ===== DESKTOP (>= md) ===== */}
       <div className="hidden md:block relative z-10">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6 items-start">
-          <div className="flex flex-col gap-2 text-[13px] leading-6 text-white/75">
+          {/* Левая колонка — ещё уже, больше строк */}
+          <div className="flex flex-col gap-2 text-[13px] leading-6 text-white/75 max-w-[46ch] md:max-w-[calc(46ch*0.95)]">
             <p>
               Questions or feedback? Email us at{' '}
               <a
@@ -104,26 +135,40 @@ export default function Footer() {
               </a>
             </p>
             <p>123 Example Street, Dublin, Ireland, The British Isles.</p>
-            <p>© {new Date().getFullYear()} H1NTED Ltd. All rights reserved.</p>
+
+            <p className="mt-2 text-white/70">
+              © 2025 H1NTED. Proprietary technology protected by IP and trade-secret laws.
+            </p>
+            <p className="text-[12.5px] leading-relaxed text-white/60">
+              No reverse engineering, scraping, automated extraction, benchmarking, or training AI
+              models on our data or outputs.
+            </p>
+            {/* Отдельная строка в самом низу */}
+            <p className="text-[12.5px] leading-relaxed text-white/60">
+              See{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+              >
+                Terms
+              </a>{' '}
+              &{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+              >
+                Privacy
+              </a>
+              .
+            </p>
           </div>
 
+          {/* Справа — только LinkedIn */}
           <nav className="flex items-center gap-6 text-[13px]" aria-label="Footer navigation">
-            <a
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/75 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1"
-            >
-              Terms of Use
-            </a>
-            <a
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/75 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1"
-            >
-              Privacy Policy
-            </a>
             <a
               href="https://www.linkedin.com/in/oleksandrlynnyk/"
               target="_blank"
