@@ -93,7 +93,7 @@ export default function ChatBubble({
     >
       <div
         className={`flex flex-col max-w-full ${
-          isUser ? 'sm:max-w-[60%]' : 'sm:max-w-[68%] xl:max-w-[72ch]'
+          isUser ? 'sm:max-w-[60%]' : 'sm:max-w-[62%] xl:max-w-[72ch]'
         } text-left`}
       >
         {/* ✅ ATTACHMENTS — квадратные превью над bubble */}

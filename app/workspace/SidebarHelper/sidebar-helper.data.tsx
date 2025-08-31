@@ -27,13 +27,13 @@ export const getSidebarBoxes = (): BoxData[] => {
     'Improving Team Dynamics',
     'Conflict Management',
     '‘Go/No-Go’ Assistance',
-    'Intrinsic Motivation to address',
+    'Intrinsic Motivation to Address',
     'C-level Recruitment',
-    'Talent R&D planning',
+    'Talent R&D Planning',
     'Personality vs Business',
     'Sales Pitches',
     'Creativity Potential',
-    'Best Engagement Setting + Icebreaker',
+    'Best Engagement Setting',
     'Feedback Delivery Calibrator',
   ];
 
