@@ -91,7 +91,11 @@ export default function ChatBubble({
       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       className={`w-full py-1 flex ${isUser ? 'justify-end' : 'justify-start'}`}
     >
-      <div className="flex flex-col max-w-full sm:max-w-[60%] text-left">
+      <div
+        className={`flex flex-col max-w-full ${
+          isUser ? 'sm:max-w-[60%]' : 'sm:max-w-[75%] xl:max-w-[72ch]'
+        } text-left`}
+      >
         {/* ✅ ATTACHMENTS — квадратные превью над bubble */}
         {attachments && attachments.length > 0 && (
           <div className="flex flex-col gap-2 mb-2">
