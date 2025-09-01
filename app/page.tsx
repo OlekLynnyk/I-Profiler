@@ -87,20 +87,43 @@ export default function HomePage() {
             />
             <div className="space-y-3 relative">
               {/* H1 */}
-              <motion.h1
-                className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] text-[clamp(3.2rem,12vw,5rem)] hero-glow"
+              <div
+                className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] hero-glow"
                 style={{ letterSpacing: '-0.02em' }}
-                initial={reduce ? undefined : 'hidden'}
-                whileInView={reduce ? undefined : 'show'}
-                viewport={{ once: true, amount: 0.6 }}
               >
-                <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={0}>
+                <motion.p
+                  className="text-[#F7F7F7] text-[clamp(4.5rem,11vw,7rem)]"
+                  initial={reduce ? undefined : 'hidden'}
+                  whileInView={reduce ? undefined : 'show'}
+                  viewport={{ once: true, amount: 0.6 }}
+                  variants={fadeUp}
+                  custom={0}
+                >
                   We Unlock Insights With
-                </motion.span>
-                <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={1}>
-                  Advanced AI Discernment
-                </motion.span>
-              </motion.h1>
+                </motion.p>
+
+                <motion.p
+                  className="text-[#F7F7F7] text-[clamp(4rem,10vw,6rem)]"
+                  initial={reduce ? undefined : 'hidden'}
+                  whileInView={reduce ? undefined : 'show'}
+                  viewport={{ once: true, amount: 0.6 }}
+                  variants={fadeUp}
+                  custom={1}
+                >
+                  Advanced AI
+                </motion.p>
+
+                <motion.p
+                  className="text-[#F7F7F7] text-[clamp(3.8rem,9vw,5.5rem)]"
+                  initial={reduce ? undefined : 'hidden'}
+                  whileInView={reduce ? undefined : 'show'}
+                  viewport={{ once: true, amount: 0.6 }}
+                  variants={fadeUp}
+                  custom={2}
+                >
+                  DISCERNMENT
+                </motion.p>
+              </div>
 
               {/* «Полка»-блик под H1 */}
               <div className="mt-3 h-px w-[min(560px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
