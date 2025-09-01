@@ -477,7 +477,7 @@ export default function WorkspacePage() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything"
                     disabled={isDragging}
-                    className="w-full px-4 py-2 text-base placeholder:text-base placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
+                    className="w-full px-4 py-2 text-sm placeholder:text-sm ios-no-zoom placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
                   />
 
                   <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">

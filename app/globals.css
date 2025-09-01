@@ -106,11 +106,12 @@ input, textarea, select, button, label {
     0 0 18px rgba(168, 85, 247, 0.18);
 }
 
-/* === iOS-safe: отключаем автозум при фокусе === */
-@layer base {
-  input, textarea, select {
-    font: inherit;
-    font-size: 16px;
+/* iOS only: anti-zoom с визуальными 14px */
+@supports (-webkit-touch-callout: none) {
+  .ios-no-zoom {
+    font-size: 16px;          /* iOS не зумит при фокусе */
+    transform: scale(0.875);  /* 16 * 0.875 = 14px визуально */
+    transform-origin: left center;
   }
 }
 
