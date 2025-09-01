@@ -468,7 +468,7 @@ export default function WorkspacePage() {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 overflow-hidden">
                   <textarea
                     ref={textareaRef}
                     rows={1}

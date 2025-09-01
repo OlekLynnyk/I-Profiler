@@ -106,12 +106,14 @@ input, textarea, select, button, label {
     0 0 18px rgba(168, 85, 247, 0.18);
 }
 
-/* iOS only: anti-zoom с визуальными 14px */
+/* iOS only: anti-zoom c визуальными ~15px и без сужения ширины */
 @supports (-webkit-touch-callout: none) {
   .ios-no-zoom {
-    font-size: 16px;          /* iOS не зумит при фокусе */
-    transform: scale(0.9375); /* 15px */
+    font-size: 16px;              /* iOS не зумит при фокусе */
+    --s: 0.9375;                  /* 15 / 16 → визуально ~15px */
+    transform: scale(var(--s));
     transform-origin: left center;
+    width: calc(100% / var(--s)); /* компенсируем сжатие по ширине */
   }
 }
 
