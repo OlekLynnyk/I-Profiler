@@ -75,7 +75,6 @@ export default function HowItWorks() {
     typeof (navigator as any)?.hardwareConcurrency === 'number' &&
     (navigator as any).hardwareConcurrency < 4;
 
-  // Авто play/pause
   // Авто play/pause — ТОЛЬКО ДЕСКТОП (lg+)
   useEffect(() => {
     const isDesktop =
@@ -212,7 +211,7 @@ export default function HowItWorks() {
     return () => clearTimeout(t);
   }, [active, reduceMotion, saveData, lowCPU]);
 
-  // Micro-tilt: движение мыши → варьируем rotateX/rotateY (макс ≈2°)
+  // Micro-tilt (десктоп)
   const handleTilt = (e: React.MouseEvent<HTMLDivElement>) => {
     if (reduceMotion || saveData || lowCPU) return;
     const el = monolithRef.current;
@@ -235,27 +234,48 @@ export default function HowItWorks() {
   return (
     <section ref={sectionRef} className="bg-transparent text-white relative overflow-hidden">
       <div className="w-full relative px-4">
-        {/* ===== MOBILE ===== */}
+        {/* ===== MOBILE (под видео) ===== */}
         <div className="lg:hidden w-full mx-auto max-w-[520px]">
-          {/* Только тексты, типографика как на десктопе */}
-          <div className="px-4 pb-[env(safe-area-inset-bottom)] space-y-8">
-            <h3 className="text-center text-white text-3xl font-extrabold tracking-tight">
-              How it works
-            </h3>
+          {/* ⛔️ Заголовок How it works скрыт на мобайле */}
+          <div className="px-4 pb-[env(safe-area-inset-bottom)]" aria-label="How it works — steps">
+            {/* Отступ от видео до первого текста: 20px */}
+            <div className="h-5" aria-hidden />
 
-            <ol role="list" className="space-y-8 max-w-[480px] mx-auto text-left">
+            {/* Шаги: компактно, строка шага — всегда в одну линию */}
+            <ol role="list" className="space-y-6 max-w-[480px] mx-auto text-left">
               {STEPS.map((s) => (
-                <li role="listitem" key={s.id} className="space-y-2">
-                  <div className="text-sm uppercase tracking-wider text-[#CDB4FF]">{s.tagline}</div>
-                  <div className="text-xl font-semibold text-white leading-tight">{s.title}</div>
-                  <p className="text-base text-white/70 leading-relaxed">{s.desc}</p>
+                <li role="listitem" key={s.id} className="space-y-3">
+                  <div className="text-[12px] uppercase tracking-wide text-[#CDB4FF]/90">
+                    {s.tagline}
+                  </div>
+
+                  {/* одна строка, не переносим */}
+                  <div className="text-[15px] leading-[1.12] font-semibold tracking-tight whitespace-nowrap text-white">
+                    — {s.title}
+                  </div>
+
+                  <p className="text-[14px] leading-[1.45] text-white/80">{s.desc}</p>
                 </li>
               ))}
             </ol>
+
+            {/* Разделитель */}
+            <div
+              className="mt-7 mb-4 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
+              aria-hidden
+            />
+
+            {/* Теглайн (маленький капс, по центру, в две строки как на референсе) */}
+            <p className="text-center text-[12px] uppercase tracking-widest text-white/75 font-light">
+              DO BETTER. MOVE FURTHER
+              <br className="block" />
+              WITH <span className="font-semibold text-white">H1NTED</span>
+            </p>
           </div>
         </div>
         {/* ===== /MOBILE ===== */}
-        {/* ===== DESKTOP ===== */}
+
+        {/* ===== DESKTOP (без изменений) ===== */}
         <div className="hidden lg:block pt-20 pb-20">
           <div className="w-full relative grid items-center gap-12 lg:grid-cols-[0.95fr_0.05fr_1fr]">
             {/* ЛЕВАЯ КОЛОНКА — Optic Monolith */}

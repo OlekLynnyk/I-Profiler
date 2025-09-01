@@ -66,9 +66,9 @@ export default function HomePage() {
         style={{ overscrollBehaviorY: 'contain' }}
       >
         {/* --- HERO (как было), только обёрнут и добавлен ref --- */}
-        <section ref={heroSectionRef} className="px-6">
+        <section ref={heroSectionRef} className="px-6 mt-10">
           <div
-            className="flex flex-col justify-between min-h-[100svh] pb-[env(safe-area-inset-bottom)] pt-8"
+            className="flex flex-col justify-start min-h-[100svh] pt-8"
             style={{
               paddingTop: 'env(safe-area-inset-top)',
               paddingBottom: 'env(safe-area-inset-bottom)',
@@ -88,7 +88,7 @@ export default function HomePage() {
             <div className="space-y-3 relative">
               {/* H1 */}
               <motion.h1
-                className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] text-[clamp(3.5rem,12vw,5rem)] hero-glow"
+                className="font-extrabold uppercase tracking-tight leading-[1.2] [text-wrap:balance] text-[clamp(3.2rem,12vw,5rem)] hero-glow"
                 style={{ letterSpacing: '-0.02em' }}
                 initial={reduce ? undefined : 'hidden'}
                 whileInView={reduce ? undefined : 'show'}
@@ -107,7 +107,7 @@ export default function HomePage() {
 
               {/* Subtitle — как на десктопе, с «дыханием» */}
               <motion.div
-                className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(0.90rem,4vw,1.1rem)]"
+                className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(1.1rem,4vw,1.1rem)]"
                 initial={reduce ? undefined : 'hidden'}
                 whileInView={reduce ? undefined : 'show'}
                 viewport={{ once: true, amount: 0.7 }}
@@ -124,7 +124,7 @@ export default function HomePage() {
 
               {/* Description */}
               <motion.p
-                className="mt-5 text-[13px] leading-snug text-white/70 max-w-[36ch]"
+                className="mt-5 mb-10 text-[13px] leading-snug text-white/70 max-w-[36ch]"
                 initial={reduce ? undefined : 'hidden'}
                 whileInView={reduce ? undefined : 'show'}
                 viewport={{ once: true, amount: 0.7 }}

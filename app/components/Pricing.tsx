@@ -68,7 +68,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       id: 'free',
       name: 'Freemium',
       price: '€0',
-      description: 'Try Out Advanced AI Discernment',
+      description: 'Intro to Advanced AI Discernment',
       features: [
         '3 AI analyses',
         'Deep profile insights',
@@ -82,11 +82,12 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       id: SELECT_ID,
       name: 'Select',
       price: '€149',
-      description: 'For Individuals to Make a Difference',
+      description: 'For Individual Decision-Makers',
       features: [
         'Everything in Freemium',
         '15 AI analyses',
-        'Enhanced tools to make the most of it for your goals',
+        'Enhanced Discernment Tools',
+        'Private workspace (single seat)',
       ],
       highlight: false,
     },
@@ -94,11 +95,12 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       id: SMARTER_ID, // Smarter
       name: 'Smarter',
       price: '€449',
-      description: 'For Teams to Make Smarter Moves',
+      description: 'For Teams That Move Smarter',
       features: [
         'Everything in Select',
         '75 AI analyses',
-        'A professional library to learn the art of calm influence',
+        'Professional library',
+        'Onboarding session on request',
       ],
       highlight: true,
     },
@@ -106,7 +108,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       id: BUSINESS_ID, // Business
       name: 'Business',
       price: '€799',
-      description: 'Enterprise-level Access',
+      description: 'Enterprise Access',
       features: [
         'Everything in Smarter',
         '200 AI analyses',
@@ -201,7 +203,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           className={`
             ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
             w-full overflow-hidden text-left
-            px-5 py-4 min-h-[120px] flex items-start justify-between gap-3
+            px-5 py-4 min-h-[100px] flex items-start justify-between gap-3
             transition-[transform,box-shadow] duration-200
             focus:outline-none focus-visible:ring-2 focus-visible:ring-[${ACCENT}]/60
           `}
@@ -212,7 +214,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             <p className="mt-1 text-[22px] font-extrabold">
               {plan.price}
               {!isFree && (
-                <span className="text-[11px] align-baseline text-[#4B5563]"> /4 weeks</span>
+                <span className="text-[11px] align-baseline text-[#4B5563]"> /month</span>
               )}
             </p>
             <p
@@ -269,7 +271,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
         <p className="mt-1 text-[clamp(26px,6vw,32px)] font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-[#1F2937] via-[#1F2937] to-[#6B21A8]">
           {plan.price}
           {!isFree && (
-            <span className="align-baseline text-[12px] font-medium text-[#4B5563]"> /4 weeks</span>
+            <span className="align-baseline text-[12px] font-medium text-[#4B5563]"> /month</span>
           )}
         </p>
 
@@ -319,7 +321,18 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           aria-describedby={`desc-${plan.id}`}
         >
           <span className="inline-flex items-center justify-center gap-2">
-            {loadingPlan === plan.id ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
+            {loadingPlan === plan.id
+              ? 'Redirecting...'
+              : plan.id === 'free'
+                ? 'Start Free'
+                : plan.id === SELECT_ID
+                  ? 'Choose Select'
+                  : plan.id === SMARTER_ID
+                    ? 'Choose Smarter'
+                    : plan.id === BUSINESS_ID
+                      ? 'Choose Business'
+                      : 'Choose Plan'}
+
             {((!isLoggedIn && !isFree) || (isFree && isLoggedIn)) && loadingPlan !== plan.id && (
               <LockIcon className="opacity-80" />
             )}
@@ -482,7 +495,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                       </span>{' '}
                       {!isFree && (
                         <span className="align-middle text-sm font-medium text-white/70">
-                          /4 weeks
+                          /month
                         </span>
                       )}
                     </div>
@@ -546,9 +559,16 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                       <span className="inline-flex items-center justify-center gap-2">
                         {loadingPlan === plan.id
                           ? 'Redirecting...'
-                          : isFree
-                            ? 'Try Demo'
-                            : 'Go Executive'}
+                          : plan.id === 'free'
+                            ? 'Start Free'
+                            : plan.id === SELECT_ID
+                              ? 'Choose Select'
+                              : plan.id === SMARTER_ID
+                                ? 'Choose Smarter'
+                                : plan.id === BUSINESS_ID
+                                  ? 'Choose Business'
+                                  : 'Choose Plan'}
+
                         {!isLoggedIn && !isFree && loadingPlan !== plan.id && (
                           <LockIcon className="opacity-85" />
                         )}
@@ -564,7 +584,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           </motion.div>
         </div>
 
-        <p className="text-[13px] leading-6 text-white/75 mt-6 sm:mt-8 max-w-3xl mx-auto text-center px-2">
+        <p className="text-[13px] leading-6 text-white/75 mt-6 sm:mt-8 max-w-3xl mx-auto text-center px-2 min-h-[48px]">
           For individual professional advice, training, or API integration, please contact us
           through email.
         </p>
