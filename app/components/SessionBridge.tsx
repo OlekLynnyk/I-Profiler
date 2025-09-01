@@ -29,6 +29,26 @@ export default function SessionBridge() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // 🔒 Удаляем ?code и ?state на финальном редиректе OAuth, чтобы клиент не сделал повторный PKCE-обмен
+    if (typeof window !== 'undefined' && window.location.pathname === '/auth/callback') {
+      const url = new URL(window.location.href);
+      let changed = false;
+
+      if (url.searchParams.has('code')) {
+        url.searchParams.delete('code');
+        changed = true;
+      }
+      if (url.searchParams.has('state')) {
+        url.searchParams.delete('state');
+        changed = true;
+      }
+
+      if (changed) {
+        const qs = url.searchParams.toString();
+        window.history.replaceState(null, '', url.pathname + (qs ? `?${qs}` : ''));
+      }
+    }
+
     const supabase = createPagesBrowserClient({
       cookieOptions:
         process.env.NODE_ENV === 'production'

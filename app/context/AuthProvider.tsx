@@ -24,7 +24,6 @@ const supabase = createPagesBrowserClient({
         },
 });
 
-// ✅ Глобальный флаг инициализации (вне компонента)
 let __hasInitialized = false;
 
 const AuthContext = createContext<{
@@ -50,6 +49,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
+    // ✅ Удаляем ?code и ?state из URL на /auth/callback, чтобы supabase не сделал повторный обмен
+    if (typeof window !== 'undefined' && window.location.pathname === '/auth/callback') {
+      const url = new URL(window.location.href);
+      let removed = false;
+
+      if (url.searchParams.has('code')) {
+        url.searchParams.delete('code');
+        removed = true;
+      }
+
+      if (url.searchParams.has('state')) {
+        url.searchParams.delete('state');
+        removed = true;
+      }
+
+      if (removed) {
+        const qs = url.searchParams.toString();
+        window.history.replaceState(null, '', url.pathname + (qs ? `?${qs}` : ''));
+      }
+    }
+
     const initAuth = async () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);

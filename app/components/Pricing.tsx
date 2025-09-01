@@ -8,6 +8,12 @@ const supabase = createPagesBrowserClient();
 const easing: Easing = [0.22, 1, 0.36, 1];
 const ACCENT = '#A855F7';
 
+// Stripe IDs
+const SMARTER_ID = 'price_1RQYE4AGnqjZyhfAY8kOMZwm';
+const BUSINESS_ID = 'price_1RQYEXAGnqjZyhfAryCzNkqV';
+// TODO: replace with real Stripe price for Select
+const SELECT_ID = 'price_SELECT_PLACEHOLDER';
+
 type Plan = {
   id: string;
   name: string;
@@ -62,9 +68,9 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       id: 'free',
       name: 'Freemium',
       price: '€0',
-      description: 'Try Advanced Discernment with AI',
+      description: 'Try Out Advanced AI Discernment',
       features: [
-        '10 AI analyses',
+        '3 AI analyses',
         'Deep profile insights',
         'Templates for structured work',
         'Standard support',
@@ -73,35 +79,46 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       action: onDemoClick,
     },
     {
-      id: 'price_1RQYE4AGnqjZyhfAY8kOMZwm', // Smarter
-      name: 'Smarter',
-      price: '€249',
-      description: 'Tools for individuals and teams',
+      id: SELECT_ID,
+      name: 'Select',
+      price: '€149',
+      description: 'For Individuals to Make a Difference',
       features: [
         'Everything in Freemium',
-        '250 AI analyses',
-        'Enhanced AI toolset',
-        'Professional Library',
+        '15 AI analyses',
+        'Enhanced tools to make the most of it for your goals',
+      ],
+      highlight: false,
+    },
+    {
+      id: SMARTER_ID, // Smarter
+      name: 'Smarter',
+      price: '€449',
+      description: 'For Teams to Make Smarter Moves',
+      features: [
+        'Everything in Select',
+        '75 AI analyses',
+        'A professional library to learn the art of calm influence',
       ],
       highlight: true,
     },
     {
-      id: 'price_1RQYEXAGnqjZyhfAryCzNkqV', // Business
+      id: BUSINESS_ID, // Business
       name: 'Business',
       price: '€799',
-      description: 'Enterprise-level access',
+      description: 'Enterprise-level Access',
       features: [
         'Everything in Smarter',
-        '1,000 AI analyses',
+        '200 AI analyses',
         'Premium support',
-        'Onboarding session on request',
+        'Training session on request',
       ],
       highlight: false,
     },
   ];
 
   // ----- MOBILE STATE -----
-  const [activeId, setActiveId] = useState<string>(plans[1].id); // Smarter по умолчанию
+  const [activeId, setActiveId] = useState<string>(SMARTER_ID); // Smarter по умолчанию
   const activePlan = useMemo(() => plans.find((p) => p.id === activeId)!, [plans, activeId]);
   const smallPlans = useMemo(() => plans.filter((p) => p.id !== activeId), [plans, activeId]);
 
@@ -173,7 +190,6 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     const layoutId = `plan-${plan.id}`;
 
     if (size === 'small') {
-      // маленькая карточка — стейбильный блок под ценой
       return (
         <motion.button
           type="button"
@@ -201,12 +217,11 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             </p>
             <p
               id={`desc-${plan.id}`}
-              className="mt-1 text-[#374151] text-[13px] leading-snug line-clamp-2 min-h-[36px]" /* фикс высоты под 2 строки */
+              className="mt-1 text-[#374151] text-[13px] leading-snug line-clamp-2 min-h-[36px]"
             >
               {plan.description}
             </p>
           </div>
-          {/* chevron */}
           <svg
             className="mt-1 h-5 w-5 flex-none opacity-60"
             viewBox="0 0 24 24"
@@ -219,7 +234,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       );
     }
 
-    // Large card (главная карточка)
+    // Large card
     return (
       <motion.div
         layout
@@ -232,10 +247,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
         role="group"
         aria-labelledby={`title-${plan.id}`}
       >
-        {/* тонкая HL/Accent сверху */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/55 to-transparent" />
-
-        {/* бейдж */}
         {plan.highlight && (
           <div
             className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full
@@ -261,7 +273,6 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           )}
         </p>
 
-        {/* Стабильный блок описания — без «прыжков» */}
         <p
           id={`desc-${plan.id}`}
           className="mt-3 text-[#374151] text-[15px] leading-relaxed line-clamp-3 min-h-[60px]"
@@ -285,7 +296,6 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           ))}
         </ul>
 
-        {/* CTA — c замком при disabled */}
         <motion.button
           whileTap={{ scale: 0.99 }}
           onClick={isFree ? (isLoggedIn ? undefined : plan.action) : () => handleCheckout(plan.id)}
@@ -304,23 +314,32 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.6), 0 8px 28px rgba(0,0,0,0.10)',
             border: '1px solid rgba(168,85,247,0.35)',
           }}
-          disabled={isDisabled}
+          disabled={(!isLoggedIn && !isFree) || (isFree && isLoggedIn) || loadingPlan === plan.id}
           title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
           aria-describedby={`desc-${plan.id}`}
         >
           <span className="inline-flex items-center justify-center gap-2">
-            {isLoading ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
-            {isDisabled && !isLoading && <LockIcon className="opacity-80" />}
+            {loadingPlan === plan.id ? 'Redirecting...' : isFree ? 'Try Demo' : 'Go Executive'}
+            {((!isLoggedIn && !isFree) || (isFree && isLoggedIn)) && loadingPlan !== plan.id && (
+              <LockIcon className="opacity-80" />
+            )}
           </span>
         </motion.button>
       </motion.div>
     );
   };
 
+  // ===== Desktop window: 4 плана, показываем 3. Лёгкий свайп по кнопкам. =====
+  // ⬇️ ИЗМЕНЕНО: по умолчанию показываем Freemium + Select + Smarter
+  const [offsetIndex, setOffsetIndex] = useState<0 | 1>(0); // 0 => Freemium, Select, Smarter | 1 => Select, Smarter, Business
+  const desktopVisiblePlans = useMemo(
+    () => plans.slice(offsetIndex, offsetIndex + 3),
+    [plans, offsetIndex]
+  );
+
   return (
     <section className="pt-6 md:pt-8 pb-16 md:pb-24 bg-transparent" aria-labelledby="pricing-title">
       <div className="max-w-6xl mx-auto px-4 md:px-6 text-center relative">
-        {/* мягкий глоу сверху */}
         <div
           className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2
           h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl"
@@ -369,127 +388,181 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           </div>
         </LayoutGroup>
 
-        {/* ===== DESKTOP (>= md) ===== */}
-        <motion.div
-          variants={containerVar}
-          initial={reduce ? undefined : 'hidden'}
-          whileInView={reduce ? undefined : 'show'}
-          viewport={{ once: true, amount: 0.35 }}
-          className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left"
-        >
-          {plans.map((plan) => {
-            const isFree = plan.id === 'free';
-            const isLoading = loadingPlan === plan.id;
-            const isDisabled = (!isLoggedIn && !isFree) || isLoading || (isFree && isLoggedIn);
+        {/* ===== DESKTOP (>= md) — визуал 1:1, окно на 3 карточки с кнопками ===== */}
+        <div className="relative hidden md:block">
+          {/* Кнопка влево — вне блока */}
+          <button
+            type="button"
+            onClick={() => setOffsetIndex(0)}
+            className={`
+              absolute left-0 -translate-x-full top-1/2 -translate-y-1/2
+              h-9 w-9 rounded-full
+              bg-[#A855F7]/10 text-white/80 ring-2 ring-[#A855F7]/40 backdrop-blur
+              transition-opacity duration-200
+              ${offsetIndex === 1 ? 'opacity-40 hover:opacity-80' : 'opacity-0 pointer-events-none'}
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
+            `}
+            aria-label="Show Freemium"
+          >
+            <svg viewBox="0 0 24 24" className="mx-auto h-5 w-5" fill="none" aria-hidden>
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          </button>
 
-            return (
-              <motion.div
-                key={plan.id}
-                variants={itemVar}
-                className={`
-                  group relative rounded-3xl bg-white/5 backdrop-blur
-                  ring-1 ring-white/10 p-8
-                  shadow-[0_10px_40px_rgba(0,0,0,0.35)]
-                  transition-all duration-200
-                  hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(168,85,247,0.15)]
-                  ${plan.highlight ? 'ring-[#A855F7]/30' : ''}
-                `}
-                role="group"
-                aria-labelledby={`title-desktop-${plan.id}`}
-              >
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent rounded-t-3xl" />
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#EDE7F6] text-[#4C1D95] px-3 py-1 text-xs tracking-wide ring-1 ring-[#C4B5FD]">
-                    Most popular
-                  </div>
-                )}
+          {/* Кнопка вправо — вне блока */}
+          <button
+            type="button"
+            onClick={() => setOffsetIndex(1)}
+            className={`
+              absolute right-0 translate-x-full top-1/2 -translate-y-1/2
+              h-9 w-9 rounded-full
+              bg-[#A855F7]/10 text-white/80 ring-2 ring-[#A855F7]/40 backdrop-blur
+              transition-opacity duration-200
+              ${offsetIndex === 0 ? 'opacity-40 hover:opacity-80' : 'opacity-0 pointer-events-none'}
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
+            `}
+            aria-label="Show Business"
+          >
+            <svg viewBox="0 0 24 24" className="mx-auto h-5 w-5" fill="none" aria-hidden>
+              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          </button>
 
-                <h3
-                  id={`title-desktop-${plan.id}`}
-                  className="text-xl font-semibold text-white tracking-tight uppercase"
-                >
-                  {plan.name}
-                </h3>
+          {/* Аниматор лёгкого сдвига при смене окна */}
+          <motion.div
+            initial={{ x: 0, opacity: 1 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.35, ease: easing }}
+          >
+            <motion.div
+              variants={containerVar}
+              initial={false}
+              whileInView={reduce ? undefined : 'show'}
+              viewport={{ once: true, amount: 0.35 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left"
+            >
+              {desktopVisiblePlans.map((plan) => {
+                const isFree = plan.id === 'free';
+                const isLoading = loadingPlan === plan.id;
+                const isDisabled = (!isLoggedIn && !isFree) || isLoading || (isFree && isLoggedIn);
 
-                <div className="mt-1 text-3xl font-extrabold">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-[#C4B5FD]">
-                    {plan.price}
-                  </span>{' '}
-                  {!isFree && (
-                    <span className="align-middle text-sm font-medium text-white/70">/4 weeks</span>
-                  )}
-                </div>
-
-                <p className="mt-3 text-base leading-relaxed text-white/70">{plan.description}</p>
-
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
-                      <svg
-                        className="mt-1 h-5 w-5 flex-none"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        aria-hidden
-                      >
-                        <path d="M5 12l4 4 10-10" stroke={ACCENT} strokeWidth="2" />
-                      </svg>
-                      <span className="text-white/80">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA — с замком при disabled */}
-                <button
-                  onClick={
-                    isFree
-                      ? isLoggedIn
-                        ? undefined
-                        : plan.action
-                      : isLoggedIn
-                        ? () => handleCheckout(plan.id)
-                        : undefined
-                  }
-                  className="
-                    mt-8 w-full rounded-full px-6 py-4
-                    text-white
-                    ring-1 ring-[#A855F7]/30
-                    backdrop-blur
-                    transition-[transform,box-shadow,background] duration-200
-                    hover:-translate-y-[1px]
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
-                    disabled:opacity-60 disabled:cursor-not-allowed
-                  "
-                  style={{
-                    backgroundImage: `
-                      radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
-                      linear-gradient(180deg, rgba(168,85,247,0.25), rgba(168,85,247,0.18))
-                    `,
-                    boxShadow: '0 12px 36px rgba(168,85,247,0.25)',
-                  }}
-                  disabled={
-                    (!isLoggedIn && !isFree) || loadingPlan === plan.id || (isFree && isLoggedIn)
-                  }
-                  title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
-                  aria-describedby={`title-desktop-${plan.id}`}
-                >
-                  <span className="inline-flex items-center justify-center gap-2">
-                    {loadingPlan === plan.id
-                      ? 'Redirecting...'
-                      : isFree
-                        ? 'Try Demo'
-                        : 'Go Executive'}
-                    {!isLoggedIn && !isFree && loadingPlan !== plan.id && (
-                      <LockIcon className="opacity-85" />
+                return (
+                  <motion.div
+                    key={plan.id}
+                    variants={itemVar}
+                    initial={false}
+                    className={`
+                      group relative rounded-3xl bg-white/5 backdrop-blur
+                      ring-1 ring-white/10 p-8
+                      shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+                      transition-all duration-200
+                      hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(168,85,247,0.15)]
+                      ${plan.highlight ? 'ring-[#A855F7]/30' : ''}
+                    `}
+                    role="group"
+                    aria-labelledby={`title-desktop-${plan.id}`}
+                  >
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent rounded-t-3xl" />
+                    {plan.highlight && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#EDE7F6] text-[#4C1D95] px-3 py-1 text-xs tracking-wide ring-1 ring-[#C4B5FD]">
+                        Most popular
+                      </div>
                     )}
-                    {isFree && isLoggedIn && loadingPlan !== plan.id && (
-                      <LockIcon className="opacity-85" />
-                    )}
-                  </span>
-                </button>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+
+                    <h3
+                      id={`title-desktop-${plan.id}`}
+                      className="text-xl font-semibold text-white tracking-tight uppercase"
+                    >
+                      {plan.name}
+                    </h3>
+
+                    <div className="mt-1 text-3xl font-extrabold">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-[#C4B5FD]">
+                        {plan.price}
+                      </span>{' '}
+                      {!isFree && (
+                        <span className="align-middle text-sm font-medium text-white/70">
+                          /4 weeks
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-3 text-base leading-relaxed text-white/70">
+                      {plan.description}
+                    </p>
+
+                    <ul className="mt-6 space-y-3">
+                      {plan.features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-3">
+                          <svg
+                            className="mt-1 h-5 w-5 flex-none"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden
+                          >
+                            <path d="M5 12l4 4 10-10" stroke={ACCENT} strokeWidth="2" />
+                          </svg>
+                          <span className="text-white/80">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* CTA — с замком при disabled */}
+                    <button
+                      onClick={
+                        isFree
+                          ? isLoggedIn
+                            ? undefined
+                            : plan.action
+                          : isLoggedIn
+                            ? () => handleCheckout(plan.id)
+                            : undefined
+                      }
+                      className="
+                        mt-8 w-full rounded-full px-6 py-4
+                        text-white
+                        ring-1 ring-[#A855F7]/30
+                        backdrop-blur
+                        transition-[transform,box-shadow,background] duration-200
+                        hover:-translate-y-[1px]
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
+                        disabled:opacity-60 disabled:cursor-not-allowed
+                      "
+                      style={{
+                        backgroundImage: `
+                          radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
+                          linear-gradient(180deg, rgba(168,85,247,0.25), rgba(168,85,247,0.18))
+                        `,
+                        boxShadow: '0 12px 36px rgba(168,85,247,0.25)',
+                      }}
+                      disabled={
+                        (!isLoggedIn && !isFree) ||
+                        loadingPlan === plan.id ||
+                        (isFree && isLoggedIn)
+                      }
+                      title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
+                      aria-describedby={`title-desktop-${plan.id}`}
+                    >
+                      <span className="inline-flex items-center justify-center gap-2">
+                        {loadingPlan === plan.id
+                          ? 'Redirecting...'
+                          : isFree
+                            ? 'Try Demo'
+                            : 'Go Executive'}
+                        {!isLoggedIn && !isFree && loadingPlan !== plan.id && (
+                          <LockIcon className="opacity-85" />
+                        )}
+                        {isFree && isLoggedIn && loadingPlan !== plan.id && (
+                          <LockIcon className="opacity-85" />
+                        )}
+                      </span>
+                    </button>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </motion.div>
+        </div>
 
         <p className="text-[13px] leading-6 text-white/75 mt-6 sm:mt-8 max-w-3xl mx-auto text-center px-2">
           For individual professional advice, training, or API integration, please contact us
