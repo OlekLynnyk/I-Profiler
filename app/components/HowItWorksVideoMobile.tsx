@@ -3,8 +3,8 @@ import Image from 'next/image';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 type Props = {
-  src?: string; // опционально переопределяем URL
-  poster?: string; // постер
+  src?: string; // можно переопределить S3/CloudFront URL
+  poster?: string;
   className?: string;
 };
 
@@ -22,7 +22,7 @@ export default function HowItWorksVideoMobile({
   const [showPoster, setShowPoster] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Политики производительности (без изменений)
+  // Политики производительности (как было)
   const reduceMotion = useMemo(() => {
     if (typeof window !== 'undefined') {
       return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
@@ -38,7 +38,22 @@ export default function HowItWorksVideoMobile({
     typeof (navigator as any)?.hardwareConcurrency === 'number' &&
     (navigator as any).hardwareConcurrency < 4;
 
-  // Авто play/pause по видимости (оставляем)
+  // Фикс высоты экрана: var(--vh) как fallback для старых браузеров, 100svh — стабильная высота без прыжков
+  useEffect(() => {
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    setVH();
+    window.addEventListener('resize', setVH);
+    window.addEventListener('orientationchange', setVH);
+    return () => {
+      window.removeEventListener('resize', setVH);
+      window.removeEventListener('orientationchange', setVH);
+    };
+  }, []);
+
+  // Авто play/pause по видимости (как было)
   useEffect(() => {
     const vid = videoRef.current;
     const el = sectionRef.current;
@@ -47,11 +62,8 @@ export default function HowItWorksVideoMobile({
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
-          if (e.isIntersecting) {
-            vid.play().catch(() => {});
-          } else {
-            vid.pause();
-          }
+          if (e.isIntersecting) vid.play().catch(() => {});
+          else vid.pause();
         });
       },
       { threshold: 0.35 }
@@ -61,12 +73,12 @@ export default function HowItWorksVideoMobile({
     return () => io.disconnect();
   }, [showPoster]);
 
-  // Постер при экономии/редьюс/низком CPU (оставляем)
+  // Триггерим постер при экономии/редьюс-моушен/низком CPU (как было)
   useEffect(() => {
     if (reduceMotion || saveData || lowCPU) setShowPoster(true);
   }, [reduceMotion, saveData, lowCPU]);
 
-  // Состояния play/pause (оставляем)
+  // Состояние play/pause (как было)
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -90,21 +102,27 @@ export default function HowItWorksVideoMobile({
   return (
     <section
       ref={sectionRef}
-      className={`md:hidden w-full ${className}`}
+      className={`md:hidden relative w-full overflow-hidden bg-black ${className}`}
+      style={{
+        // Ровно экран: стабильный 100svh (без прыжков) + fallback через --vh для старых браузеров
+        height: 'calc(var(--vh, 100svh) * 100)',
+        overscrollBehaviorY: 'contain',
+      }}
       aria-label="How it works — intro video"
     >
-      {/* ВИДЕО: рамка, без обрезания, фикс. пропорции */}
-      <div className="relative aspect-video rounded-2xl overflow-hidden bg-black/90 outline outline-1 outline-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.45)]">
+      {/* ВИДЕО на весь экран, без обрезки (letterbox/pillarbox) */}
+      <div className="absolute inset-0 grid place-items-center">
         {!showPoster ? (
           <video
             ref={videoRef}
-            className="w-full h-full object-contain"
+            className="h-full w-full object-contain"
             muted
             playsInline
             loop
             preload="metadata"
             autoPlay
             onClick={togglePlay}
+            poster={poster}
             crossOrigin="anonymous"
           >
             <source src={src} type="video/mp4" />
@@ -112,46 +130,49 @@ export default function HowItWorksVideoMobile({
         ) : (
           <Image src={poster} alt="Preview of product flow" fill className="object-contain" />
         )}
-
-        {/* тонкая внутренняя виньетка по краям — мягкий кант, не «жёсткая линия» */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(120% 120% at 50% 50%, rgba(0,0,0,0) 66%, rgba(0,0,0,0.18) 100%)',
-          }}
-        />
-
-        {/* Плей/Пауза — внутри рамки, не залезает на кант */}
-        {!showPoster && (
-          <button
-            type="button"
-            onClick={togglePlay}
-            aria-label={isPaused ? 'Play video' : 'Pause video'}
-            aria-pressed={!isPaused}
-            className="absolute bottom-3 right-3 z-20 h-10 w-10 rounded-full backdrop-blur-md flex items-center justify-center transition-opacity duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 opacity-85 ring-1 ring-white/10"
-            style={{
-              background:
-                'radial-gradient(120% 120% at 30% 30%, rgba(168,85,247,0.22), rgba(168,85,247,0.08))',
-              boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 0 1px rgba(255,255,255,0.06), 0 10px 28px rgba(0,0,0,0.45)',
-            }}
-          >
-            {isPaused ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-              </svg>
-            )}
-          </button>
-        )}
       </div>
 
-      {/* Вертикальный ритм секции вокруг видео — задайте снаружи: mt-5/mt-6 и т.п. */}
+      {/* Верхний scrim — мягкая стыковка со статусбаром */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-16"
+        style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.44), rgba(0,0,0,0))' }}
+      />
+
+      {/* Нижний seam — плавный переход к следующему блоку (не влияет на layout) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(10,10,12,0.60) 64%, rgba(10,10,12,0.92) 100%)',
+        }}
+      />
+
+      {/* Play/Pause — как было */}
+      {!showPoster && (
+        <button
+          type="button"
+          onClick={togglePlay}
+          aria-label={isPaused ? 'Play video' : 'Pause video'}
+          aria-pressed={!isPaused}
+          className="absolute bottom-4 right-5 z-[1] h-10 w-10 rounded-full backdrop-blur-md flex items-center justify-center ring-1 ring-white/10 text-white/90"
+          style={{
+            background:
+              'radial-gradient(120% 120% at 30% 30%, rgba(168,85,247,0.22), rgba(168,85,247,0.08))',
+          }}
+        >
+          {isPaused ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+            </svg>
+          )}
+        </button>
+      )}
     </section>
   );
 }
