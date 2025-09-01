@@ -110,7 +110,7 @@ input, textarea, select, button, label {
 @supports (-webkit-touch-callout: none) {
   .ios-no-zoom {
     font-size: 16px;          /* iOS не зумит при фокусе */
-    transform: scale(0.875);  /* 16 * 0.875 = 14px визуально */
+    transform: scale(0.9375); /* 15px */
     transform-origin: left center;
   }
 }
