@@ -189,7 +189,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       ? 'ring-1 ring-[#A855F7]/40 shadow-[0_12px_40px_rgba(168,85,247,0.28)]'
       : '';
 
-    const layoutId = `plan-${plan.id}`;
+    const layoutId = `plan-${plan.id}-${size}`;
 
     if (size === 'small') {
       return (

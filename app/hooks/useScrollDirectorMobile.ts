@@ -8,15 +8,6 @@ type Opts = {
   enabled?: boolean;
 };
 
-/**
- * Mobile scroll director:
- * - swipe down in Hero => snap to Video (full-screen)
- * - swipe up at top edge of Video => snap back to Hero
- * - elsewhere => normal scroll
- * - repeats always
- *
- * API: { active, detached, snappedToVideo }
- */
 export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: Opts) {
   const [detached, setDetached] = useState(false);
   const [snappedToVideo, setSnappedToVideo] = useState(false);
@@ -52,12 +43,24 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
   // cubic-bezier(0.22,1,0.36,1) аппроксимация через easeOutCubic — мягко и “люкс”
   const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
+  // Динамическая верхняя зона для iOS/мобильных браузеров (адрес-бар/toolbar)
+  const getTopSnapZone = () => {
+    if (typeof window === 'undefined') return 96;
+    const vh = window.innerHeight || 0;
+    // 12% вьюпорта, но не меньше 64 и не больше 160
+    return Math.max(64, Math.min(160, Math.round(vh * 0.12)));
+  };
+
   // rAF-аниматор с блокировкой нативного скролла во время автоскролла
   const animateScrollTo = (targetY: number, distanceHint = 0) => {
     // длительность от дистанции
     const dist = Math.abs(targetY - window.scrollY);
     const base = distanceHint || dist;
-    const duration = Math.max(360, Math.min(640, base * 0.6)); // 0.6ms/px, зажато в 360..640
+    // В 2 раза медленнее: 1.2ms/px, зажато в 720..1280
+    const DURATION_PER_PX = 1.2;
+    const MIN_DUR = 720;
+    const MAX_DUR = 1280;
+    const duration = Math.max(MIN_DUR, Math.min(MAX_DUR, base * DURATION_PER_PX));
 
     // если reduce/saveData — мгновенно, но всё равно “снэпаем”
     if (reduceMotion || saveData) {
@@ -81,6 +84,12 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
     // важное: нужен non-passive, иначе preventDefault не сработает
     window.addEventListener('touchmove', preventWhileAnimating, { passive: false });
 
+    const cleanup = () => {
+      isAnimating.current = false;
+      window.removeEventListener('touchmove', preventWhileAnimating);
+      animCancel.current = null;
+    };
+
     const step = (now: number) => {
       const t = Math.min(1, (now - startT) / duration);
       const y = startY + total * ease(t);
@@ -88,6 +97,8 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       if (t < 1) {
         raf = requestAnimationFrame(step);
       } else {
+        // Финальная фиксация позиции после анимации (адрес-бар мог сдвинуть layout)
+        window.scrollTo(0, Math.round(targetY));
         cleanup();
       }
     };
@@ -95,12 +106,6 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
     const cancelOnUser = () => {
       if (raf) cancelAnimationFrame(raf);
       cleanup();
-    };
-
-    const cleanup = () => {
-      isAnimating.current = false;
-      window.removeEventListener('touchmove', preventWhileAnimating);
-      animCancel.current = null;
     };
 
     raf = requestAnimationFrame(step);
@@ -164,7 +169,6 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
     // Пороговые параметры (минимальные для “сразу среагировать”)
     const DOWN_INTENT_PX = 8; // из Hero вниз
     const UP_INTENT_PX = 8; // из Video вверх (в верхней зоне)
-    const TOP_SNAP_ZONE = 48; // верхняя зона внутри Video
     const MIN_REARM_MS = 260; // антидребезг
 
     const onTouchStart = (e: TouchEvent) => {
@@ -211,7 +215,7 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
 
       // Позиции
       const videoTop = getTop(videoEl);
-      const atVideoTopZone = Math.abs(window.scrollY - videoTop) <= TOP_SNAP_ZONE;
+      const atVideoTopZone = Math.abs(window.scrollY - videoTop) <= getTopSnapZone();
 
       // Логика снапов (минимальные пороги — “сразу сработать”)
       if (verticalDominant) {
@@ -227,7 +231,7 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
         }
 
         // в Video, в верхней зоне, жест вверх → к Hero
-        if (inVideoZone() && atVideoTopZone && d < -UP_INTENT_PX && snappedToVideo) {
+        if (inVideoZone() && atVideoTopZone && d < -UP_INTENT_PX) {
           const heroTop = getTop(heroEl);
           lastAutoAt.current = now;
           const distance = Math.abs(window.scrollY - heroTop);
