@@ -92,7 +92,7 @@ export default function HomePage() {
                 style={{ letterSpacing: '-0.02em' }}
               >
                 <motion.p
-                  className="text-[#F7F7F7] text-[clamp(4.1rem,9vw,6rem)]"
+                  className="text-[#F7F7F7] text-[clamp(3.9rem,9vw,6rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
                   viewport={{ once: true, amount: 0.6 }}
@@ -103,7 +103,7 @@ export default function HomePage() {
                 </motion.p>
 
                 <motion.p
-                  className="text-[#F7F7F7] text-[clamp(3.5rem,8vw,5.2rem)]"
+                  className="text-[#F7F7F7] text-[clamp(3.3rem,8vw,5.2rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
                   viewport={{ once: true, amount: 0.6 }}
@@ -114,7 +114,7 @@ export default function HomePage() {
                 </motion.p>
 
                 <motion.p
-                  className="text-[#F7F7F7] text-[clamp(3.3rem,6vw,4rem)]"
+                  className="text-[#F7F7F7] text-[clamp(3.1rem,6vw,4rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
                   viewport={{ once: true, amount: 0.6 }}
@@ -317,7 +317,7 @@ export default function HomePage() {
         <HowItWorks />
       </section>
 
-      <section id="pricing" className="mt-0 relative z-10">
+      <section id="pricing" className="mt-10 relative z-10">
         <Pricing onDemoClick={() => setIsAuthModalOpen(true)} />
       </section>
 

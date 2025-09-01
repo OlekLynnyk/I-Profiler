@@ -203,7 +203,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           className={`
             ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
             w-full overflow-hidden text-left
-            px-5 py-4 min-h-[90px] flex items-start justify-between gap-3
+            px-4 py-2 min-h-[72px] flex items-start justify-between gap-3
             transition-[transform,box-shadow] duration-200
             focus:outline-none focus-visible:ring-2 focus-visible:ring-[${ACCENT}]/60
           `}
@@ -211,7 +211,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
         >
           <div className="flex-1">
             <h3 className="text-[13px] font-semibold uppercase tracking-[0.12em]">{plan.name}</h3>
-            <p className="mt-1 text-[22px] font-extrabold">
+            <p className="mt-0 text-[20px] font-extrabold">
               {plan.price}
               {!isFree && (
                 <span className="text-[11px] align-baseline text-[#4B5563]"> /month</span>
@@ -219,7 +219,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
             </p>
             <p
               id={`desc-${plan.id}`}
-              className="mt-1 text-[#374151] text-[13px] leading-snug line-clamp-2 min-h-[36px]"
+              className="mt-0.5 text-[#374151] text-[12px] leading-tight line-clamp-1 min-h-0"
             >
               {plan.description}
             </p>
