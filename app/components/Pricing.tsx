@@ -203,7 +203,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           className={`
             ${baseCream} ${radius} ${ringBase} ${luxShadow} ${highlightGlow}
             w-full overflow-hidden text-left
-            px-5 py-4 min-h-[100px] flex items-start justify-between gap-3
+            px-5 py-4 min-h-[90px] flex items-start justify-between gap-3
             transition-[transform,box-shadow] duration-200
             focus:outline-none focus-visible:ring-2 focus-visible:ring-[${ACCENT}]/60
           `}
@@ -368,7 +368,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
 
         {/* ===== MOBILE (< md) ===== */}
         <LayoutGroup>
-          <div className="md:hidden space-y-5">
+          <div className="md:hidden space-y-4">
             {/* КРУПНАЯ КАРТОЧКА — активный план */}
             <motion.div
               key={activePlan.id}
@@ -388,7 +388,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               variants={containerVar}
               initial={false}
               animate="show"
-              className="grid grid-cols-1 gap-5"
+              className="grid grid-cols-1 gap-4"
             >
               {smallPlans.map((p) => (
                 <motion.div key={p.id} layout variants={itemVar} initial={false} animate="show">

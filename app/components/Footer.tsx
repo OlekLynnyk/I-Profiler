@@ -86,8 +86,8 @@ export default function Footer() {
         </div>
 
         {/* Юридический блок — узкий и с отдельной строкой для ссылок */}
-        <div className="w-full">
-          <div className="max-w-[46ch] text-left">
+        <div className="w-full px-4">
+          <div className="max-w-[36ch] text-left">
             <p className="pt-2 text-[13px] leading-relaxed text-white/70">
               © 2025 H1NTED. Proprietary technology protected by IP and trade-secret laws.
             </p>
