@@ -16,7 +16,7 @@ const STEPS: Step[] = [
     id: 1,
     title: 'Step 1 — Present a Clue',
     tagline: 'Their words …',
-    desc: 'A single image of an accessory — enough to begin; No bio.',
+    desc: 'A single image of an accessory — enough to begin;<span class="hidden sm:inline"> No bio.</span>',
     start: 0,
     end: 3,
   },
@@ -251,10 +251,14 @@ export default function HowItWorks() {
 
                   {/* одна строка, не переносим */}
                   <div className="text-[15px] leading-[1.12] font-semibold tracking-tight whitespace-nowrap text-white">
-                    — {s.title}
+                    <span className="hidden sm:inline">— </span>
+                    {s.title}
                   </div>
 
-                  <p className="text-[14px] leading-[1.45] text-white/80">{s.desc}</p>
+                  <p
+                    className="text-[14px] leading-[1.45] text-white/80"
+                    dangerouslySetInnerHTML={{ __html: s.desc }}
+                  />
                 </li>
               ))}
             </ol>

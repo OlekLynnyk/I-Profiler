@@ -92,7 +92,7 @@ export default function HomePage() {
                 style={{ letterSpacing: '-0.02em' }}
               >
                 <motion.p
-                  className="text-[#F7F7F7] text-[clamp(4.3rem,10vw,6.5rem)]"
+                  className="text-[#F7F7F7] text-[clamp(4.1rem,9vw,6rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
                   viewport={{ once: true, amount: 0.6 }}
@@ -103,7 +103,7 @@ export default function HomePage() {
                 </motion.p>
 
                 <motion.p
-                  className="text-[#F7F7F7] text-[clamp(3.8rem,9vw,5.5rem)]"
+                  className="text-[#F7F7F7] text-[clamp(3.5rem,8vw,5.2rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
                   viewport={{ once: true, amount: 0.6 }}
@@ -114,7 +114,7 @@ export default function HomePage() {
                 </motion.p>
 
                 <motion.p
-                  className="text-[#F7F7F7] text-[clamp(3.6rem,8vw,5rem)]"
+                  className="text-[#F7F7F7] text-[clamp(3.3rem,6vw,4rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
                   viewport={{ once: true, amount: 0.6 }}
