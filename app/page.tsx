@@ -114,7 +114,7 @@ export default function HomePage() {
                 </motion.p>
 
                 <motion.p
-                  className="text-[#F7F7F7] text-[clamp(3rem,6vw,4rem)]"
+                  className="text-[#F7F7F7] text-[clamp(2.8rem,6vw,4rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
                   viewport={{ once: true, amount: 0.6 }}

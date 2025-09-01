@@ -13,7 +13,7 @@ const MOBILE_VIDEO = `${VIDEO_BASE}/how-it-works-mobile.MP4`;
 
 export default function HowItWorksVideoMobile({
   src = MOBILE_VIDEO,
-  poster = '/images/howitworks-poster.jpg',
+  poster = '',
   className = '',
 }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -142,10 +142,10 @@ export default function HowItWorksVideoMobile({
       {/* Нижний seam — плавный переход к следующему блоку (не влияет на layout) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-32"
         style={{
-          background:
-            'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(10,10,12,0.60) 64%, rgba(10,10,12,0.92) 100%)',
+          background: 'linear-gradient(180deg, rgba(0,0,0,0), rgb(10,10,12))',
+          transform: 'translateZ(0)',
         }}
       />
 
