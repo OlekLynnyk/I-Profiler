@@ -18,11 +18,10 @@ export function useInjectPrompt() {
     // 2) Диспатчим input, чтобы React поднял новое значение в state
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
-    // 3) Фокус и каретка в конец (UX)
-    textarea.focus({ preventScroll: true });
     const len = textarea.value.length;
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
     try {
-      textarea.setSelectionRange(len, len);
+      if (!isIOS) textarea.setSelectionRange(len, len);
     } catch {}
 
     // 4) Мгновенный и отложенный ресайз — закрывает баг "не расширяется до пробела"

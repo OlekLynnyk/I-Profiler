@@ -442,7 +442,7 @@ export default function WorkspacePage() {
               </div>
             </div>
 
-            <div className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe">
+            <div className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe keyboard-safe">
               <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl">
                 {attachedFiles.length > 0 && (
                   <div className="flex gap-2 mb-2 flex-wrap">
@@ -477,7 +477,7 @@ export default function WorkspacePage() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything"
                     disabled={isDragging}
-                    className="w-full px-4 py-2 text-sm placeholder:text-sm placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
+                    className="w-full px-4 py-2 text-base placeholder:text-base placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
                   />
 
                   <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
