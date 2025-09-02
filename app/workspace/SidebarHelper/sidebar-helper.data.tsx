@@ -38,20 +38,20 @@ export const getSidebarBoxes = (): BoxData[] => {
   ];
 
   const contents = [
-    'From what the appearance/accessories project about this person: what hidden drivers and collaboration risks should I expect, and how should I collaborate effectively?',
-    'From what the appearance/accessories project about this person: which negotiation approach is most likely to work? What words are better to use, and what Intrinsic motivation to address?',
-    'From what the appearance/accessories project about this person: what decision-making style is this person most likely to use unconsciously?',
-    'From what the appearance/accessories reveal about this person: what is the best role per the Nine Belbin Team Roles, and how should I use this person in the team to improve dynamics?',
-    `From what the appearance/accessories project about this person: which conflict-handling approach should I use, incl. best opening words + hidden command & motivation? Structure the answer to the user's question like the following:  a) Persona calibration → b) Predicted reactions & triggers → c) Suggest how to find out what is the root cause of a conflict  → d) suggest how to reframe in their language → e) Joint resolution protecting their values.`,
-    'From what the appearance/accessories project about this person and based on the most self-projected trait, the hidden command, and the basic unbalanced contradiction, is this person a good fit (game-theory rationale) for: [YOUR SITUATION]?',
-    'From what the appearance/accessories reveal about this person: which primary motivators should I address in this person, and list all relevant Intrinsic motivators?',
-    'From what the appearance/accessories project about this person: what are executive-interaction tendencies (potential C-level role fit) + hiring risks to investigate? The possible role the person is considered is [TYPE THE ROLE].',
-    'From what the appearance/accessories project about this person: what is the development potential (taking into account that people show who they want to be, but mostly they act from shadow traits)? Also: what approach, words, and motivators keep this person engaged/staying & developing?',
-    'From what the appearance/accessories project about this person: how to align likely drivers and Basic Unbalanced Contradiction with business goals/approaches? [TYPE IN BUSINESS GOAL / TASK / COMPANY CULTURE].',
-    'From what the appearance/accessories project about this person: how should I tailor a sales pitch — words, approach, style, motivators for a ‘Yes’, and the proof types that will convince this person?',
-    'From what the appearance/accessories project about this person: what signals indicate innovation/creativity level, and how should I engage it?',
-    'From what the appearance/accessories project about this person: what is the best meeting setting (formal/informal with details why), a tailored icebreaker, and the first line to transition into business; plus a cold-reaction fallback?',
-    'From what the appearance/accessories reveal about this person: calibrate feedback delivery for the person to protect their dignity, keep standards, etc. Suggest: Tone note, Best words to use, Opening line, Avoid-phrases, Follow-up check.',
+    'Based on the results of the analysis: what hidden drivers and collaboration risks should I expect, and how should I collaborate effectively?',
+    'Based on the results of the analysis: which negotiation approach is most likely to work? What words are better to use, and what Intrinsic motivation to address?',
+    'Based on the results of the analysis: what decision-making style is this person most likely to use unconsciously?',
+    'Based on the results of the analysis: what is the best role per the Nine Belbin Team Roles, and how should I use this person in the team to improve dynamics?',
+    `Based on the results of the analysis: which conflict-handling approach should I use, incl. best opening words + hidden command & motivation? Structure the answer to the user's question like the following:  a) Persona calibration → b) Predicted reactions & triggers → c) Suggest how to find out what is the root cause of a conflict  → d) suggest how to reframe in their language → e) Joint resolution protecting their values.`,
+    'Based on the results of the analysis: what is the hidden command, and the basic unbalanced contradiction, is this person a good fit (game-theory rationale) for: [YOUR SITUATION]?',
+    'Based on the results of the analysis: which primary motivators should I address in this person, and list all relevant Intrinsic motivators?',
+    'Based on the results of the analysis: what are executive-interaction tendencies (potential C-level role fit) + hiring risks to investigate? The possible role the person is considered is [TYPE THE ROLE].',
+    'Based on the results of the analysis: what is the development potential (taking into account that people show who they want to be, but mostly they act from shadow traits)? Also: what approach, words, and motivators keep this person engaged/staying & developing?',
+    'Based on the results of the analysis: how to align likely drivers and Basic Unbalanced Contradiction with business goals/approaches? [TYPE IN BUSINESS GOAL / TASK / COMPANY CULTURE].',
+    'Based on the results of the analysis: how should I tailor a sales pitch — words, approach, style, motivators for a ‘Yes’, and the proof types that will convince this person?',
+    'Based on the results of the analysis: what signals indicate innovation/creativity level, and how should I engage it?',
+    'Based on the results of the analysis: what is the best meeting setting (formal/informal with details why), a tailored icebreaker, and the first line to transition into business; plus a cold-reaction fallback?',
+    'Based on the results of the analysis: calibrate feedback delivery for the person to protect their dignity, keep standards, etc. Suggest: Tone note, Best words to use, Opening line, Avoid-phrases, Follow-up check.',
   ];
 
   const templates: Template[] = titles.map((title, i) => ({
