@@ -38,18 +38,22 @@ export default function HowItWorksVideoMobile({
     typeof (navigator as any)?.hardwareConcurrency === 'number' &&
     (navigator as any).hardwareConcurrency < 4;
 
-  // Фикс высоты экрана: var(--vh) как fallback для старых браузеров, 100svh — стабильная высота без прыжков
+  // ✅ Стабильная высота: задаём --vh только на маунте и при смене ориентации (без resize!)
   useEffect(() => {
-    const setVH = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    const setStableVH = () => {
+      const h = (window.visualViewport?.height ?? window.innerHeight) * 0.01;
+      document.documentElement.style.setProperty('--vh', `${h}px`);
     };
-    setVH();
-    window.addEventListener('resize', setVH);
-    window.addEventListener('orientationchange', setVH);
+    setStableVH();
+
+    const onOrientation = () => {
+      // даём вьюпорту устаканиться после поворота
+      requestAnimationFrame(() => setTimeout(setStableVH, 300));
+    };
+
+    window.addEventListener('orientationchange', onOrientation);
     return () => {
-      window.removeEventListener('resize', setVH);
-      window.removeEventListener('orientationchange', setVH);
+      window.removeEventListener('orientationchange', onOrientation);
     };
   }, []);
 
@@ -104,7 +108,7 @@ export default function HowItWorksVideoMobile({
       ref={sectionRef}
       className={`md:hidden relative w-full overflow-hidden bg-black ${className}`}
       style={{
-        // Ровно экран: стабильный 100svh (без прыжков) + fallback через --vh для старых браузеров
+        // ✅ стабильная высота без «прыжков»
         height: 'calc(var(--vh, 100svh) * 100)',
         overscrollBehaviorY: 'contain',
       }}

@@ -56,10 +56,12 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
     // длительность от дистанции
     const dist = Math.abs(targetY - window.scrollY);
     const base = distanceHint || dist;
-    // В 2 раза медленнее: 1.2ms/px, зажато в 720..1280
-    const DURATION_PER_PX = 1.2;
-    const MIN_DUR = 720;
-    const MAX_DUR = 1280;
+
+    // На 30% медленнее
+    const SPEED_SCALE = 1.3;
+    const DURATION_PER_PX = 1.2 * SPEED_SCALE;
+    const MIN_DUR = Math.round(720 * SPEED_SCALE);
+    const MAX_DUR = Math.round(1280 * SPEED_SCALE);
     const duration = Math.max(MIN_DUR, Math.min(MAX_DUR, base * DURATION_PER_PX));
 
     // если reduce/saveData — мгновенно, но всё равно “снэпаем”
@@ -187,12 +189,33 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       if (y == null || x == null || lastTouchY.current == null || lastTouchX.current == null)
         return;
 
+      // накопим смещение
       deltaY.current += lastTouchY.current - y; // + вниз, - вверх
       lastTouchY.current = y;
       lastTouchX.current = x;
 
-      // Во время активной анимации блокируем нативный скролл (подстраховка)
-      if (isAnimating.current) e.preventDefault();
+      // Вертикальное преобладание по отношению к стартовой точке
+      const dxSinceStart = startTouchX.current != null ? Math.abs(x - startTouchX.current) : 0;
+      const dySinceStart =
+        startTouchY.current != null ? Math.abs(y - startTouchY.current) : Math.abs(deltaY.current);
+      const verticalDominantNow = dySinceStart > dxSinceStart * 1.2;
+
+      // Зона блокировки нативного скролла: Hero ИЛИ верхняя зона Video
+      const videoTop = getTop(videoEl);
+      const atVideoTopZone = Math.abs(window.scrollY - videoTop) <= getTopSnapZone();
+      const lockZone = inHeroZone() || (inVideoZone() && atVideoTopZone);
+
+      // Во время активной анимации ВСЕГДА блокируем нативный скролл (подстраховка)
+      if (isAnimating.current) {
+        e.preventDefault();
+        return;
+      }
+
+      // Если мы в зоне Hero↔верх Video и жест вертикальный — блокируем нативный скролл,
+      // чтобы не было "двойного" скролла. Ниже Video — нативный скролл свободен.
+      if (lockZone && verticalDominantNow) {
+        e.preventDefault();
+      }
     };
 
     const onTouchEnd = () => {
@@ -219,10 +242,9 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
 
       // Логика снапов (минимальные пороги — “сразу сработать”)
       if (verticalDominant) {
-        // из Hero вниз → к Video (практически всегда при малейшем намерении вниз)
+        // из Hero вниз → к Video
         if (inHeroZone() && d > DOWN_INTENT_PX && !snappedToVideo) {
           lastAutoAt.current = now;
-          // дистанция для расчёта длительности
           const distance = Math.abs(videoTop - window.scrollY);
           requestAnimationFrame(() => animateScrollTo(videoTop, distance));
           setSnappedToVideo(true);

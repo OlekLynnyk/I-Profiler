@@ -443,7 +443,7 @@ export default function WorkspacePage() {
             </div>
 
             <div className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe keyboard-safe">
-              <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl">
+              <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl overflow-visible">
                 {attachedFiles.length > 0 && (
                   <div className="flex gap-2 mb-2 flex-wrap">
                     {attachedFiles.map((file, idx) => (
@@ -468,7 +468,7 @@ export default function WorkspacePage() {
                   </div>
                 )}
 
-                <div className="flex flex-col gap-0.5 overflow-hidden">
+                <div className="flex flex-col gap-0.5 overflow-visible">
                   <textarea
                     ref={textareaRef}
                     rows={1}
@@ -477,7 +477,7 @@ export default function WorkspacePage() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything"
                     disabled={isDragging}
-                    className="w-full px-4 py-2 text-sm placeholder:text-sm ios-no-zoom leading-5 min-h-[44px] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[192px]"
+                    className="w-full px-4 py-2 text-sm placeholder:text-sm ios-no-zoom leading-5 min-h-[36px] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[120px]"
                   />
 
                   <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
@@ -568,11 +568,12 @@ export default function WorkspacePage() {
                             exit={{ opacity: 0, y: 8 }}
                             transition={{ duration: 0.2 }}
                             className="
-                          absolute bottom-12 left-0 w-40 rounded-lg shadow-lg
-                          bg-[var(--card-bg)] text-[var(--text-primary)]
-                          border border-[var(--card-border)]
-                          z-50
-                        "
+                              absolute bottom-full mb-2 left-0 z-50
+                              w-48 max-w-[calc(100vw-2rem)] rounded-xl shadow-xl
+                              bg-[var(--card-bg)] text-[var(--text-primary)]
+                              border border-[var(--card-border)]
+                              overflow-auto max-h-[50vh] text-sm
+                            "
                           >
                             <button
                               className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition ${
