@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClientForApi } from '@/lib/supabase/server';
-import { stripe } from '@/lib/stripe';
+import { stripe, formatAmount, DEFAULT_CURRENCY } from '@/lib/stripe';
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
@@ -37,13 +37,16 @@ export async function POST(req: NextRequest) {
       limit: 10,
     });
 
-    const result = invoices.data.map((invoice) => ({
-      id: invoice.id,
-      amount: (invoice.amount_paid / 100).toFixed(2),
-      currency: invoice.currency.toUpperCase(),
-      date: new Date(invoice.created * 1000).toISOString().split('T')[0],
-      invoiceUrl: invoice.invoice_pdf,
-    }));
+    const result = invoices.data.map((invoice) => {
+      const currency = (invoice.currency || DEFAULT_CURRENCY).toLowerCase();
+      return {
+        id: invoice.id,
+        amount: formatAmount(invoice.amount_paid, currency),
+        currency: currency.toUpperCase(),
+        date: new Date(invoice.created * 1000).toISOString().split('T')[0],
+        invoiceUrl: invoice.invoice_pdf,
+      };
+    });
 
     return NextResponse.json({ invoices: result });
   } catch (error) {

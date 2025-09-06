@@ -16,7 +16,7 @@ const STEPS: Step[] = [
     id: 1,
     title: 'Step 1 — Present a Clue',
     tagline: 'Their words …',
-    desc: 'A single image of an accessory — enough to begin;<span class="hidden sm:inline"> No bio.</span>',
+    desc: 'A single image of an accessory — enough to begin; No bio.',
     start: 0,
     end: 3,
   },

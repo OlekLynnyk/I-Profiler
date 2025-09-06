@@ -208,8 +208,8 @@ export default function TermsPage() {
           8) Subscription and Payments
         </h2>
         <p className="text-white/80">
-          We offer several subscription tiers (Free, Smarter, Business) as described on our Pricing
-          page. Subscriptions renew automatically every 4 weeks via Stripe.
+          We offer several subscription tiers (Free, Select, Smarter, Business) as described on our
+          Pricing page. Subscriptions renew automatically per your Stripe billing period.
         </p>
         <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-white/80">
           <li>You may cancel at any time; access remains until the end of the current period.</li>

@@ -25,7 +25,7 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
       aria-label={`Toggle ${box.title}`}
       onClick={() => !disabled && onToggle()}
       onKeyDown={handleKeyDown}
-      title={disabled ? 'Available on Smarter & Business plans' : ''}
+      title={disabled ? 'Upgrade required to access this feature' : ''} // 👈 нейтрально и без хардкода планов
       className={`
         transition-all duration-300 mb-4 rounded-xl border
         ${

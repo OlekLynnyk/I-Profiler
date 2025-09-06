@@ -1,7 +1,7 @@
 // lib/subscription.ts
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import {
   PackageType,
   isValidPackageType,
@@ -13,10 +13,6 @@ import {
 import { Database } from '@/types/supabase';
 import { updateUserLimits } from '@/lib/updateUserLimits';
 
-/**
- * Проверяет наличие активной подписки.
- * Работает в любом окружении, требует SupabaseClient.
- */
 export async function hasActiveSubscription(supabase: SupabaseClient): Promise<boolean> {
   const {
     data: { user },
@@ -61,19 +57,17 @@ export async function getPackageFromServer(supabase: SupabaseClient): Promise<Pa
   return data.package_type;
 }
 
-/* -------------------------------------------------------------------------- */
-/*                     Централизованный контракт и сервис                     */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Приводит Stripe.Subscription к внутреннему контракту.
- * Если priceId неизвестен, даты отсутствуют или план невалиден — возвращает null.
- */
 export function mapStripeToPlan(subscription: Stripe.Subscription): SubscriptionPlanPayload | null {
   const item = subscription.items?.data?.[0];
   const priceId = item?.price?.id;
-  const periodStart = item?.current_period_start;
-  const periodEnd = item?.current_period_end;
+
+  const s = subscription as unknown as {
+    current_period_start?: number | null;
+    current_period_end?: number | null;
+  };
+
+  const periodStart = s.current_period_start ?? null;
+  const periodEnd = s.current_period_end ?? null;
 
   const plan = priceId ? PRICE_TO_PACKAGE[priceId] : undefined;
 
@@ -90,10 +84,6 @@ export function mapStripeToPlan(subscription: Stripe.Subscription): Subscription
   };
 }
 
-/**
- * Единственная точка апдейта подписки пользователя и лимитов.
- * Правило: если подписка не 'active' (или невалидный маппинг) — безопасный фоллбек в Freemium.
- */
 export async function syncSubscriptionWithSupabase(
   supabase: SupabaseClient<Database>,
   userId: string,

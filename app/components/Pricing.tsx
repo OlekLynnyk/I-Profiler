@@ -3,16 +3,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { motion, useReducedMotion, type Easing, LayoutGroup } from 'framer-motion';
+import { PACKAGE_TO_PRICE, PACKAGE_LIMITS } from '@/types/plan';
 
 const supabase = createPagesBrowserClient();
 const easing: Easing = [0.22, 1, 0.36, 1];
 const ACCENT = '#A855F7';
 
-// Stripe IDs
-const SMARTER_ID = 'price_1RQYE4AGnqjZyhfAY8kOMZwm';
-const BUSINESS_ID = 'price_1RQYEXAGnqjZyhfAryCzNkqV';
-// TODO: replace with real Stripe price for Select
-const SELECT_ID = 'price_SELECT_PLACEHOLDER';
+// Stripe IDs (centralized)
+const SMARTER_ID = PACKAGE_TO_PRICE.Smarter!;
+const BUSINESS_ID = PACKAGE_TO_PRICE.Business!;
+const SELECT_ID = PACKAGE_TO_PRICE.Select!;
 
 type Plan = {
   id: string;
@@ -70,7 +70,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       price: '€0',
       description: 'Intro to Advanced AI Discernment',
       features: [
-        '3 AI analyses',
+        `${PACKAGE_LIMITS.Freemium.requestsPerMonth} AI analyses`,
         'Deep profile insights',
         'Templates for structured work',
         'Standard support',
@@ -85,7 +85,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       description: 'For Individual Decision-Makers',
       features: [
         'Everything in Freemium',
-        '15 AI analyses',
+        `${PACKAGE_LIMITS.Select.requestsPerMonth} AI analyses`,
         'Enhanced Discernment Tools',
         'Private workspace (single seat)',
       ],
@@ -98,7 +98,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       description: 'For Teams That Move Smarter',
       features: [
         'Everything in Select',
-        '75 AI analyses',
+        `${PACKAGE_LIMITS.Smarter.requestsPerMonth} AI analyses`,
         'Professional library',
         'Onboarding session on request',
       ],
@@ -111,7 +111,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
       description: 'Enterprise Access',
       features: [
         'Everything in Smarter',
-        '200 AI analyses',
+        `${PACKAGE_LIMITS.Business.requestsPerMonth} AI analyses`,
         'Premium support',
         'Training session on request',
       ],
@@ -325,13 +325,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               ? 'Redirecting...'
               : plan.id === 'free'
                 ? 'Start Free'
-                : plan.id === SELECT_ID
-                  ? 'Choose Select'
-                  : plan.id === SMARTER_ID
-                    ? 'Choose Smarter'
-                    : plan.id === BUSINESS_ID
-                      ? 'Choose Business'
-                      : 'Choose Plan'}
+                : `Choose ${plan.name}`}
 
             {((!isLoggedIn && !isFree) || (isFree && isLoggedIn)) && loadingPlan !== plan.id && (
               <LockIcon className="opacity-80" />
@@ -561,13 +555,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                           ? 'Redirecting...'
                           : plan.id === 'free'
                             ? 'Start Free'
-                            : plan.id === SELECT_ID
-                              ? 'Choose Select'
-                              : plan.id === SMARTER_ID
-                                ? 'Choose Smarter'
-                                : plan.id === BUSINESS_ID
-                                  ? 'Choose Business'
-                                  : 'Choose Plan'}
+                            : `Choose ${plan.name}`}
 
                         {!isLoggedIn && !isFree && loadingPlan !== plan.id && (
                           <LockIcon className="opacity-85" />

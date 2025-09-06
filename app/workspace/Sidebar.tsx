@@ -9,6 +9,7 @@ import { useUserPlan } from '../hooks/useUserPlan';
 import { usePlanUsage, PlanUsageProvider } from '../workspace/context/PlanUsageContext';
 import { useStripeCheckout } from '../hooks/useStripeCheckout';
 import { useSidebar } from '@/app/context/SidebarContext';
+import { PACKAGE_TO_PRICE } from '@/types/plan';
 
 // Типы
 type SidebarProps = {
@@ -68,13 +69,19 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
           >
             <MonthlyUsage refreshToken={refreshToken} />
             <button
-              onClick={() => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm')}
+              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
               className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
             >
               Upgrade to Smarter
             </button>
             <button
-              onClick={() => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV')}
+              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
+              className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
+            >
+              Upgrade to Select
+            </button>
+            <button
+              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
               className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl w-full"
             >
               Upgrade to Business

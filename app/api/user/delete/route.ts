@@ -49,6 +49,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to delete profile' }, { status: 500 });
   }
 
+  try {
+    const { error: invalidateError } = await (
+      supabaseAdminClient as any
+    ).auth.admin.invalidateRefreshTokens(user.id);
+    if (invalidateError) {
+      console.warn('⚠️ Failed to invalidate refresh tokens:', invalidateError);
+    }
+  } catch (e) {
+    console.warn('⚠️ Exception while invalidating refresh tokens:', e);
+  }
+
   // ✅ деактивируем подписку пользователя
   const { error: subscriptionError } = await supabaseAdminClient
     .from('user_subscription')

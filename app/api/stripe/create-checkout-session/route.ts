@@ -1,32 +1,16 @@
+// app/api/stripe/create-checkout-session/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClientForApi } from '@/lib/supabase/server';
-import Stripe from 'stripe';
-import type { Database } from '@/types/supabase';
+import { stripe } from '@/lib/stripe';
 import { env } from '@/env.server';
 import { logUserAction } from '@/lib/logger';
 
-const stripeSecretKey = env.STRIPE_SECRET_KEY;
 const appUrl = env.NEXT_PUBLIC_APP_URL;
-
-if (!stripeSecretKey) {
-  throw new Error('STRIPE_SECRET_KEY is not defined');
-}
-
-if (!appUrl) {
-  throw new Error('NEXT_PUBLIC_APP_URL is not defined');
-}
-
-const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-06-30.basil',
-  typescript: true,
-});
+if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not defined');
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
-
-  if (!token) {
-    return NextResponse.json({ error: 'Missing access token' }, { status: 401 });
-  }
+  if (!token) return NextResponse.json({ error: 'Missing access token' }, { status: 401 });
 
   const supabase = await createServerClientForApi();
   const {
@@ -34,20 +18,18 @@ export async function POST(req: NextRequest) {
     error: authError,
   } = await supabase.auth.getUser(token);
 
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { priceId } = await req.json().catch(() => ({}));
-  console.log('🧾 Received priceId:', priceId); // 👈 log 1
-
+  console.log('🧾 Received priceId:', priceId);
   if (!priceId || typeof priceId !== 'string') {
     return NextResponse.json({ error: 'Missing or invalid priceId' }, { status: 400 });
   }
 
+  // 1) читаем статус и customer_id
   const { data: subData, error: subCheckError } = await supabase
     .from('user_subscription')
-    .select('status, plan')
+    .select('status, plan, stripe_customer_id, stripe_subscription_id, stripe_price_id')
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -59,28 +41,15 @@ export async function POST(req: NextRequest) {
   const isFreemium = subData?.plan === 'Freemium';
   const isActivePaid = subData?.status === 'active' && !isFreemium;
 
-  if (isActivePaid) {
-    return NextResponse.json(
-      { error: 'У вас уже есть активная платная подписка' },
-      { status: 400 }
-    );
-  }
-
-  const { data: subRecord, error: subError } = await supabase
-    .from('user_subscription')
-    .select('stripe_customer_id')
-    .eq('user_id', user.id)
-    .single();
-
-  let customerId = subRecord?.stripe_customer_id;
+  // 2) гарантируем customerId
+  let customerId: string | undefined = subData?.stripe_customer_id ?? undefined;
 
   if (customerId) {
     try {
       await stripe.customers.retrieve(customerId);
     } catch (e: any) {
-      if (e.code === 'resource_missing') {
-        customerId = undefined;
-      } else {
+      if (e?.code === 'resource_missing') customerId = undefined;
+      else {
         console.error('❌ Stripe customer fetch failed:', e);
         return NextResponse.json({ error: 'Stripe customer fetch failed' }, { status: 500 });
       }
@@ -89,13 +58,8 @@ export async function POST(req: NextRequest) {
 
   if (!customerId) {
     try {
-      const existingCustomers = await stripe.customers.list({
-        email: user.email ?? undefined,
-        limit: 1,
-      });
-
-      const existingCustomer = existingCustomers.data?.[0];
-
+      const existing = await stripe.customers.list({ email: user.email ?? undefined, limit: 1 });
+      const existingCustomer = existing.data?.[0];
       if (existingCustomer) {
         customerId = existingCustomer.id;
       } else {
@@ -103,7 +67,6 @@ export async function POST(req: NextRequest) {
           email: user.email ?? undefined,
           metadata: { user_id: user.id },
         });
-
         customerId = customer.id;
       }
 
@@ -115,7 +78,6 @@ export async function POST(req: NextRequest) {
         },
         { onConflict: 'user_id' }
       );
-
       if (upsertError) {
         console.error('❌ Supabase upsert error:', upsertError);
         return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
@@ -126,43 +88,99 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // 3) активная платная → апгрейд действующей подписки, без портала
+  if (isActivePaid) {
+    try {
+      // если уже на этом же price — менять нечего
+      if (subData?.stripe_price_id === priceId) {
+        return NextResponse.json(
+          { error: 'Subscription already on this price', reason: 'no_change' },
+          { status: 409 }
+        );
+      }
+
+      const currentSubId = subData?.stripe_subscription_id;
+      if (!currentSubId) {
+        return NextResponse.json(
+          { error: 'No active subscription id found', reason: 'missing_subscription_id' },
+          { status: 409 }
+        );
+      }
+
+      // получаем текущую подписку и обновляем первый item на новый price
+      const currentSub = await stripe.subscriptions.retrieve(currentSubId);
+      const currentItemId = currentSub.items?.data?.[0]?.id;
+      if (!currentItemId) {
+        return NextResponse.json(
+          { error: 'No subscription item to update', reason: 'missing_item' },
+          { status: 500 }
+        );
+      }
+
+      const updated = await stripe.subscriptions.update(currentSubId, {
+        items: [{ id: currentItemId, price: priceId, quantity: 1 }],
+        proration_behavior: 'create_prorations',
+        payment_behavior: 'allow_incomplete',
+        metadata: { user_id: user.id },
+      });
+
+      await logUserAction({
+        userId: user.id,
+        action: 'stripe:subscription_upgraded',
+        metadata: {
+          fromPrice: subData?.stripe_price_id ?? null,
+          toPrice: priceId,
+          subscriptionId: updated.id,
+        },
+      });
+
+      return NextResponse.json(
+        { ok: true, kind: 'upgraded', subscriptionId: updated.id },
+        { status: 200 }
+      );
+    } catch (e: any) {
+      console.error('❌ Stripe upgrade error:', e);
+      const msg = e?.message || 'Stripe upgrade failed';
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+  }
+
+  // 4) новый Checkout для пользователей без платной подписки
   try {
     console.log('📤 Stripe create-checkout-session →', {
-      // 👈 log 2
       mode: 'subscription',
       customer: customerId,
       priceId,
       userId: user.id,
-      success_url: `${appUrl}/?checkout=success`,
+      success_url: `${appUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/?checkout=cancel`,
     });
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      customer: customerId,
+      customer: customerId!,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/?checkout=success`,
+      success_url: `${appUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/?checkout=cancel`,
       metadata: { user_id: user.id },
+      client_reference_id: user.id, // для трассировки (не влияет на бизнес-логику)
     });
 
     await logUserAction({
       userId: user.id,
       action: 'stripe:checkout_session_created',
-      metadata: {
-        priceId,
-        customerId,
-        sessionId: session.id,
-      },
+      metadata: { priceId, customerId, sessionId: session.id },
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url }, { status: 200 });
   } catch (e: any) {
     console.error('❌ Stripe checkout session error:', {
       message: e?.message,
       code: e?.code,
       raw: e?.raw,
     });
-    return NextResponse.json({ error: 'Stripe checkout session failed' }, { status: 500 });
+    const msg = e?.message || 'Stripe checkout session failed';
+    const isNoSuchPrice = typeof msg === 'string' && msg.toLowerCase().includes('no such price');
+    return NextResponse.json({ error: msg }, { status: isNoSuchPrice ? 400 : 500 });
   }
 }

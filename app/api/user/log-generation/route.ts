@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { env } from '@/env.server';
 import { tryLogUserAction } from '@/lib/logger';
+import { PACKAGE_LIMITS, isValidPackageType, type ValidPackageType } from '@/types/plan';
+import { updateUserLimits } from '@/lib/updateUserLimits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest) {
   const { data: limits, error: limitsError } = await supabase
     .from('user_limits')
     .select(
-      'used_today, daily_limit, limit_reset_at, used_monthly, monthly_limit, monthly_reset_at'
+      'used_today, daily_limit, limit_reset_at, used_monthly, monthly_limit, monthly_reset_at, plan'
     )
     .eq('user_id', userId)
     .maybeSingle();
@@ -65,24 +67,34 @@ export async function POST(req: NextRequest) {
   const now = new Date();
 
   if (!limits || limitsError) {
+    // Инициализируем лимиты из фактического плана пользователя (или Freemium) без хардкодов
+    const { data: sub } = await supabase
+      .from('user_subscription')
+      .select('package_type')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const resolvedPlan: ValidPackageType = isValidPackageType(sub?.package_type ?? '')
+      ? (sub!.package_type as ValidPackageType)
+      : 'Freemium';
+
+    await updateUserLimits(supabase as any, resolvedPlan, userId);
+
+    // Поддерживаем прежнюю семантику monthly_reset_at (now + 28 дней) и считаем этот вызов попыткой (used=1)
     const nextMonthlyReset = new Date();
     nextMonthlyReset.setUTCDate(now.getUTCDate() + 28);
 
-    const initResult = await supabase.from('user_limits').insert([
-      {
-        user_id: userId,
-        plan: 'Freemium',
+    const initBump = await supabase
+      .from('user_limits')
+      .update({
         used_today: 1,
         used_monthly: 1,
-        daily_limit: 10,
-        monthly_limit: 100,
-        limit_reset_at: now.toISOString(),
         monthly_reset_at: nextMonthlyReset.toISOString(),
-        active: false,
-      },
-    ]);
+        updated_at: now.toISOString(),
+      })
+      .eq('user_id', userId);
 
-    if (initResult.error) {
+    if (initBump.error) {
       return NextResponse.json({ error: 'Failed to initialize limits' }, { status: 500 });
     }
 
@@ -95,11 +107,19 @@ export async function POST(req: NextRequest) {
   const usedToday = shouldResetDaily ? 0 : limits.used_today || 0;
   const usedMonthly = shouldResetMonthly ? 0 : limits.used_monthly || 0;
 
-  if (usedToday >= (limits.daily_limit || 0)) {
+  // Читаем фактические лимиты: сперва из БД, при null — из PACKAGE_LIMITS по плану
+  const planForLimits: ValidPackageType = isValidPackageType(limits.plan ?? '')
+    ? (limits.plan as ValidPackageType)
+    : 'Freemium';
+  const cfg = PACKAGE_LIMITS[planForLimits];
+  const dailyLimit = limits.daily_limit ?? cfg.dailyGenerations;
+  const monthlyLimit = limits.monthly_limit ?? cfg.requestsPerMonth;
+
+  if (dailyLimit != null && usedToday >= dailyLimit) {
     return NextResponse.json({ error: 'Daily limit reached' }, { status: 403 });
   }
 
-  if (usedMonthly >= (limits.monthly_limit || 0)) {
+  if (monthlyLimit != null && usedMonthly >= monthlyLimit) {
     return NextResponse.json({ error: 'Monthly limit reached' }, { status: 403 });
   }
 

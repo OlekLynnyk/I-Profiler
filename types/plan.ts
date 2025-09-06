@@ -1,4 +1,6 @@
-export const PACKAGE_TYPES = ['Freemium', 'Smarter', 'Business'] as const;
+// types/plan.ts
+
+export const PACKAGE_TYPES = ['Freemium', 'Select', 'Smarter', 'Business'] as const;
 export type ValidPackageType = (typeof PACKAGE_TYPES)[number];
 export type PackageType = ValidPackageType | string;
 
@@ -12,20 +14,26 @@ export const PACKAGE_LIMITS: Record<
   }
 > = {
   Freemium: {
-    requestsPerMonth: 10,
-    dailyGenerations: 5,
+    requestsPerMonth: 3,
+    dailyGenerations: 3,
     allowExport: false,
     allowCustomBranding: false,
   },
+  Select: {
+    requestsPerMonth: 15,
+    dailyGenerations: 15,
+    allowExport: true,
+    allowCustomBranding: true,
+  },
   Smarter: {
-    requestsPerMonth: 250,
+    requestsPerMonth: 75,
     dailyGenerations: 25,
     allowExport: true,
     allowCustomBranding: true,
   },
   Business: {
-    requestsPerMonth: 1000,
-    dailyGenerations: 100,
+    requestsPerMonth: 200,
+    dailyGenerations: 25,
     allowExport: true,
     allowCustomBranding: true,
   },
@@ -35,16 +43,16 @@ export function isValidPackageType(pkg: string): pkg is ValidPackageType {
   return PACKAGE_TYPES.includes(pkg as ValidPackageType);
 }
 
-// --- central mapping & status normalization ---
-
-/**
- * Единая карта соответствия Stripe price_id → внутренний план.
- * Взято из текущего webhook: PLAN_MAPPING.
- * Держим ТОЛЬКО реальные price_id Stripe (без "freemium").
- */
 export const PRICE_TO_PACKAGE: Record<string, ValidPackageType> = {
   price_1RQYE4AGnqjZyhfAY8kOMZwm: 'Smarter',
   price_1RQYEXAGnqjZyhfAryCzNkqV: 'Business',
+  price_1S2wOPAGnqjZyhfAqHosAvL3: 'Select',
+};
+
+export const PACKAGE_TO_PRICE: Partial<Record<ValidPackageType, string>> = {
+  Smarter: 'price_1RQYE4AGnqjZyhfAY8kOMZwm',
+  Business: 'price_1RQYEXAGnqjZyhfAryCzNkqV',
+  Select: 'price_1S2wOPAGnqjZyhfAqHosAvL3',
 };
 
 export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';
@@ -52,16 +60,11 @@ export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';
 export interface SubscriptionPlanPayload {
   plan: ValidPackageType;
   priceId: string;
-  periodStart: string; // ISO-строка из Stripe current_period_start
-  periodEnd: string; // ISO-строка из Stripe current_period_end
+  periodStart: string;
+  periodEnd: string;
   status: NormalizedSubscriptionStatus;
 }
 
-/**
- * Единая трактовка статусов Stripe → внутренний статус.
- * past_due считаем 'active' (доступ сохраняется),
- * unpaid и canceled считаем 'canceled'.
- */
 export function mapStripeStatus(status: string): NormalizedSubscriptionStatus {
   switch (status) {
     case 'active':
@@ -76,4 +79,11 @@ export function mapStripeStatus(status: string): NormalizedSubscriptionStatus {
     default:
       return 'canceled';
   }
+}
+
+/** ✅ Единый гейт платных планов */
+export const PAID_PLANS = ['Select', 'Smarter', 'Business'] as const;
+
+export function isPaidPlan(plan: PackageType): plan is ValidPackageType {
+  return isValidPackageType(plan) && plan !== 'Freemium';
 }

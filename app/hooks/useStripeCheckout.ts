@@ -12,6 +12,7 @@ export function useStripeCheckout() {
   const handleCheckout = async (priceId: string) => {
     setLoading(true);
     setError(null);
+
     try {
       const { data } = await supabase.auth.getSession();
       const userId = data.session?.user.id;
@@ -26,14 +27,35 @@ export function useStripeCheckout() {
         },
       });
 
+      // Пытаемся распарсить JSON даже при !ok, чтобы показать текст ошибки с бэка
+      let json: any = null;
+      try {
+        json = await res.json();
+      } catch {
+        /* игнорируем, останется null */
+      }
+
       if (!res.ok) {
-        const errorText = await res.text();
-        setError('Checkout failed. Try again.');
+        setError(json?.error ?? 'Checkout failed. Try again.');
         return;
       }
 
-      const { url } = await res.json();
+      // ✅ Новое: поддержка портала для активных подписок
+      const portalUrl: string | undefined = json?.portalUrl;
+      if (portalUrl) {
+        if (userId) {
+          await logUserAction({
+            userId,
+            action: 'stripe:billing_portal_redirect',
+            metadata: { priceId },
+          });
+        }
+        window.location.href = portalUrl;
+        return;
+      }
 
+      // Старый путь: обычный Checkout Session
+      const url: string | undefined = json?.url;
       if (userId) {
         await logUserAction({
           userId,
@@ -41,12 +63,13 @@ export function useStripeCheckout() {
           metadata: { priceId },
         });
       }
+
       if (url) {
         window.location.href = url;
       } else {
         setError('Unexpected error. No redirect URL.');
       }
-    } catch (e) {
+    } catch {
       setError('Something went wrong. Try again.');
     } finally {
       setLoading(false);

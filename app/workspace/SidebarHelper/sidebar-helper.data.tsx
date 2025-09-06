@@ -1,4 +1,3 @@
-// sidebar-helper.data.tsx
 'use client';
 
 import { useUserPlan } from '@/app/hooks/useUserPlan';
@@ -6,6 +5,7 @@ import { useInjectPrompt } from '@/app/hooks/useInjectPrompt';
 import SavedProfileList from '@/app/components/SavedProfileList';
 import { BoxData } from './types';
 import { flushSync } from 'react-dom';
+import { isPaidPlan } from '@/types/plan'; // 👈 добавлено
 
 type Template = {
   id: string;
@@ -15,7 +15,8 @@ type Template = {
 
 export const getSidebarBoxes = (): BoxData[] => {
   const { plan } = useUserPlan();
-  const isPro = plan === 'Smarter' || plan === 'Business';
+  const isPro = isPaidPlan(plan); // 👈 было Smarter||Business
+  const isUpperTier = plan === 'Smarter' || plan === 'Business'; // 👈 для Library (Smarter+Business)
 
   const injectPrompt = useInjectPrompt();
 
@@ -78,19 +79,24 @@ export const getSidebarBoxes = (): BoxData[] => {
     </div>
   );
 
-  const LockedMessage = () => (
+  // 🔒 разные сообщения блокировок
+  const LockedPaidMessage = () => (
+    <div className="text-sm text-[var(--text-secondary)] italic">
+      🔒 Available on paid plans (Select, Smarter, Business).
+    </div>
+  );
+  const LockedUpperTierMessage = () => (
     <div className="text-sm text-[var(--text-secondary)] italic">
       🔒 Available on Smarter & Business plans.
     </div>
   );
 
   const SavedMessagesContent = () => {
-    if (!isPro) return <LockedMessage />;
     return <SavedProfileList />;
   };
 
   const LibraryContent = () => {
-    if (!isPro) return <LockedMessage />;
+    if (!isUpperTier) return <LockedUpperTierMessage />;
     return (
       <div className="flex flex-col gap-2 text-sm text-[var(--text-primary)]">
         <div className="cursor-default">Article One</div>
@@ -114,14 +120,13 @@ export const getSidebarBoxes = (): BoxData[] => {
       title: 'Saved messages',
       description: 'Your collection of saved messages.',
       renderContent: <SavedMessagesContent />,
-      locked: !isPro,
     },
     {
       id: 'library',
       title: 'Library',
       description: 'Knowledge library for quick reference.',
       renderContent: <LibraryContent />,
-      locked: !isPro,
+      locked: !isUpperTier, // 👈 только Smarter & Business
     },
     {
       id: 'support-email',

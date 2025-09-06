@@ -7,6 +7,7 @@ import { tryLogUserAction } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
   const agreedHeader = req.headers.get('x-agreed-to-terms');
@@ -127,8 +128,8 @@ export async function POST(req: NextRequest) {
     console.error('❌ Profile init logic failed:', e);
   }
 
-  // ✅ Лимиты
-  const freemiumLimits = PACKAGE_LIMITS.Freemium;
+  // ✅ Лимиты — ЕДИНЫЙ ИСТОЧНИК: PACKAGE_LIMITS.Freemium
+  const freemiumLimits = PACKAGE_LIMITS.Freemium; // ← Шаг 12: только из констант, никаких хардкодов
   const now = new Date();
 
   try {
@@ -159,6 +160,7 @@ export async function POST(req: NextRequest) {
         console.log('✅ Inserted user_limits');
       }
     }
+    // Если запись уже есть — НИЧЕГО НЕ МЕНЯЕМ (идемпотентно, без регрессий)
   } catch (e) {
     console.error('❌ user_limits logic failed:', e);
   }

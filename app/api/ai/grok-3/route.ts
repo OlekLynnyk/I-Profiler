@@ -58,7 +58,7 @@ async function ensureExcelFileExists() {
 
   const command = new GetObjectCommand({
     Bucket: 'profiling-formulas',
-    Key: '(Project Profiling).xlsx',
+    Key: 'profiling-formula_v2508.xlsx',
   });
 
   const response = await s3.send(command);
@@ -76,6 +76,49 @@ async function ensureExcelFileExists() {
 
   console.log('Excel file downloaded to /tmp/file.xlsx');
 }
+
+// ── PATCH: helpers for safe image normalization (точечный фикс) ───────────────
+const URL_RE = /^https?:\/\/\S+$/i;
+const DATA_URL_IMG_RE = /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/i;
+
+/**
+ * Нормализует вход из Excel:
+ * - http(s) → оставить как есть
+ * - data:image/*;base64,... → оставить как есть
+ * - «голый» base64 → обернуть в data:image/png;base64,...
+ * - иначе → null (пропустить)
+ */
+function normalizeExcelImage(input: string): string | null {
+  if (!input) return null;
+  const s = String(input).trim();
+  if (URL_RE.test(s)) return s;
+  if (DATA_URL_IMG_RE.test(s)) return s;
+
+  const b64 = s.replace(/\s+/g, '');
+  if (/^[A-Za-z0-9+/=]+$/.test(b64)) {
+    // Выбрали PNG — совпадает с текущей логикой user-вложений
+    return `data:image/png;base64,${b64}`;
+  }
+  return null;
+}
+
+/**
+ * Строит корректный data URL для пользовательской картинки из чата.
+ * Принимает как «голый» base64, так и готовый data:...;base64, ...
+ */
+function buildUserImageDataUrl(raw: string): string {
+  const s = String(raw || '')
+    .trim()
+    .replace(/\s+/g, '');
+  if (s.startsWith('data:')) return s; // уже готовый data URL
+  return `data:image/png;base64,${s}`; // строго сохраняем png, как было (без поведенческих изменений)
+}
+// ─────────────────────────────────────────────────────────────
+
+// ── RETRY HELPERS (без изменения внешнего поведения) ────────
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+const jitter = (base: number) => Math.max(0, Math.floor(base * (0.5 + Math.random()))); // 0.5x..1.5x
+const isRetriableStatus = (s: number) => s === 408 || s === 429 || (s >= 500 && s <= 599);
 
 // Диагностические флаги для исключения кэширования/edge-побочек
 export const runtime = 'nodejs';
@@ -160,18 +203,27 @@ export async function POST(req: NextRequest) {
         content: fullSystemPrompt,
       });
 
+      // ── PATCH: безопасная нормализация картинок из Excel/S3 ───────────────
       for (const img of imagesBase64) {
+        const url = normalizeExcelImage(img);
+        if (!url) {
+          console.warn(`[GROK][${traceId}] PROFILING: skipped invalid image input`);
+          continue;
+        }
         messages.push({
           role: 'system',
-          content: {
-            type: 'image_url',
-            image_url: {
-              url: img,
-              detail: 'high',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url,
+                detail: 'high',
+              },
             },
-          },
+          ],
         });
       }
+      // ───────────────────────────────────────────────────────────────────────
 
       const { error: insertSystemError } = await supabase.from('chat_messages').insert([
         {
@@ -242,15 +294,18 @@ INSTRUCTION:
 
     const userContent: any[] = [];
 
+    // ── PATCH: безопасная очистка base64 из чата + поддержка готового data: ──
     if (imageBase64) {
+      const url = buildUserImageDataUrl(imageBase64);
       userContent.push({
         type: 'image_url',
         image_url: {
-          url: `data:image/png;base64,${imageBase64}`,
+          url,
           detail: 'high',
         },
       });
     }
+    // ────────────────────────────────────────────────────────────────────────
 
     if (prompt?.trim()) {
       userContent.push({
@@ -270,29 +325,145 @@ INSTRUCTION:
       count: messages.length,
     });
 
-    const xaiT0 = Date.now();
-    const grokResponse = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${env.XAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'grok-2-vision-latest',
-        messages,
-        temperature: 0.3,
-        max_tokens: 2000,
-        stream: false,
-      }),
+    // ── RETRY BLOCK: один и тот же payload на все попытки ───────────────────
+    const XAI_RETRIES = Number(process.env.XAI_RETRIES ?? '1'); // доп. попыток (итого до 2)
+    const RETRY_BACKOFF_MS = Number(process.env.RETRY_BACKOFF_MS ?? '600');
+    const XAI_TIMEOUT_MS = Number(process.env.XAI_TIMEOUT_MS ?? '55000');
+    const XAI_BUDGET_MS = Number(process.env.XAI_BUDGET_MS ?? '57000');
+
+    const payload = {
+      model: 'grok-2-vision-1212',
+      messages, // ← тот же объект, без мутаций после этого места
+      temperature: 0.3,
+      max_tokens: 2000,
+      stream: false,
+    };
+    const bodyString = JSON.stringify(payload); // ← один и тот же JSON на все попытки
+    const payloadBytes = Buffer.byteLength(bodyString, 'utf8');
+
+    let grokResponse: Response | null = null;
+    let lastError: any = null;
+    let budgetExhausted = false;
+
+    const safetyMs = 150; // запас, чтобы не упереться в лимит платформы
+
+    for (let attempt = 0; attempt <= XAI_RETRIES; attempt++) {
+      // Проверяем оставшийся бюджет времени всего хендлера
+      const elapsed = Date.now() - startedAt;
+      let remaining = XAI_BUDGET_MS - elapsed;
+      if (remaining <= 0) {
+        console.warn(`[GROK][${traceId}] budget_exhausted_before_attempt`, { attempt, elapsed });
+        budgetExhausted = true;
+        break;
+      }
+
+      if (attempt > 0) {
+        // небольшой backoff с джиттером, но не выходим за бюджет
+        const backoff = Math.min(jitter(RETRY_BACKOFF_MS), Math.max(0, remaining - safetyMs));
+        if (backoff > 0) {
+          await sleep(backoff);
+          remaining -= backoff;
+        }
+      }
+
+      const attemptTimeout = Math.min(XAI_TIMEOUT_MS, Math.max(0, remaining - safetyMs));
+      if (attemptTimeout <= 0) {
+        console.warn(`[GROK][${traceId}] no_time_for_attempt`, { attempt, remaining });
+        budgetExhausted = true;
+        break;
+      }
+
+      const controller = new AbortController();
+      const t0 = Date.now();
+      const timer = setTimeout(() => controller.abort(), attemptTimeout);
+
+      console.log(`[GROK][${traceId}] attempt_start`, {
+        attempt,
+        payload_bytes: payloadBytes,
+        attemptTimeout,
+      });
+
+      try {
+        const resp = await fetch('https://api.x.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${env.XAI_API_KEY}`,
+          },
+          body: bodyString, // ← фиксированный payload
+          signal: controller.signal,
+        });
+
+        clearTimeout(timer);
+
+        const dt = Date.now() - t0;
+        if (resp.ok) {
+          console.log(`[GROK][${traceId}] attempt_success`, {
+            attempt,
+            status: resp.status,
+            ms: dt,
+          });
+          grokResponse = resp;
+          break;
+        }
+
+        // Не-OK: решаем, ретраить ли
+        const retriable = isRetriableStatus(resp.status);
+        console[retriable ? 'warn' : 'error'](
+          `[GROK][${traceId}] attempt_${retriable ? 'retriable_status' : 'non_retriable_status'}`,
+          { attempt, status: resp.status, ms: dt }
+        );
+
+        if (retriable && attempt < XAI_RETRIES) {
+          // следующий цикл
+          continue;
+        } else {
+          grokResponse = resp; // финальный ответ (не ок)
+          break;
+        }
+      } catch (err: any) {
+        clearTimeout(timer);
+        const dt = Date.now() - t0;
+        lastError = err;
+
+        if (err?.name === 'AbortError') {
+          console.warn(`[GROK][${traceId}] attempt_abort_timeout`, { attempt, ms: dt });
+          if (attempt < XAI_RETRIES) {
+            continue; // ретраим таймаут
+          } else {
+            // больше попыток нет — выходим, grokResponse останется null
+            break;
+          }
+        }
+
+        // Любая другая ошибка — не ретраим (строго по ТЗ)
+        console.error(`[GROK][${traceId}] attempt_failed_exception`, {
+          attempt,
+          err: String(err?.message || err),
+          ms: dt,
+        });
+        break;
+      }
+    } // end for
+
+    // Если совсем не получили ответа (null) — решаем по причине
+    if (!grokResponse) {
+      if (lastError?.name === 'AbortError' || budgetExhausted) {
+        console.error(
+          `[GROK][${traceId}] Upstream timeout (final)`,
+          budgetExhausted ? { reason: 'budget_exhausted' } : {}
+        );
+        return withTraceJson(traceId, { error: 'Upstream timeout' }, { status: 504 });
+      }
+      // Поведение как раньше: сваливаемся в общий catch → 500
+      throw lastError || new Error('No response from upstream');
+    }
+
+    console.log(`[GROK][${traceId}] XAI: status ${grokResponse.status}`, {
+      contentType: grokResponse.headers.get('content-type') || '',
     });
 
-    console.log(
-      `[GROK][${traceId}] XAI: status ${grokResponse.status} in ${Date.now() - xaiT0}ms`,
-      { contentType: grokResponse.headers.get('content-type') || '' }
-    );
-
     const contentType = grokResponse.headers.get('content-type') || '';
-
     let data;
 
     if (contentType.includes('application/json')) {

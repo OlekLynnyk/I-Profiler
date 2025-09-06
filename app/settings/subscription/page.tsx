@@ -5,6 +5,12 @@ import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { useStripeCheckout } from '@/app/hooks/useStripeCheckout';
 import { useUserSubscription } from '@/app/hooks/useUserSubscription';
 import { motion, useReducedMotion } from 'framer-motion';
+import {
+  PACKAGE_TO_PRICE,
+  isPaidPlan,
+  isValidPackageType,
+  type ValidPackageType,
+} from '@/types/plan';
 
 const ACCENT = '#A855F7';
 
@@ -120,6 +126,14 @@ export default function SubscriptionSettings() {
     package_type: packageType,
   } = data;
 
+  // Нормализация текущего плана и гейты для действий
+  const currentPlan: ValidPackageType = isValidPackageType(plan)
+    ? (plan as ValidPackageType)
+    : 'Freemium';
+  const isFreemium = currentPlan === 'Freemium';
+  const canUpgradeTo = (target: ValidPackageType) =>
+    currentPlan !== target && Boolean(PACKAGE_TO_PRICE[target]);
+
   const statusBadge = cancelAtPeriodEnd
     ? {
         text: `Ends on ${nextBillingDate}`,
@@ -183,29 +197,31 @@ export default function SubscriptionSettings() {
               <input type="checkbox" checked readOnly className="h-4 w-4 accent-[#A78BFA]" />
             </p>
 
-            {/* оплата */}
-            <div className="mt-2 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
-              <p className="text-white/80">
-                <span className="font-medium text-white/90">Payment Method:</span> {paymentMethod}
-              </p>
-              <button
-                type="button"
-                onClick={handleOpenPortal}
-                disabled={portalLoading}
-                className="mt-3 w-fit rounded-full px-5 py-2 text-[#111827] transition-[transform,box-shadow,background] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 disabled:opacity-60"
-                style={{
-                  backgroundImage: `
-                    radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
-                    linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88))
-                  `,
-                  boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.6), 0 8px 28px rgba(0,0,0,0.10)',
-                  border: '1px solid rgba(168,85,247,0.35)',
-                }}
-              >
-                {portalLoading ? 'Opening…' : 'Update via Stripe'}
-              </button>
-              {portalError && <p className="mt-2 text-xs text-red-300">{portalError}</p>}
-            </div>
+            {/* оплата (только для платных планов) */}
+            {isPaidPlan(currentPlan) && (
+              <div className="mt-2 rounded-2xl bg-white/5 ring-1 ring-white/10 p-4">
+                <p className="text-white/80">
+                  <span className="font-medium text-white/90">Payment Method:</span> {paymentMethod}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleOpenPortal}
+                  disabled={portalLoading}
+                  className="mt-3 w-fit rounded-full px-5 py-2 text-[#111827] transition-[transform,box-shadow,background] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 disabled:opacity-60"
+                  style={{
+                    backgroundImage: `
+                      radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
+                      linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88))
+                    `,
+                    boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.6), 0 8px 28px rgba(0,0,0,0.10)',
+                    border: '1px solid rgba(168,85,247,0.35)',
+                  }}
+                >
+                  {portalLoading ? 'Opening…' : 'Update via Stripe'}
+                </button>
+                {portalError && <p className="mt-2 text-xs text-red-300">{portalError}</p>}
+              </div>
+            )}
           </div>
 
           {/* история платежей */}
@@ -242,10 +258,30 @@ export default function SubscriptionSettings() {
 
           {/* действия */}
           <div className="mt-8 flex flex-col items-start gap-2">
+            {/* Freemium → Select */}
+            {isFreemium && (
+              <button
+                type="button"
+                onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
+                disabled={upgradeLoading || !canUpgradeTo('Select')}
+                className="rounded-full px-4 py-2 text-white backdrop-blur transition-[transform,box-shadow,background] hover:-translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 disabled:opacity-60"
+                style={{
+                  backgroundImage: `
+                    radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
+                    linear-gradient(180deg, rgba(168,85,247,0.25), rgba(168,85,247,0.18))
+                  `,
+                  boxShadow: '0 12px 36px rgba(168,85,247,0.25)',
+                  border: '1px solid rgba(168,85,247,0.35)',
+                }}
+              >
+                {upgradeLoading ? 'Redirecting…' : 'Upgrade to Select'}
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={() => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm')}
-              disabled={upgradeLoading}
+              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
+              disabled={upgradeLoading || !canUpgradeTo('Smarter')}
               className="rounded-full px-4 py-2 text-white backdrop-blur transition-[transform,box-shadow,background] hover:-translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 disabled:opacity-60"
               style={{
                 backgroundImage: `
@@ -261,8 +297,8 @@ export default function SubscriptionSettings() {
 
             <button
               type="button"
-              onClick={() => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV')}
-              disabled={upgradeLoading}
+              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
+              disabled={upgradeLoading || !canUpgradeTo('Business')}
               className="rounded-full px-4 py-2 text-[#111827] transition-[transform,box-shadow,background] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 disabled:opacity-60"
               style={{
                 backgroundImage: `
@@ -276,14 +312,17 @@ export default function SubscriptionSettings() {
               {upgradeLoading ? 'Redirecting…' : 'Upgrade to Business'}
             </button>
 
-            <button
-              type="button"
-              onClick={handleCancelSubscription}
-              disabled={portalLoading}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-red-200 ring-1 ring-red-400/20 bg-red-500/10 hover:bg-red-500/15 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40 disabled:opacity-60"
-            >
-              {portalLoading ? 'Processing…' : 'Unsubscribe'}
-            </button>
+            {/* Отписка доступна только на платных планах и если не запланировано завершение */}
+            {isPaidPlan(currentPlan) && !cancelAtPeriodEnd && (
+              <button
+                type="button"
+                onClick={handleCancelSubscription}
+                disabled={portalLoading}
+                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-red-200 ring-1 ring-red-400/20 bg-red-500/10 hover:bg-red-500/15 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40 disabled:opacity-60"
+              >
+                {portalLoading ? 'Processing…' : 'Unsubscribe'}
+              </button>
+            )}
           </div>
 
           {(upgradeError || portalError) && (

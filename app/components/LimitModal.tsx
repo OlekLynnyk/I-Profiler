@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+import { PACKAGE_TO_PRICE } from '@/types/plan';
 
 interface LimitModalProps {
   show: boolean;
@@ -81,13 +82,19 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
               </span>
               <div className="flex flex-col md:flex-row gap-2 md:items-center w-full md:w-auto">
                 <button
-                  onClick={() => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm')}
+                  onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
                   className="text-[11px] bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-md w-full md:w-auto min-w-[95px]"
                 >
                   Smarter
                 </button>
                 <button
-                  onClick={() => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV')}
+                  onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
+                  className="text-[11px] bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-md w-full md:w-auto min-w-[95px]"
+                >
+                  Select
+                </button>
+                <button
+                  onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
                   className="text-[11px] bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md w-full md:w-auto min-w-[95px]"
                 >
                   Business
@@ -107,7 +114,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                 Your subscription limit has been reached 🚀
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Smarter Block */}
                 <div className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex flex-col justify-between">
                   <div>
@@ -117,10 +124,26 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleCheckout('price_1RQYE4AGnqjZyhfAY8kOMZwm')}
+                    onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
                     className={`bg-gray-500 hover:bg-gray-600 text-white ${buttonClasses} w-full`}
                   >
                     Upgrade to Smarter
+                  </button>
+                </div>
+
+                {/* Select Block */}
+                <div className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-white text-base md:text-lg font-semibold mb-2">Select</h3>
+                    <p className="text-gray-300 text-sm mb-4">
+                      Text description for the Select plan goes here.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
+                    className={`bg-gray-500 hover:bg-gray-600 text-white ${buttonClasses} w-full`}
+                  >
+                    Upgrade to Select
                   </button>
                 </div>
 
@@ -133,7 +156,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleCheckout('price_1RQYEXAGnqjZyhfAryCzNkqV')}
+                    onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
                     className={`bg-purple-600 hover:bg-purple-700 text-white ${buttonClasses} w-full`}
                   >
                     Upgrade to Business

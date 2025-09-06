@@ -38,26 +38,32 @@ export async function POST(req: NextRequest) {
   const updates: { user_id: string; used_today: number; limit_reset_at: string }[] = [];
 
   for (const user of users) {
-    const { user_id, used_today, used_monthly, monthly_limit, limit_reset_at, timezone } = user;
+    const { user_id, limit_reset_at, timezone } = user;
 
-    const usedMonthly = used_monthly ?? 0;
-    const monthlyLimit = monthly_limit ?? 0;
     const userTz = timezone || 'UTC';
-
     const nowLocal = nowUtc.setZone(userTz);
-    const lastResetLocal = limit_reset_at
+
+    // limit_reset_at — "следующая точка сброса" в UTC
+    const nextResetLocal = limit_reset_at
       ? DateTime.fromISO(limit_reset_at, { zone: userTz })
-      : DateTime.fromMillis(0); // fallback: давно не сбрасывалось
+      : null;
 
-    const isNewDay = nowLocal.startOf('day') > lastResetLocal.startOf('day');
-    const isAfterMidnight = nowLocal.hour === 0 && nowLocal.minute >= 1;
-    const hasMonthlyLimitLeft = usedMonthly < monthlyLimit;
+    // Сбрасываем, когда наступил новый локальный день (прошли локальную границу следующего сброса)
+    const isResetDue = !nextResetLocal || nowLocal >= nextResetLocal;
 
-    if (isNewDay && isAfterMidnight && hasMonthlyLimitLeft) {
+    if (isResetDue) {
+      const nextLocalReset = nowLocal.plus({ days: 1 }).startOf('day'); // следующая локальная полночь
+      const nextResetIso = nextLocalReset.toUTC().toISO(); // string | null по типам Luxon
+
+      if (!nextResetIso) {
+        // крайне маловероятно, но защищаем тип: если ISO не получилось — пропускаем пользователя
+        continue;
+      }
+
       updates.push({
         user_id,
         used_today: 0,
-        limit_reset_at: nowUtc.toISO(),
+        limit_reset_at: nextResetIso,
       });
     }
   }
