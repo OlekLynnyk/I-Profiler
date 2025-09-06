@@ -6,7 +6,7 @@ import { useProfile } from '../hooks/useProfile';
 import { PlanProgress } from '@/components/PlanProgress';
 import { PackageType } from '@/types/plan';
 import { useUserPlan } from '../hooks/useUserPlan';
-import { usePlanUsage, PlanUsageProvider } from '../workspace/context/PlanUsageContext';
+// import { usePlanUsage, PlanUsageProvider } from '../workspace/context/PlanUsageContext'; // УДАЛЕНО
 import { useStripeCheckout } from '../hooks/useStripeCheckout';
 import { useSidebar } from '@/app/context/SidebarContext';
 import { PACKAGE_TO_PRICE } from '@/types/plan';
@@ -35,6 +35,18 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   const { handleCheckout } = useStripeCheckout();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
+  // === ДОБАВЛЕНО: локальный бамп для мгновенного обновления ===
+  const [usageBump, setUsageBump] = useState(0);
+  useEffect(() => {
+    const onInc = (e: Event) => {
+      const delta = (e as CustomEvent)?.detail?.delta ?? 1;
+      setUsageBump((n) => n + delta);
+    };
+    window.addEventListener('usage:inc', onInc as EventListener);
+    return () => window.removeEventListener('usage:inc', onInc as EventListener);
+  }, []);
+  // === КОНЕЦ ДОБАВЛЕНИЯ ===
+
   const handleKeyToggle = (e: KeyboardEvent<HTMLDivElement>, boxId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -62,32 +74,32 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       id: 'plan-box',
       title: packageType,
       content: (
-        <PlanUsageProvider>
-          <div
-            className="space-y-2 text-sm text-[var(--text-primary)]"
-            onClick={(e) => e.stopPropagation()}
+        // УБРАНО: <PlanUsageProvider>
+        <div
+          className="space-y-2 text-sm text-[var(--text-primary)]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MonthlyUsage refreshToken={refreshToken} usageBump={usageBump} />
+          <button
+            onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
+            className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
           >
-            <MonthlyUsage refreshToken={refreshToken} />
-            <button
-              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
-              className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
-            >
-              Upgrade to Smarter
-            </button>
-            <button
-              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
-              className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
-            >
-              Upgrade to Select
-            </button>
-            <button
-              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
-              className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl w-full"
-            >
-              Upgrade to Business
-            </button>
-          </div>
-        </PlanUsageProvider>
+            Upgrade to Smarter
+          </button>
+          <button
+            onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
+            className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
+          >
+            Upgrade to Select
+          </button>
+          <button
+            onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
+            className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl w-full"
+          >
+            Upgrade to Business
+          </button>
+        </div>
+        // УБРАНО: </PlanUsageProvider>
       ),
     },
     {
@@ -228,9 +240,8 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
           >
             <div className="px-3 sm:px-4 py-3 flex justify-between items-center">
               {box.id === 'plan-box' ? (
-                <PlanUsageProvider>
-                  <PlanProgressFetcher refreshToken={refreshToken} />
-                </PlanUsageProvider>
+                // УБРАНО оборачивание в <PlanUsageProvider>
+                <PlanProgressFetcher refreshToken={refreshToken} usageBump={usageBump} />
               ) : (
                 <span className="text-sm font-medium text-[var(--text-primary)]">{box.title}</span>
               )}
@@ -248,10 +259,15 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   );
 }
 
-function PlanProgressFetcher({ refreshToken }: { refreshToken: number }) {
-  const { updatedAt } = usePlanUsage();
+function PlanProgressFetcher({
+  refreshToken,
+  usageBump,
+}: {
+  refreshToken: number;
+  usageBump: number;
+}) {
   const { plan, limits, used, hasReachedDailyLimit, limitResetAt } = useUserPlan(
-    updatedAt + refreshToken
+    refreshToken + usageBump
   );
 
   if (!plan)
@@ -273,9 +289,8 @@ function PlanProgressFetcher({ refreshToken }: { refreshToken: number }) {
   );
 }
 
-function MonthlyUsage({ refreshToken }: { refreshToken: number }) {
-  const { updatedAt } = usePlanUsage();
-  const { limits, usedMonthly } = useUserPlan(updatedAt + refreshToken);
+function MonthlyUsage({ refreshToken, usageBump }: { refreshToken: number; usageBump: number }) {
+  const { limits, usedMonthly } = useUserPlan(refreshToken + usageBump);
 
   return (
     <div className="text-xs bg-[var(--card-bg)] border border-[var(--card-border)] text-center text-[var(--text-primary)] px-3 py-1 rounded-xl w-full">

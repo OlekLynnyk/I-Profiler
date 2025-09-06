@@ -48,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <link rel="preload" href="/loading/octo-static.webp" as="image" />
       </head>
       <body className={inter.className}>
         <Providers>

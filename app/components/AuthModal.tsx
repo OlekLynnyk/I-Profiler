@@ -5,6 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { FcGoogle } from 'react-icons/fc';
 import { getRedirectTo } from '@/utils/getRedirectTo';
+import GlobalLoading from '@/app/loading';
 
 export default function AuthModal({ onClose }: { onClose: () => void }) {
   const supabase = createClientComponentClient();
@@ -20,6 +21,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [redirecting, setRedirecting] = useState(false);
 
   // lock scroll + esc + focus
   useEffect(() => {
@@ -54,14 +56,20 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       setError('You must agree to the Terms to continue.');
       return;
     }
-    // 🔹 Добавлено: сохраняем согласие в localStorage, чтобы callback смог его считать
+
+    setRedirecting(true);
     localStorage.setItem('agreed_to_terms', 'true');
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: getRedirectTo(), queryParams: { prompt: 'select_account' } },
-    });
-    if (error) setError(error.message);
+    requestAnimationFrame(async () => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: getRedirectTo(), queryParams: { prompt: 'select_account' } },
+      });
+      if (error) {
+        setRedirecting(false);
+        setError(error.message);
+      }
+    }); // закрывает requestAnimationFrame
   };
 
   const handleAuth = async () => {
@@ -96,6 +104,14 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       }
     }
   };
+
+  if (redirecting) {
+    return (
+      <div className="fixed inset-0 z-[9999]">
+        <GlobalLoading />
+      </div>
+    );
+  }
 
   return (
     <div

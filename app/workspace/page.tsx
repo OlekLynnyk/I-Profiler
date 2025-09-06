@@ -20,6 +20,7 @@ import { useSavedProfiles } from '@/app/hooks/useSavedProfiles';
 import { FaLinkedin } from 'react-icons/fa';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import SessionBridge from '@/app/components/SessionBridge';
+import GlobalLoading from '@/app/loading';
 
 function AmbientBackdrop({ src }: { src: string }) {
   return (
@@ -311,8 +312,7 @@ export default function WorkspacePage() {
     }
   };
 
-  if (isLoading)
-    return <div className="p-8 text-[var(--text-secondary)]">🔄 Loading session...</div>;
+  if (isLoading) return <GlobalLoading />;
   if (!session) return <div className="p-8 text-[var(--text-secondary)]">❌ No access</div>;
 
   return (

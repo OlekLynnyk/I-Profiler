@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/app/context/AuthProvider';
 import { detectUserLanguage } from '@/scripts/detectUserLanguage';
 import { logUserAction } from '@/lib/logger';
+import { usageBump } from '@/app/workspace/context/PlanUsageContext';
 
 export type ChatMessage = {
   id: string;
@@ -230,6 +231,9 @@ export function useChatLogic(): UseChatLogicResult {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      window.dispatchEvent(new CustomEvent('usage:inc', { detail: { delta: 1 } }));
+      usageBump(1);
 
       const logResult = await resLog.json();
 

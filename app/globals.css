@@ -121,3 +121,21 @@ input, textarea, select, button, label {
 .pb-safe {
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
+/* === Loading: octopus pulse === */
+@layer utilities {
+  @keyframes octo-pulse {
+    0%   { opacity: 0.25; transform: scale(1); }
+    50%  { opacity: 0.80; transform: scale(1.02); } /* едва заметный масштаб, очень лёгкий */
+    100% { opacity: 0.25; transform: scale(1); }
+  }
+
+  .animate-octo-pulse {
+    animation: octo-pulse 2.4s ease-in-out infinite;
+    will-change: opacity, transform; /* даём GPU-хинт, безопасно */
+  }
+
+  /* Доступность: если пользователь просит «меньше анимации» — выключаем полностью */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-octo-pulse { animation: none !important; }
+  }
+}
