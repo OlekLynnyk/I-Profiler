@@ -434,11 +434,13 @@ export default function WorkspacePage() {
                   </div>
                 )}
 
-                {isGenerating && (
-                  <div className="w-full text-left py-1 text-sm text-[var(--text-secondary)] animate-pulse">
-                    Analysing...
-                  </div>
-                )}
+                {isGenerating &&
+                  messages.length > 0 &&
+                  messages[messages.length - 1]?.role === 'user' && (
+                    <div className="w-full text-left py-1 text-sm text-[var(--text-secondary)] animate-pulse">
+                      Analysing...
+                    </div>
+                  )}
               </div>
             </div>
 

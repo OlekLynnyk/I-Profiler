@@ -13,21 +13,6 @@ export default function Footer() {
       {/* верхний hairline — только на мобиле */}
       <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent md:hidden" />
 
-      {/* осьминог — оставляем */}
-      <motion.div
-        aria-hidden
-        className="absolute inset-0 opacity-[0.06] pointer-events-none bg-center bg-no-repeat
-                   bg-[length:26px_auto] sm:bg-[length:45px_auto] md:bg-[length:65px_auto] lg:bg-[length:75px_auto]"
-        style={{
-          backgroundImage: "url('/images/footer-art.png')",
-          maskImage: 'radial-gradient(circle at 50% 60%, white 32%, transparent 78%)',
-          WebkitMaskImage: 'radial-gradient(circle at 50% 60%, white 32%, transparent 78%)',
-        }}
-        initial={false}
-        animate={reduce ? undefined : { y: [0, -6, 0] }}
-        transition={reduce ? undefined : { duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
       {/* ===== MOBILE (< md) ===== */}
       <div className="md:hidden relative z-10 max-w-6xl mx-auto flex flex-col items-center gap-4">
         <p className="text-center text-[13px] leading-relaxed text-white/70">

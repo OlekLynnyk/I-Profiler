@@ -4,11 +4,26 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
-import { PACKAGE_TO_PRICE } from '@/types/plan';
+import { PACKAGE_TO_PRICE, PACKAGE_LIMITS } from '@/types/plan';
 
 interface LimitModalProps {
   show: boolean;
   onClose: () => void;
+}
+
+const ACCENT = '#A855F7';
+
+function CheckIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+      className={`h-4 w-4 flex-none mt-[2px] ${className}`}
+    >
+      <path d="M5 12l4 4 10-10" stroke={ACCENT} strokeWidth="2" />
+    </svg>
+  );
 }
 
 export default function LimitModal({ show, onClose }: LimitModalProps) {
@@ -35,11 +50,8 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
       }
 
       const { url } = await res.json();
-      if (url) {
-        window.location.href = url;
-      } else {
-        throw new Error('Missing Stripe redirect URL');
-      }
+      if (!url) throw new Error('Missing Stripe redirect URL');
+      window.location.href = url;
     } catch (error) {
       console.error('❌ Stripe Checkout Error:', error);
       alert('Something went wrong with Stripe checkout. Please try again later.');
@@ -75,10 +87,11 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
             text-[var(--text-primary)]
           `}
         >
+          {/* --- COMPACT: НЕ МЕНЯЕМ --- */}
           {!expanded ? (
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 py-3 text-sm text-white">
               <span className="whitespace-normal md:whitespace-nowrap text-center md:text-left">
-                Your subscription limit has been reached 🚀 Upgrade to:
+                Your subscription limit has been reached: 🚀
               </span>
               <div className="flex flex-col md:flex-row gap-2 md:items-center w-full md:w-auto">
                 <button
@@ -109,57 +122,109 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
               </div>
             </div>
           ) : (
+            /* --- EXPANDED: МЕНЯЕМ ТОЛЬКО ЗДЕСЬ --- */
             <div className="relative px-4 py-5 sm:px-6 sm:py-5 rounded-2xl overflow-y-auto max-h-[80vh]">
-              <h2 className="text-center text-sm text-gray-300 mb-6">
-                Your subscription limit has been reached 🚀
-              </h2>
-
+              {/* порядок: Select → Smarter → Business */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Smarter Block */}
+                {/* Select */}
                 <div className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-white text-base md:text-lg font-semibold mb-2">Smarter</h3>
-                    <p className="text-gray-300 text-sm mb-4">
-                      Text description for the Smarter plan goes here.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
-                    className={`bg-gray-500 hover:bg-gray-600 text-white ${buttonClasses} w-full`}
-                  >
-                    Upgrade to Smarter
-                  </button>
-                </div>
-
-                {/* Select Block */}
-                <div className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-white text-base md:text-lg font-semibold mb-2">Select</h3>
-                    <p className="text-gray-300 text-sm mb-4">
-                      Text description for the Select plan goes here.
-                    </p>
+                    <h3 className="text-white text-base md:text-lg font-semibold">Select</h3>
+                    <div className="text-white text-sm md:text-base font-semibold mt-1 mb-2">
+                      €149 <span className="text-xs text-white/70 align-middle">/month</span>
+                    </div>
+                    <ul className="space-y-2 text-gray-300 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>All in Freemium</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>{PACKAGE_LIMITS.Select!.requestsPerMonth} AI analyses</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Enhanced Tools</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Private workspace</span>
+                      </li>
+                    </ul>
                   </div>
                   <button
                     onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
-                    className={`bg-gray-500 hover:bg-gray-600 text-white ${buttonClasses} w-full`}
+                    className={`bg-gray-500 hover:bg-gray-600 text-white ${buttonClasses} w-full mt-4`}
                   >
-                    Upgrade to Select
+                    Choose Select
                   </button>
                 </div>
 
-                {/* Business Block */}
+                {/* Smarter */}
                 <div className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-white text-base md:text-lg font-semibold mb-2">Business</h3>
-                    <p className="text-gray-300 text-sm mb-4">
-                      Text description for the Business plan goes here.
-                    </p>
+                    <h3 className="text-white text-base md:text-lg font-semibold">Smarter</h3>
+                    <div className="text-white text-sm md:text-base font-semibold mt-1 mb-2">
+                      €449 <span className="text-xs text-white/70 align-middle">/month</span>
+                    </div>
+                    <ul className="space-y-2 text-gray-300 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>All in Select</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>{PACKAGE_LIMITS.Smarter!.requestsPerMonth} AI analyses</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Professional library</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Onboarding session</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
+                    className={`bg-gray-500 hover:bg-gray-600 text-white ${buttonClasses} w-full mt-4`}
+                  >
+                    Choose Smarter
+                  </button>
+                </div>
+
+                {/* Business */}
+                <div className="bg-gray-800 bg-opacity-50 rounded-xl p-4 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-white text-base md:text-lg font-semibold">Business</h3>
+                    <div className="text-white text-sm md:text-base font-semibold mt-1 mb-2">
+                      €799 <span className="text-xs text-white/70 align-middle">/month</span>
+                    </div>
+                    <ul className="space-y-2 text-gray-300 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>All in Smarter</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>{PACKAGE_LIMITS.Business!.requestsPerMonth} AI analyses</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Premium support</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Training session</span>
+                      </li>
+                    </ul>
                   </div>
                   <button
                     onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
-                    className={`bg-purple-600 hover:bg-purple-700 text-white ${buttonClasses} w-full`}
+                    className={`bg-purple-600 hover:bg-purple-700 text-white ${buttonClasses} w-full mt-4`}
                   >
-                    Upgrade to Business
+                    Choose Business
                   </button>
                 </div>
               </div>

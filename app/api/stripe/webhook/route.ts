@@ -17,6 +17,8 @@ if (!webhookSecret) {
   throw new Error('STRIPE_WEBHOOK_SECRET is not defined');
 }
 
+type InvoiceWithPI = Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+
 export async function POST(req: Request) {
   // 1) Сначала читаем сырое тело и проверяем подпись — без побочных действий до этого
   const rawBody = await req.text();
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutCompleted(session, supabase);
+        await handleCheckoutCompleted(session, supabase); // ✅ основная правка шага 2
         break;
       }
 
@@ -71,11 +73,63 @@ export async function POST(req: Request) {
         break;
       }
 
-      case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const incoming = event.data.object as Stripe.Subscription;
         await handleSubscriptionChange(incoming, supabase);
+        break;
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice & { subscription?: string };
+        let subscriptionId = (invoice.subscription as string) || null;
+
+        // Fallback: у инвойса нет subscriptionId → пробуем найти по customer
+        if (!subscriptionId) {
+          const customerId = (invoice.customer as string) || extractCustomerId(event);
+
+          if (customerId) {
+            try {
+              const list = await stripe.subscriptions.list({
+                customer: customerId,
+                status: 'all',
+                limit: 1, // самый свежий
+              });
+              if (list.data[0]) {
+                subscriptionId = list.data[0].id;
+              }
+            } catch (e) {
+              console.warn(
+                '⚠️ invoice.paid fallback: failed to list subscriptions for customer=',
+                customerId,
+                e
+              );
+            }
+          }
+        }
+
+        if (!subscriptionId) {
+          console.warn('⚠️ invoice.paid: cannot resolve subscriptionId, invoice:', invoice.id);
+          break;
+        }
+
+        const fresh = await stripe.subscriptions.retrieve(subscriptionId);
+        await handleSubscriptionChange(fresh, supabase);
+
+        try {
+          const customerId = fresh.customer as string;
+          await logUserAction({
+            userId: (fresh.metadata?.user_id as string) ?? 'unknown',
+            action: 'stripe:invoice_paid_sync',
+            metadata: {
+              subscriptionId,
+              invoiceId: invoice.id,
+              status: fresh.status,
+              customerId,
+            },
+          });
+        } catch {}
+
         break;
       }
 
@@ -156,6 +210,41 @@ async function handleCheckoutExpired(
       metadata: {},
     });
   }
+}
+
+async function isPaymentSettledForChange(sub: Stripe.Subscription): Promise<boolean> {
+  // Работаем на свежем объекте с развёрнутыми связями, чтобы не ошибиться из-за пустого latest_invoice
+  const fresh = await stripe.subscriptions.retrieve(sub.id, {
+    expand: ['latest_invoice.payment_intent'],
+  });
+
+  const li = fresh.latest_invoice as string | Stripe.Invoice | null | undefined;
+  if (!li) {
+    // Нет latest_invoice → считаем расчёт не завершённым, ждём события invoice.*
+    return false;
+  }
+
+  const invoice: InvoiceWithPI =
+    typeof li === 'string'
+      ? ((await stripe.invoices.retrieve(li)) as InvoiceWithPI)
+      : (li as InvoiceWithPI);
+
+  // Нулевой итог (кредит/купон/прорейтинг) — доступа можно давать сразу
+  const total = (invoice.total ?? invoice.amount_due ?? 0) || 0;
+  if (invoice.status === 'paid' || total <= 0) return true;
+
+  // Если есть PI — ждём успешного списания
+  const piRef = invoice.payment_intent as string | Stripe.PaymentIntent | null | undefined;
+  if (piRef) {
+    const pi =
+      typeof piRef === 'string'
+        ? await stripe.paymentIntents.retrieve(piRef)
+        : (piRef as Stripe.PaymentIntent);
+    return pi.status === 'succeeded';
+  }
+
+  // Инвойс есть, итог положительный, PI нет или не успешен → ещё не оплачено
+  return false;
 }
 
 async function handleSubscriptionChange(
@@ -269,8 +358,23 @@ async function handleSubscriptionChange(
     return;
   }
 
-  // 4) Получаем свежую подписку и синхронизируем
-  const fresh = await stripe.subscriptions.retrieve(incoming.id);
+  const canSyncNow = await isPaymentSettledForChange(incoming);
+  if (!canSyncNow) {
+    console.log('⏳ Defer sync until payment settles', {
+      subscriptionId: incoming.id,
+      reason: 'invoice_not_paid_or_missing',
+      incomingLatestInvoice:
+        typeof incoming.latest_invoice === 'string'
+          ? incoming.latest_invoice
+          : ((incoming.latest_invoice as any)?.id ?? null),
+    });
+    return;
+  }
+
+  const fresh = await stripe.subscriptions.retrieve(incoming.id, {
+    expand: ['latest_invoice.payment_intent'],
+  });
+
   await syncSubscriptionWithSupabase(supabase, userId, fresh);
 
   await logUserAction({

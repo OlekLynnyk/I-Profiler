@@ -3,10 +3,92 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download } from 'lucide-react';
-import jsPDF from 'jspdf';
-import { createPortal } from 'react-dom'; // ✅ добавлено
+import { jsPDF } from 'jspdf';
+import { createPortal } from 'react-dom';
 
-// ✅ Добавлено: AmbientBackdrop — ничего не выносится в отдельный файл
+let __pdfFontReady = false;
+let __wmImgData: string | null = null;
+
+async function __ensureUnicodeFont(doc: any) {
+  if (__pdfFontReady) return;
+  async function ttfToBase64(url: string) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Font load failed: ${url}`);
+    const buf = await res.arrayBuffer();
+    let binary = '';
+    const bytes = new Uint8Array(buf);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  try {
+    const regularB64 = await ttfToBase64('/fonts/NotoSans-Regular.ttf');
+    doc.addFileToVFS('NotoSans-Regular.ttf', regularB64);
+    doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    try {
+      const boldB64 = await ttfToBase64('/fonts/NotoSans-Bold.ttf');
+      doc.addFileToVFS('NotoSans-Bold.ttf', boldB64);
+      doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+    } catch {}
+    __pdfFontReady = true;
+  } catch {}
+}
+
+async function __ensureWatermarkImage() {
+  if (__wmImgData) return __wmImgData;
+  try {
+    const res = await fetch('/images/logo.png');
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const reader = new FileReader();
+    const dataUrl = await new Promise<string>((resolve) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+    __wmImgData = dataUrl;
+    return __wmImgData;
+  } catch {
+    return null;
+  }
+}
+
+function __drawWatermark(doc: any, imgData: string) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+
+  const wmW = Math.min(220, pageW * 0.35);
+  const wmH = wmW * 0.35; // приблизительное соотношение; можно подстроить
+
+  // Ставим лёгкую прозрачность, если поддерживается
+  try {
+    const gs = new doc.GState({ opacity: 0.06 });
+    doc.setGState(gs);
+  } catch {}
+
+  // Рисуем по центру с лёгким наклоном
+  doc.addImage(
+    imgData,
+    'PNG',
+    (pageW - wmW) / 2,
+    (pageH - wmH) / 2,
+    wmW,
+    wmH,
+    undefined,
+    'FAST',
+    -30 // поворот, градусов
+  );
+
+  // Возвращаем нормальную непрозрачность
+  try {
+    const gsReset = new doc.GState({ opacity: 1 });
+    doc.setGState(gsReset);
+  } catch {}
+}
+
+// ✅ AmbientBackdrop — не выносим в отдельный файл
 function AmbientBackdrop({ src }: { src: string }) {
   return (
     <div
@@ -37,7 +119,7 @@ interface SaveProfileModalProps {
   onSave: (name: string, aiResponse: string, comments: string) => Promise<void>;
   defaultProfileName?: string;
   readonly?: boolean;
-  isNew?: boolean; // новый флаг
+  isNew?: boolean;
 }
 
 export default function SaveProfileModal({
@@ -81,20 +163,73 @@ export default function SaveProfileModal({
     onClose();
   };
 
-  const handleDownload = () => {
-    const doc = new jsPDF({
-      unit: 'pt',
-      format: 'a4',
-    });
+  const handleDownload = async () => {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    await __ensureUnicodeFont(doc);
+    const wm = await __ensureWatermarkImage();
 
-    doc.setFont('courier', 'normal');
-    doc.setFontSize(14);
-    doc.text(`Profile name: ${profileName}`, 40, 60);
+    // Шрифт с Unicode (если доступен)
+    try {
+      doc.setFont('NotoSans', 'normal');
+    } catch {
+      doc.setFont('courier', 'normal'); // фолбек
+    }
 
-    doc.setFontSize(12);
-    doc.text('AI Response:', 40, 90);
-    doc.setFontSize(10);
-    doc.text(doc.splitTextToSize(aiResponse || '-', 500), 40, 110);
+    const fontSize = 12;
+    const lineHeight = 16;
+    doc.setFontSize(fontSize);
+
+    const margins = { top: 48, right: 40, bottom: 48, left: 40 };
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const contentW = pageW - margins.left - margins.right;
+    let y = margins.top;
+
+    // Рисуем водяной знак на первой странице
+    if (wm) __drawWatermark(doc, wm);
+
+    const newPage = () => {
+      doc.addPage();
+      // Перерисовать водяной знак на каждой странице
+      if (wm) __drawWatermark(doc, wm);
+      try {
+        doc.setFont('NotoSans', 'normal');
+      } catch {
+        doc.setFont('courier', 'normal');
+      }
+      doc.setFontSize(fontSize);
+      y = margins.top;
+    };
+
+    const writeTitle = (title: string) => {
+      if (!title) return;
+      if (y > pageH - margins.bottom) newPage();
+      try {
+        doc.setFont('NotoSans', 'bold');
+      } catch {}
+      doc.text(title, margins.left, y);
+      try {
+        doc.setFont('NotoSans', 'normal');
+      } catch {}
+      y += lineHeight + 2;
+    };
+
+    const writeParagraph = (text: string) => {
+      const paragraphs = (text ?? '').split(/\n{2,}/); // сохраняем абзацы
+      for (const p of paragraphs) {
+        const lines = doc.splitTextToSize(p, contentW);
+        for (const line of lines) {
+          if (y > pageH - margins.bottom) newPage();
+          doc.text(line, margins.left, y);
+          y += lineHeight;
+        }
+        y += Math.round(lineHeight * 0.5); // отступ между абзацами
+      }
+    };
+
+    writeTitle(`Profile name: ${profileName}`);
+    writeTitle('AI Response');
+    writeParagraph(aiResponse || '-');
 
     doc.save(`${profileName}.pdf`);
   };
@@ -139,7 +274,7 @@ export default function SaveProfileModal({
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
           >
-            {/* ✅ Добавлено: фон с логотипом */}
+            {/* фон с логотипом */}
             <AmbientBackdrop src="/images/ambient.png" />
 
             <div className="flex justify-between items-center mb-5">

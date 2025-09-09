@@ -60,28 +60,29 @@ export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';
 export interface SubscriptionPlanPayload {
   plan: ValidPackageType;
   priceId: string;
-  periodStart: string;
-  periodEnd: string;
+  /** могут временно отсутствовать в ранних эвентах */
+  periodStart?: string | null;
+  periodEnd?: string | null;
   status: NormalizedSubscriptionStatus;
 }
 
+/** статусы — как согласовали на Шаге 3b */
 export function mapStripeStatus(status: string): NormalizedSubscriptionStatus {
   switch (status) {
     case 'active':
     case 'trialing':
-    case 'past_due':
       return 'active';
+    case 'past_due':
+    case 'unpaid':
     case 'incomplete':
     case 'incomplete_expired':
       return 'incomplete';
     case 'canceled':
-    case 'unpaid':
     default:
       return 'canceled';
   }
 }
 
-/** ✅ Единый гейт платных планов */
 export const PAID_PLANS = ['Select', 'Smarter', 'Business'] as const;
 
 export function isPaidPlan(plan: PackageType): plan is ValidPackageType {

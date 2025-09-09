@@ -225,7 +225,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
           <button
             type="submit"
-            disabled={!agree || !email || !password}
+            disabled={!email || !password}
             className="mt-4 w-full rounded-full px-5 py-3
                        bg-purple-500/20 text-white
                        ring-1 ring-purple-300/30 backdrop-blur

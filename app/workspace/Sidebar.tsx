@@ -81,22 +81,22 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         >
           <MonthlyUsage refreshToken={refreshToken} usageBump={usageBump} />
           <button
-            onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
-            className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
-          >
-            Upgrade to Smarter
-          </button>
-          <button
             onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
             className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
           >
-            Upgrade to Select
+            Choose Select · 15/mo
+          </button>
+          <button
+            onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
+            className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
+          >
+            Choose Smarter · 75/mo
           </button>
           <button
             onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
             className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl w-full"
           >
-            Upgrade to Business
+            Choose Business · 200/mo
           </button>
         </div>
         // УБРАНО: </PlanUsageProvider>

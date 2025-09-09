@@ -4,9 +4,15 @@ import { createServerClientForApi } from '@/lib/supabase/server';
 import { stripe } from '@/lib/stripe';
 import { env } from '@/env.server';
 import { logUserAction } from '@/lib/logger';
+import type Stripe from 'stripe';
 
 const appUrl = env.NEXT_PUBLIC_APP_URL;
 if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not defined');
+
+// Локальный тип: расширяем Invoice полем payment_intent (из-за несовпадения версий типов)
+type InvoiceWithPI = Stripe.Invoice & {
+  payment_intent?: string | Stripe.PaymentIntent | null;
+};
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
@@ -88,7 +94,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3) активная платная → апгрейд действующей подписки, без портала
+  // 3) активная платная → апгрейд действующей подписки, без портала (SCA-safe)
   if (isActivePaid) {
     try {
       // если уже на этом же price — менять нечего
@@ -117,16 +123,139 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const updated = await stripe.subscriptions.update(currentSubId, {
-        items: [{ id: currentItemId, price: priceId, quantity: 1 }],
-        proration_behavior: 'create_prorations',
-        payment_behavior: 'allow_incomplete',
-        metadata: { user_id: user.id },
-      });
+      // опциональная идемпотентность из заголовка клиента
+      const idempotencyKey = req.headers.get('x-idempotency-key') ?? undefined;
 
+      const updated = await stripe.subscriptions.update(
+        currentSubId,
+        {
+          items: [{ id: currentItemId, price: priceId, quantity: 1 }],
+          proration_behavior: 'always_invoice',
+          payment_behavior: 'pending_if_incomplete',
+          expand: ['latest_invoice.payment_intent'],
+        },
+        idempotencyKey ? { idempotencyKey } : undefined
+      );
+
+      // ── разбор статуса платежа (прорейт/доплата)
+      const latestInvoiceRaw = updated.latest_invoice as string | Stripe.Invoice | null | undefined;
+
+      let paymentIntent: Stripe.PaymentIntent | null = null;
+      if (latestInvoiceRaw && typeof latestInvoiceRaw !== 'string') {
+        const inv = latestInvoiceRaw as InvoiceWithPI;
+        const piField = inv.payment_intent;
+
+        if (piField) {
+          paymentIntent =
+            typeof piField === 'string'
+              ? await stripe.paymentIntents.retrieve(piField)
+              : (piField as Stripe.PaymentIntent);
+        }
+      }
+
+      if (paymentIntent) {
+        const status = paymentIntent.status;
+
+        if (status === 'requires_action') {
+          await logUserAction({
+            userId: user.id,
+            action: 'stripe:subscription_upgrade_requires_action',
+            metadata: {
+              fromPrice: subData?.stripe_price_id ?? null,
+              toPrice: priceId,
+              subscriptionId: updated.id,
+              paymentIntentId: paymentIntent.id,
+            },
+          });
+
+          return NextResponse.json(
+            {
+              kind: 'upgraded_requires_action',
+              requiresAction: true,
+              clientSecret: paymentIntent.client_secret,
+              subscriptionId: updated.id,
+            },
+            { status: 200 }
+          );
+        }
+
+        if (status === 'requires_payment_method') {
+          await logUserAction({
+            userId: user.id,
+            action: 'stripe:subscription_upgrade_requires_payment_method',
+            metadata: {
+              fromPrice: subData?.stripe_price_id ?? null,
+              toPrice: priceId,
+              subscriptionId: updated.id,
+              paymentIntentId: paymentIntent.id,
+            },
+          });
+
+          // карта недействительна/отклонена → фронту показать обновление PM
+          return NextResponse.json(
+            {
+              error: 'payment_method_required',
+              message: 'A valid payment method is required to complete the upgrade.',
+              subscriptionId: updated.id,
+            },
+            { status: 402 } // Payment Required
+          );
+        }
+
+        // иные промежуточные статусы: processing/requires_confirmation → считаем принятым
+        if (status === 'processing' || status === 'requires_confirmation') {
+          await logUserAction({
+            userId: user.id,
+            action: 'stripe:subscription_upgrade_processing',
+            metadata: {
+              fromPrice: subData?.stripe_price_id ?? null,
+              toPrice: priceId,
+              subscriptionId: updated.id,
+              paymentIntentId: paymentIntent.id,
+              status,
+            },
+          });
+
+          return NextResponse.json(
+            {
+              ok: true,
+              kind: 'upgraded_processing',
+              subscriptionId: updated.id,
+              url: `${appUrl}/account?billing=processing`,
+            },
+            { status: 200 }
+          );
+        }
+
+        // успех
+        if (status === 'succeeded') {
+          await logUserAction({
+            userId: user.id,
+            action: 'stripe:subscription_upgraded',
+            metadata: {
+              fromPrice: subData?.stripe_price_id ?? null,
+              toPrice: priceId,
+              subscriptionId: updated.id,
+              paymentIntentId: paymentIntent.id,
+            },
+          });
+
+          return NextResponse.json(
+            {
+              ok: true,
+              kind: 'upgraded',
+              subscriptionId: updated.id,
+              url: `${appUrl}/account?billing=updated`,
+            },
+            { status: 200 }
+          );
+        }
+      }
+
+      // кейс без платежа (нет доплаты/прорейт нулевой) — просто успех
       await logUserAction({
         userId: user.id,
-        action: 'stripe:subscription_upgraded',
+        action: 'stripe:subscription_upgraded_no_payment_intent',
         metadata: {
           fromPrice: subData?.stripe_price_id ?? null,
           toPrice: priceId,
@@ -135,7 +264,12 @@ export async function POST(req: NextRequest) {
       });
 
       return NextResponse.json(
-        { ok: true, kind: 'upgraded', subscriptionId: updated.id },
+        {
+          ok: true,
+          kind: 'upgraded',
+          subscriptionId: updated.id,
+          url: `${appUrl}/account?billing=updated`,
+        },
         { status: 200 }
       );
     } catch (e: any) {
@@ -163,7 +297,9 @@ export async function POST(req: NextRequest) {
       success_url: `${appUrl}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/?checkout=cancel`,
       metadata: { user_id: user.id },
-      client_reference_id: user.id, // для трассировки (не влияет на бизнес-логику)
+      client_reference_id: user.id,
+      payment_method_collection: 'always',
+      subscription_data: { metadata: { user_id: user.id } },
     });
 
     await logUserAction({
