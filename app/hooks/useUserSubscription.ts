@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { PackageType } from '@/types/plan';
-import { getPackageFromServer, hasActiveSubscription } from '@/lib/subscription';
 
 type SubscriptionData = {
   plan: PackageType;
@@ -24,8 +23,9 @@ export function useUserSubscription() {
       try {
         const supabase = createPagesBrowserClient();
 
-        const plan = await getPackageFromServer(supabase);
-        const isActive = await hasActiveSubscription(supabase);
+        const res = await fetch('/api/subscription', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to load subscription');
+        const { plan, isActive } = await res.json();
 
         setData({
           plan,
