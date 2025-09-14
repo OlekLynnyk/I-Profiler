@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthProvider';
+import GlobalLoading from '@/app/loading';
 
 const ACCENT = '#A855F7';
 
@@ -128,7 +129,7 @@ export default function ProfileSettingsPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-white/60 text-sm">Loading…</div>;
+  if (loading) return <GlobalLoading />;
 
   return (
     <div className="min-h-screen w-full bg-[#1A1E23] text-white">

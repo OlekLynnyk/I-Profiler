@@ -1,26 +1,25 @@
+// app/api/internal/reset-monthly/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import dayjs from 'dayjs';
 import { env } from '@/env.server';
 
-// Вытаскиваем period_end (в секундах) из payload Stripe invoice.payment_succeeded
-function extractPeriodEndSeconds(payload: any): number | null {
-  // Стандартное место у invoice
-  const p1 = payload?.data?.object?.period_end;
-  if (typeof p1 === 'number') return p1;
+type LimitsRow = {
+  user_id: string;
+  plan: string;
+  monthly_reset_at: string | null;
+};
 
-  // Часто period_end лежит в первой линии подписки
-  const p2 = payload?.data?.object?.lines?.data?.[0]?.period?.end;
-  if (typeof p2 === 'number') return p2;
+type SubRow = {
+  user_id: string;
+  status: string | null;
+  subscription_ends_at: string | null;
+};
 
-  // Иногда в объекте подписки
-  const p3 = payload?.data?.object?.subscription?.current_period_end;
-  if (typeof p3 === 'number') return p3;
+const CHUNK = 200;
 
-  return null;
-}
-
-// 🔐 Безопасность: только если секрет верен
+// 🔐 Только с секретом
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('authorization');
   if (secret !== `Bearer ${env.SYNC_SECRET_KEY}`) {
@@ -28,72 +27,90 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createServerClientForApi();
+  const nowMs = dayjs().valueOf();
 
-  // 📥 Берём лимиты (все пользователи)
-  const { data: limitsData, error: limitsError } = await supabase
-    .from('user_limits')
-    .select('user_id, plan, monthly_reset_at');
+  let offset = 0;
+  let totalUpdated = 0;
 
-  if (limitsError || !limitsData) {
-    return NextResponse.json({ error: 'Failed to fetch user limits' }, { status: 500 });
-  }
+  while (true) {
+    // 1) Активные, не Freemium — партиями
+    const { data: limitsData, error: limitsError } = await supabase
+      .from('user_limits')
+      .select('user_id, plan, monthly_reset_at')
+      .eq('active', true)
+      .neq('plan', 'Freemium')
+      .order('user_id', { ascending: true })
+      .range(offset, offset + CHUNK - 1);
 
-  type MonthlyUpdate = { user_id: string; monthly_reset_at: string; used_monthly: number };
-  const updates: MonthlyUpdate[] = [];
+    if (limitsError) {
+      return NextResponse.json({ error: 'Failed to fetch user limits' }, { status: 500 });
+    }
+    if (!limitsData || limitsData.length === 0) break;
 
-  for (const user of limitsData) {
-    const { user_id, plan, monthly_reset_at } = user;
+    const paidLimits: LimitsRow[] = limitsData;
 
-    // 1) Freemium: по политике — никогда не сбрасываем
-    if (plan === 'Freemium') continue;
+    // 2) Подтягиваем подписки одной пачкой
+    const userIds = paidLimits.map((r) => r.user_id);
+    const { data: subs, error: subsError } = await supabase
+      .from('user_subscription')
+      .select('user_id, status, subscription_ends_at')
+      .in('user_id', userIds);
 
-    // 2) Платные: сбрасываем ТОЛЬКО при подтверждённой оплате по invoice.payment_succeeded
-    const { data: log, error: logErr } = await supabase
-      .from('billing_logs')
-      .select('created_at, payload')
-      .eq('user_id', user_id)
-      .eq('event_type', 'invoice.payment_succeeded')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (logErr || !log) {
-      // Нет подтверждённой оплаты — ничего не делаем
-      continue;
+    if (subsError) {
+      return NextResponse.json({ error: 'Failed to fetch subscriptions' }, { status: 500 });
     }
 
-    const periodEndSec = extractPeriodEndSeconds(log.payload);
-    if (!periodEndSec) {
-      // Не смогли распарсить период — перестрахуемся: не сбрасываем
-      continue;
-    }
-
-    const paidPeriodEndIso = dayjs.unix(periodEndSec).toISOString();
-
-    // Сбрасываем только если это НОВЫЙ оплаченный период
-    const hasResetPoint = !!monthly_reset_at;
-    const isNewPaidPeriod =
-      !hasResetPoint || dayjs(paidPeriodEndIso).isAfter(dayjs(monthly_reset_at!));
-
-    if (isNewPaidPeriod) {
-      updates.push({
-        user_id,
-        used_monthly: 0,
-        monthly_reset_at: paidPeriodEndIso,
+    const subMap = new Map<string, SubRow>();
+    for (const s of subs ?? []) {
+      subMap.set(s.user_id, {
+        user_id: s.user_id,
+        status: s.status ?? null,
+        subscription_ends_at: s.subscription_ends_at ?? null,
       });
     }
+
+    type MonthlyUpdate = { user_id: string; used_monthly: number; monthly_reset_at: string };
+    const updates: MonthlyUpdate[] = [];
+
+    // 3) Сброс ровно при наступлении subscription_ends_at, один раз за период
+    for (const l of paidLimits) {
+      const sub = subMap.get(l.user_id);
+      if (!sub) continue;
+
+      const endsAtIso = sub.subscription_ends_at;
+      if (sub.status !== 'active' || !endsAtIso) continue;
+
+      const endsAtMs = dayjs(endsAtIso).valueOf();
+      const due = nowMs >= endsAtMs;
+
+      const alreadyResetForThisPeriod =
+        l.monthly_reset_at && dayjs(l.monthly_reset_at).valueOf() >= endsAtMs;
+
+      if (due && !alreadyResetForThisPeriod) {
+        updates.push({
+          user_id: l.user_id,
+          used_monthly: 0,
+          monthly_reset_at: endsAtIso, // фиксируем ПРОШЕДШИЙ рубеж
+        });
+      }
+    }
+
+    // 4) Применяем обновления
+    for (const u of updates) {
+      await supabase
+        .from('user_limits')
+        .update({
+          used_monthly: u.used_monthly,
+          monthly_reset_at: u.monthly_reset_at,
+        })
+        .eq('user_id', u.user_id);
+    }
+
+    totalUpdated += updates.length;
+
+    if (paidLimits.length < CHUNK) break;
+    offset += CHUNK;
   }
 
-  // 💾 Пишем обновления
-  for (const u of updates) {
-    await supabase
-      .from('user_limits')
-      .update({
-        used_monthly: u.used_monthly,
-        monthly_reset_at: u.monthly_reset_at,
-      })
-      .eq('user_id', u.user_id);
-  }
-
-  return NextResponse.json({ success: true, updated: updates.length });
+  return NextResponse.json({ success: true, updated: totalUpdated });
 }

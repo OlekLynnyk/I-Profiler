@@ -73,14 +73,23 @@ export async function POST(req: Request) {
         break;
       }
 
+      // новая подписка → сразу синкаем периоды/план
+      case 'customer.subscription.created': {
+        const sub = event.data.object as Stripe.Subscription;
+        await handleSubscriptionChange(sub, supabase);
+        break;
+      }
+
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const incoming = event.data.object as Stripe.Subscription;
+
         await handleSubscriptionChange(incoming, supabase);
         break;
       }
 
-      case 'invoice.paid': {
+      case 'invoice.paid':
+      case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice & { subscription?: string };
         let subscriptionId = (invoice.subscription as string) || null;
 
@@ -253,23 +262,22 @@ async function handleSubscriptionChange(
 ) {
   const customerId = incoming.customer as string;
 
-  // 0) Самый точный источник — метадата самой подписки (если есть)
+  // 0) Не доверяем слепо subscription.metadata.user_id: сначала читаем, но перепроверим по БД
   let userId: string | null = (incoming.metadata?.user_id as string | undefined) ?? null;
 
-  // 1) По текущему маппингу в БД
-  if (!userId) {
-    const { data, error } = await supabase
-      .from('user_subscription')
-      .select('user_id')
-      .eq('stripe_customer_id', customerId)
-      .maybeSingle();
+  // 1) Маппинг из БД — источник истины (перебивает metadata при конфликте)
+  const { data: mapRow, error: mapErr } = await supabase
+    .from('user_subscription')
+    .select('user_id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle();
 
-    if (error) {
-      console.error('❌ Lookup error by customerId:', customerId, error);
-    }
-    if (data?.user_id) {
-      userId = data.user_id;
-    }
+  if (mapErr) {
+    console.error('❌ Lookup error by customerId:', customerId, mapErr);
+  }
+  const mappedUserId = mapRow?.user_id ?? null;
+  if (mappedUserId && userId !== mappedUserId) {
+    userId = mappedUserId;
   }
 
   // 2) Fallback: из customer.metadata.user_id (и восстановить маппинг)
@@ -358,7 +366,86 @@ async function handleSubscriptionChange(
     return;
   }
 
-  const canSyncNow = await isPaymentSettledForChange(incoming);
+  // ✅ Guard: user_id должен существовать в profiles, иначе не синкаем
+  const { data: profileRow, error: profileErr } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (profileErr) {
+    console.error('❌ profiles lookup error for user_id=', userId, profileErr);
+    return;
+  }
+
+  if (!profileRow?.id) {
+    console.warn('⚠️ Profile missing for user_id=', userId, ' — skipping sync.');
+    return;
+  }
+
+  // 🔒 Выбираем «победителя» между входящим и тем, что в БД — без зависимости от current_period_start.
+  const { data: currentRow } = await supabase
+    .from('user_subscription')
+    .select('stripe_subscription_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  const currentSubId = currentRow?.stripe_subscription_id ?? null;
+
+  // сравнение по статусу и времени создания; priceId — доп. сигнал смены плана
+  const statusRank = (s: Stripe.Subscription['status']) => {
+    switch (s) {
+      case 'active':
+        return 5;
+      case 'trialing':
+        return 4;
+      case 'past_due':
+        return 3;
+      case 'incomplete':
+        return 2;
+      default:
+        return 0; // canceled/unpaid/incomplete_expired и пр.
+    }
+  };
+
+  if (currentSubId && incoming.id !== currentSubId) {
+    const [incomingFresh, currentFresh] = await Promise.all([
+      stripe.subscriptions.retrieve(incoming.id),
+      stripe.subscriptions.retrieve(currentSubId).catch(() => null),
+    ]);
+
+    const rankA = statusRank(incomingFresh.status);
+    const rankB = currentFresh ? statusRank(currentFresh.status) : -1;
+
+    const createdA = incomingFresh.created ?? 0;
+    const createdB = currentFresh?.created ?? 0;
+
+    const priceA = incomingFresh.items?.data?.[0]?.price?.id ?? null;
+    const priceB = currentFresh?.items?.data?.[0]?.price?.id ?? null;
+    const priceChanged = !!(priceA && priceB && priceA !== priceB);
+
+    const preferIncoming =
+      rankA > rankB || (rankA === rankB && (createdA > createdB || priceChanged));
+
+    if (!preferIncoming) {
+      console.log('↩️ Ignore non-winner subscription event', {
+        userId,
+        incomingId: incoming.id,
+        currentSubId,
+        rankA,
+        rankB,
+        createdA,
+        createdB,
+        priceA,
+        priceB,
+      });
+      return;
+    }
+  }
+
+  // canceled применяем сразу; иначе ждём расчёт/оплату
+  const canSyncNow =
+    incoming.status === 'canceled' ? true : await isPaymentSettledForChange(incoming);
   if (!canSyncNow) {
     console.log('⏳ Defer sync until payment settles', {
       subscriptionId: incoming.id,

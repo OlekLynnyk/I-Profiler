@@ -22,19 +22,31 @@ export function useUserSubscription() {
       setIsLoading(true);
       try {
         const supabase = createPagesBrowserClient();
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
 
-        const res = await fetch('/api/subscription', { cache: 'no-store' });
+        const res = await fetch('/api/subscription', {
+          method: 'GET',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          cache: 'no-store',
+        });
+
         if (!res.ok) throw new Error('Failed to load subscription');
-        const { plan, isActive } = await res.json();
+
+        const json = await res.json();
+        const plan = (json.plan ?? 'Freemium') as PackageType;
+        const isActive =
+          typeof json.isActive === 'boolean' ? json.isActive : (json.status as string) === 'active';
 
         setData({
           plan,
           status: isActive ? 'active' : 'inactive',
-          next_billing_date: null,
-          trial_end_date: null,
-          cancel_at_period_end: false,
-          payment_method: null,
-          package_type: 'Freemium',
+          next_billing_date: json.nextBillingDate ?? null,
+          trial_end_date: json.trialEndDate ?? null,
+          cancel_at_period_end: Boolean(json.cancelAtPeriodEnd),
+          payment_method: json.paymentMethod ?? null,
+          // пока не active — явно показываем Freemium
+          package_type: isActive ? (json.packageType ?? plan) : 'Freemium',
         });
       } catch (e: any) {
         setError(e.message);

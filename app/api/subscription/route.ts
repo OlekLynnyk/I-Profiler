@@ -10,12 +10,13 @@ import { logUserAction } from '@/lib/logger';
 
 type SubscriptionDTO = {
   plan: string;
+  packageType: string;
   status: string;
+  isActive: boolean; // ✅ добавлено
   nextBillingDate: string;
   trialEndDate: string;
   cancelAtPeriodEnd: boolean;
   paymentMethod: string;
-  packageType: string;
 };
 
 type SubscriptionRow = {
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
         plan: 'Freemium',
         packageType: 'Freemium',
         status: 'inactive',
+        isActive: false, // ✅
         nextBillingDate: '',
         trialEndDate: '',
         cancelAtPeriodEnd: false,
@@ -101,6 +103,7 @@ export async function POST(req: NextRequest) {
     const packageType = isValidPackageType(pkgRaw) ? pkgRaw : 'Freemium';
     const planForUi = sub.plan ?? packageType ?? 'Freemium';
     const status = sub.status ?? 'inactive';
+    const isActive = status === 'active'; // ✅
     const nextBillingDateFromDb = sub.subscription_ends_at ?? '';
 
     let nextBillingDate = nextBillingDateFromDb || '';
@@ -147,10 +150,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ✅ ключ: если НЕ active — возвращаем Freemium (UI не переключится раньше оплаты)
     const dto: SubscriptionDTO = {
-      plan: planForUi,
-      packageType,
+      plan: isActive ? planForUi : 'Freemium', // ✅
+      packageType: isActive ? packageType : 'Freemium', // ✅
       status,
+      isActive, // ✅
       nextBillingDate,
       trialEndDate,
       cancelAtPeriodEnd,
@@ -168,4 +173,14 @@ export async function POST(req: NextRequest) {
     console.error('❌ API /api/subscription error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+export async function GET(req: NextRequest) {
+  const res = await POST(req);
+  try {
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  } catch {
+    /* no-op */
+  }
+  return res;
 }

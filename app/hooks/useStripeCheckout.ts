@@ -18,7 +18,8 @@ export function useStripeCheckout() {
       const userId = data.session?.user.id;
       const token = data.session?.access_token;
 
-      const res = await fetch('/api/stripe/create-checkout-session', {
+      // 1) PREVIEW (Paid→Paid): сервер вернёт requiresConfirmation=true
+      let res = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         body: JSON.stringify({ priceId }),
         headers: {
@@ -27,22 +28,77 @@ export function useStripeCheckout() {
         },
       });
 
-      // Пытаемся распарсить JSON даже при !ok, чтобы показать текст ошибки с бэка
       let json: any = null;
       try {
         json = await res.json();
-      } catch {
-        /* игнорируем, останется null */
-      }
+      } catch {}
 
       if (!res.ok) {
+        // На этом шаге не должно быть 402, но подстрахуемся
+        if (json?.portalUrl) {
+          window.location.href = json.portalUrl;
+          return;
+        }
+        if (json?.requiresAction && (json?.hostedInvoiceUrl || json?.url)) {
+          window.location.href = json.hostedInvoiceUrl || json.url;
+          return;
+        }
         setError(json?.error ?? 'Checkout failed. Try again.');
         return;
       }
 
-      // ✅ Новое: поддержка портала для активных подписок
-      const portalUrl: string | undefined = json?.portalUrl;
-      if (portalUrl) {
+      // 2) Если это апгрейд — показываем сумму и спрашиваем подтверждение
+      if (json?.requiresConfirmation) {
+        const total = json.preview?.total ?? 0;
+        const currency = (json.preview?.currency ?? 'eur').toUpperCase();
+        const ok = window.confirm(
+          `С вашего счёта будет списано ${(total / 100).toFixed(2)} ${currency}. Продолжить?`
+        );
+        if (!ok) return;
+
+        // 3) CONFIRM — апгрейд. Здесь возможны 200 (нулевой счёт) или 402 (доплата/ПМ/3DS)
+        res = await fetch('/api/stripe/create-checkout-session', {
+          method: 'POST',
+          body: JSON.stringify({ priceId, confirm: true }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        try {
+          json = await res.json();
+        } catch {}
+
+        // 402 → редирект в hostedInvoice или в Портал
+        if (!res.ok) {
+          if (json?.portalUrl) {
+            window.location.href = json.portalUrl;
+            return;
+          }
+          if (json?.requiresAction && (json?.hostedInvoiceUrl || json?.url)) {
+            window.location.href = json.hostedInvoiceUrl || json.url;
+            return;
+          }
+          setError(json?.error ?? 'Upgrade failed. Try again.');
+          return;
+        }
+
+        // 200 с requiresAction (на всякий случай) → редирект
+        if (json?.requiresAction && (json?.hostedInvoiceUrl || json?.url)) {
+          window.location.href = json.hostedInvoiceUrl || json.url;
+          return;
+        }
+
+        // 200 нулевой счёт → успех
+        if (json?.url) {
+          window.location.href = json.url;
+          return;
+        }
+      }
+
+      // 4) Free→Paid (Checkout Session): сервер вернёт session.url
+      if (json?.portalUrl) {
         if (userId) {
           await logUserAction({
             userId,
@@ -50,18 +106,13 @@ export function useStripeCheckout() {
             metadata: { priceId },
           });
         }
-        window.location.href = portalUrl;
+        window.location.href = json.portalUrl;
         return;
       }
 
-      // Старый путь: обычный Checkout Session
       const url: string | undefined = json?.url;
       if (userId) {
-        await logUserAction({
-          userId,
-          action: 'stripe:checkout:initiate',
-          metadata: { priceId },
-        });
+        await logUserAction({ userId, action: 'stripe:checkout:initiate', metadata: { priceId } });
       }
 
       if (url) {

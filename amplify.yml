@@ -18,6 +18,7 @@ frontend:
         - printf "NEXT_PUBLIC_SITE_URL=%s\n" "$NEXT_PUBLIC_SITE_URL" >> .env.production
         - printf "USE_EMAIL_MOCK=%s\n" "$USE_EMAIL_MOCK" >> .env.production
         - printf "SENTRY_DSN=%s\n" "$SENTRY_DSN" >> .env.production
+        - printf "SYNC_SECRET_KEY=%s\n" "$SYNC_SECRET_KEY" >> .env.production 
         - npm run build
   artifacts:
     baseDirectory: .next

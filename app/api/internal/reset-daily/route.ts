@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClientForApi } from '@/lib/supabase/server';
 import { DateTime } from 'luxon';
-import { env } from '@/env.server';
+import { createClient } from '@supabase/supabase-js';
 
 type UserLimit = {
   user_id: string;
@@ -13,52 +12,75 @@ type UserLimit = {
   timezone?: string | null;
 };
 
+const CHUNK = 200;
+
 export async function POST(req: NextRequest) {
+  // 1) Проверяем секрет
   const secret = req.headers.get('authorization');
-  if (secret !== `Bearer ${env.SYNC_SECRET_KEY}`) {
+  const expectedKey = (process.env.SYNC_SECRET_KEY ?? '').trim();
+
+  if (!expectedKey) {
+    console.error('❌ SYNC_SECRET_KEY not set in environment');
+    return new Response('Server misconfigured', { status: 500 });
+  }
+
+  if (secret !== `Bearer ${expectedKey}`) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const supabase = await createServerClientForApi();
+  // 2) Создаём service-role клиент Supabase
+  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    db: { schema: 'public' },
+  });
 
-  const { data, error } = await supabase
-    .from('user_limits')
-    .select(
-      'user_id, used_today, used_monthly, monthly_limit, daily_limit, limit_reset_at, timezone'
-    )
-    .eq('active', true);
-
-  if (error || !data || !Array.isArray(data)) {
-    return NextResponse.json({ error: 'Failed to fetch user limits' }, { status: 500 });
-  }
-
-  const users: UserLimit[] = data;
   const nowUtc = DateTime.utc();
+  let offset = 0;
+  let totalUpdated = 0;
+  let totalScanned = 0;
 
-  const updates: { user_id: string; used_today: number; limit_reset_at: string }[] = [];
+  while (true) {
+    const { data, error } = await supabase
+      .from('user_limits')
+      .select(
+        'user_id, used_today, used_monthly, monthly_limit, daily_limit, limit_reset_at, timezone'
+      )
+      .eq('active', true)
+      .order('user_id', { ascending: true })
+      .range(offset, offset + CHUNK - 1);
 
-  for (const user of users) {
-    const { user_id, limit_reset_at, timezone } = user;
+    if (error) {
+      console.error('❌ read_batch_failed', error);
+      return NextResponse.json({ error: 'Failed to fetch user limits' }, { status: 500 });
+    }
+    if (!data || data.length === 0) break;
 
-    const userTz = timezone || 'UTC';
-    const nowLocal = nowUtc.setZone(userTz);
+    totalScanned += data.length;
 
-    // limit_reset_at — "следующая точка сброса" в UTC
-    const nextResetLocal = limit_reset_at
-      ? DateTime.fromISO(limit_reset_at, { zone: userTz })
-      : null;
+    const updates: { user_id: string; used_today: number; limit_reset_at: string }[] = [];
 
-    // Сбрасываем, когда наступил новый локальный день (прошли локальную границу следующего сброса)
-    const isResetDue = !nextResetLocal || nowLocal >= nextResetLocal;
+    for (const user of data as UserLimit[]) {
+      const { user_id, limit_reset_at, timezone } = user;
 
-    if (isResetDue) {
-      const nextLocalReset = nowLocal.plus({ days: 1 }).startOf('day'); // следующая локальная полночь
-      const nextResetIso = nextLocalReset.toUTC().toISO(); // string | null по типам Luxon
+      const userTz = timezone || 'UTC';
+      const nowLocal = nowUtc.setZone(userTz);
 
-      if (!nextResetIso) {
-        // крайне маловероятно, но защищаем тип: если ISO не получилось — пропускаем пользователя
-        continue;
+      let nextResetLocal: DateTime | null = null;
+      if (limit_reset_at) {
+        const parsed = DateTime.fromISO(limit_reset_at, { zone: 'utc' });
+        if (parsed.isValid) {
+          nextResetLocal = parsed.setZone(userTz);
+        }
       }
+      const lastResetLocal = nextResetLocal ? nextResetLocal.minus({ days: 1 }) : null;
+
+      const isNewLocalDay =
+        !lastResetLocal || nowLocal.startOf('day') > lastResetLocal.startOf('day');
+
+      if (!isNewLocalDay) continue;
+
+      const nextLocalReset = nowLocal.plus({ days: 1 }).startOf('day');
+      const nextResetIso = nextLocalReset.toUTC().toISO();
+      if (!nextResetIso) continue;
 
       updates.push({
         user_id,
@@ -66,17 +88,54 @@ export async function POST(req: NextRequest) {
         limit_reset_at: nextResetIso,
       });
     }
+
+    let batchUpdated = 0;
+    let batchErrors = 0;
+
+    for (const u of updates) {
+      const { error: updErr } = await supabase
+        .from('user_limits')
+        .update({
+          used_today: u.used_today,
+          limit_reset_at: u.limit_reset_at,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', u.user_id);
+
+      if (updErr) {
+        batchErrors++;
+        console.error('❌ update_failed', { user_id: u.user_id, error: updErr });
+      } else {
+        batchUpdated++;
+      }
+    }
+
+    totalUpdated += batchUpdated;
+
+    if (batchErrors > 0) {
+      return NextResponse.json(
+        {
+          error: 'partial failure',
+          scanned: data.length,
+          updated: batchUpdated,
+          updateErrors: batchErrors,
+        },
+        { status: 500 }
+      );
+    }
+
+    if (data.length < CHUNK) break;
+    offset += CHUNK;
   }
 
-  for (const u of updates) {
-    await supabase
-      .from('user_limits')
-      .update({
-        used_today: u.used_today,
-        limit_reset_at: u.limit_reset_at,
-      })
-      .eq('user_id', u.user_id);
-  }
+  console.log(
+    JSON.stringify({
+      event: 'reset_daily_done',
+      scanned: totalScanned,
+      updated: totalUpdated,
+      ts: new Date().toISOString(),
+    })
+  );
 
-  return NextResponse.json({ success: true, updated: updates.length });
+  return NextResponse.json({ success: true, scanned: totalScanned, updated: totalUpdated });
 }

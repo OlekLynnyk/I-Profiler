@@ -154,6 +154,28 @@ export default function Header({ onLoginClick }: HeaderProps) {
                   >
                     Pricing
                   </button>
+
+                  {/* Disabled until the Gallery page/section is ready */}
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    title="Gallery — coming soon"
+                    className={`
+                      relative transition-colors rounded-md px-1
+                      text-white/60 hover:text-white/80
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
+                      after:content-[''] after:pointer-events-none
+                      after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1
+                      after:h-[2px] after:w-0
+                      after:bg-gradient-to-r after:from-transparent after:via-[#A855F7]/35 after:to-transparent
+                      after:transition-[width] after:duration-200
+                      hover:after:w-[120px]
+                      disabled:cursor-not-allowed disabled:opacity-60
+                    `}
+                  >
+                    Gallery
+                  </button>
                 </nav>
               )}
             </div>

@@ -5,6 +5,7 @@ import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { useStripeCheckout } from '@/app/hooks/useStripeCheckout';
 import { useUserSubscription } from '@/app/hooks/useUserSubscription';
 import { motion, useReducedMotion } from 'framer-motion';
+import GlobalLoading from '@/app/loading';
 import {
   PACKAGE_TO_PRICE,
   isPaidPlan,
@@ -19,6 +20,8 @@ export default function SubscriptionSettings() {
   const { data, isLoading, error } = useUserSubscription();
 
   const [billingHistory, setBillingHistory] = useState<any[]>([]);
+  const [showAllInvoices, setShowAllInvoices] = useState(false);
+
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
 
@@ -38,7 +41,7 @@ export default function SubscriptionSettings() {
 
       if (res.ok) {
         const { invoices } = await res.json();
-        setBillingHistory(invoices);
+        setBillingHistory(invoices ?? []);
       }
     };
 
@@ -112,7 +115,7 @@ export default function SubscriptionSettings() {
     }
   };
 
-  if (isLoading) return <div className="p-8 text-white/60">Loading subscription…</div>;
+  if (isLoading) return <GlobalLoading />;
   if (error || !data)
     return <div className="p-8 text-red-300">Error: {String(error || 'unknown')}</div>;
 
@@ -123,31 +126,42 @@ export default function SubscriptionSettings() {
     trial_end_date: trialEndDate,
     cancel_at_period_end: cancelAtPeriodEnd,
     payment_method: paymentMethod,
-    package_type: packageType,
   } = data;
 
-  // Нормализация текущего плана и гейты для действий
+  // Нормализация текущего плана
   const currentPlan: ValidPackageType = isValidPackageType(plan)
     ? (plan as ValidPackageType)
     : 'Freemium';
-  const isFreemium = currentPlan === 'Freemium';
-  const canUpgradeTo = (target: ValidPackageType) =>
-    currentPlan !== target && Boolean(PACKAGE_TO_PRICE[target]);
 
   const statusBadge = cancelAtPeriodEnd
     ? {
-        text: `Ends on ${nextBillingDate}`,
+        text: `Ends on ${nextBillingDate ?? ''}`.trim(),
         cls: 'bg-amber-500/15 text-amber-300 ring-amber-400/20',
       }
-    : { text: 'Active & renewing', cls: 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/20' };
+    : {
+        text: isPaidPlan(currentPlan) ? 'Active & renewing' : 'Inactive',
+        cls: isPaidPlan(currentPlan)
+          ? 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/20'
+          : 'bg-white/10 text-white/70 ring-white/15',
+      };
+
+  // История: сортировка и 3 последних
+  const sortedInvoices = [...billingHistory].sort((a, b) => {
+    const da = new Date(a.date as string).getTime();
+    const db = new Date(b.date as string).getTime();
+    return db - da;
+  });
+  const visibleInvoices = showAllInvoices ? sortedInvoices : sortedInvoices.slice(0, 3);
+  const hasMoreInvoices = sortedInvoices.length > 3;
 
   return (
     <div className="min-h-screen w-full bg-[#1A1E23] text-white">
-      <div className="mx-auto max-w-3xl px-4 py-10 md:py-14">
-        {/* верхний мягкий glow */}
+      {/* уменьшил верхний отступ страницы */}
+      <div className="mx-auto max-w-3xl px-4 pt-2 md:pt-4 pb-10 md:pb-12">
+        {/* glow оставлен, но компактнее */}
         <div
           aria-hidden
-          className="pointer-events-none -mb-6 mx-auto h-[120px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl"
+          className="pointer-events-none -mb-1 mx-auto h-[64px] w-[min(680px,90%)] rounded-[999px] bg-white/5 blur-2xl"
         />
 
         <motion.div
@@ -166,9 +180,6 @@ export default function SubscriptionSettings() {
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs ring-1 ring-white/15">
                 Plan: <span className="font-semibold text-white">{plan}</span>
               </span>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs ring-1 ring-white/15">
-                Package: <span className="font-semibold text-white">{packageType}</span>
-              </span>
               <span
                 className={`rounded-full px-3 py-1 text-xs ring-1 ${statusBadge.cls}`}
                 title={status}
@@ -178,24 +189,21 @@ export default function SubscriptionSettings() {
             </div>
           </header>
 
-          {/* детали подписки */}
+          {/* детали подписки — убрал дублирующий статус и Auto-Renewal */}
           <div className="grid gap-3 text-sm">
-            <p className="text-white/80">
-              <span className="font-medium text-white/90">Subscription Status:</span> {status}
-            </p>
-            <p className="text-white/80">
-              <span className="font-medium text-white/90">Next Billing Date:</span>{' '}
-              {nextBillingDate}
-            </p>
-            <p className="text-white/80">
-              <span className="font-medium text-white/90">Trial Info:</span>{' '}
-              {trialEndDate || 'Not on trial'}
-            </p>
+            {isPaidPlan(currentPlan) && nextBillingDate && (
+              <p className="text-white/80">
+                <span className="font-medium text-white/90">Next Billing Date:</span>{' '}
+                {nextBillingDate}
+              </p>
+            )}
 
-            <p className="flex items-center gap-2 text-white/80">
-              <span className="font-medium text-white/90">Auto-Renewal:</span>
-              <input type="checkbox" checked readOnly className="h-4 w-4 accent-[#A78BFA]" />
-            </p>
+            {trialEndDate && (
+              <p className="text-white/80">
+                <span className="font-medium text-white/90">Trial Info:</span> Trial until{' '}
+                {trialEndDate}
+              </p>
+            )}
 
             {/* оплата (только для платных планов) */}
             {isPaidPlan(currentPlan) && (
@@ -228,97 +236,56 @@ export default function SubscriptionSettings() {
           <div className="mt-8">
             <h2 className="text-base font-semibold tracking-tight mb-3">Billing History</h2>
             <div className="overflow-hidden rounded-2xl ring-1 ring-white/10">
-              {billingHistory.length === 0 ? (
+              {sortedInvoices.length === 0 ? (
                 <div className="p-4 text-sm text-white/60 bg-white/5">No invoices yet.</div>
               ) : (
-                <ul className="divide-y divide-white/10 bg-white/5">
-                  {billingHistory.map((entry) => (
-                    <li
-                      key={entry.id}
-                      className="flex items-center justify-between gap-3 p-3 text-sm text-white/80 hover:bg-white/7"
-                    >
-                      <div className="font-medium text-white/90">{entry.date}</div>
-                      <div className="whitespace-nowrap">
-                        {entry.amount} {entry.currency}
-                      </div>
-                      <a
-                        href={entry.invoiceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                <>
+                  <ul className="divide-y divide-white/10 bg-white/5">
+                    {visibleInvoices.map((entry) => (
+                      <li
+                        key={entry.id}
+                        className="flex items-center justify-between gap-3 p-3 text-sm text-white/80 hover:bg-white/7"
+                      >
+                        <div className="font-medium text-white/90">{entry.date}</div>
+                        <div className="whitespace-nowrap">
+                          {entry.amount} {entry.currency}
+                        </div>
+                        <a
+                          href={entry.invoiceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full px-3 py-1 text-xs text-white ring-1 ring-white/15 hover:ring-[#A855F7]/40 hover:bg-[#A855F7]/10 transition-colors"
+                        >
+                          Download PDF
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {hasMoreInvoices && (
+                    <div className="bg-white/5 flex justify-center p-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllInvoices((v) => !v)}
                         className="rounded-full px-3 py-1 text-xs text-white ring-1 ring-white/15 hover:ring-[#A855F7]/40 hover:bg-[#A855F7]/10 transition-colors"
                       >
-                        Download PDF
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                        {showAllInvoices ? 'Show less' : 'Show more'}
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
 
-          {/* действия */}
-          <div className="mt-8 flex flex-col items-start gap-2">
-            {/* Freemium → Select */}
-            {isFreemium && (
-              <button
-                type="button"
-                onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
-                disabled={upgradeLoading || !canUpgradeTo('Select')}
-                className="rounded-full px-4 py-2 text-white backdrop-blur transition-[transform,box-shadow,background] hover:-translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 disabled:opacity-60"
-                style={{
-                  backgroundImage: `
-                    radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
-                    linear-gradient(180deg, rgba(168,85,247,0.25), rgba(168,85,247,0.18))
-                  `,
-                  boxShadow: '0 12px 36px rgba(168,85,247,0.25)',
-                  border: '1px solid rgba(168,85,247,0.35)',
-                }}
-              >
-                {upgradeLoading ? 'Redirecting…' : 'Upgrade to Select'}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
-              disabled={upgradeLoading || !canUpgradeTo('Smarter')}
-              className="rounded-full px-4 py-2 text-white backdrop-blur transition-[transform,box-shadow,background] hover:-translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 disabled:opacity-60"
-              style={{
-                backgroundImage: `
-                  radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.22) 0%, rgba(168,85,247,0) 60%),
-                  linear-gradient(180deg, rgba(168,85,247,0.25), rgba(168,85,247,0.18))
-                `,
-                boxShadow: '0 12px 36px rgba(168,85,247,0.25)',
-                border: '1px solid rgba(168,85,247,0.35)',
-              }}
-            >
-              {upgradeLoading ? 'Redirecting…' : 'Upgrade to Smarter'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
-              disabled={upgradeLoading || !canUpgradeTo('Business')}
-              className="rounded-full px-4 py-2 text-[#111827] transition-[transform,box-shadow,background] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 disabled:opacity-60"
-              style={{
-                backgroundImage: `
-                  radial-gradient(120% 120% at 50% 0%, rgba(168,85,247,0.24) 0%, rgba(168,85,247,0) 60%),
-                  linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88))
-                `,
-                boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.6), 0 8px 28px rgba(0,0,0,0.1)',
-                border: '1px solid rgba(168,85,247,0.35)',
-              }}
-            >
-              {upgradeLoading ? 'Redirecting…' : 'Upgrade to Business'}
-            </button>
-
-            {/* Отписка доступна только на платных планах и если не запланировано завершение */}
+          {/* действия — удалил все апгрейды, оставил только отписку справа */}
+          <div className="mt-8 flex justify-end">
             {isPaidPlan(currentPlan) && !cancelAtPeriodEnd && (
               <button
                 type="button"
                 onClick={handleCancelSubscription}
                 disabled={portalLoading}
-                className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-red-200 ring-1 ring-red-400/20 bg-red-500/10 hover:bg-red-500/15 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-full px-4 h-10 text-sm text-red-200 ring-1 ring-red-400/20 bg-red-500/10 hover:bg-red-500/15 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40 disabled:opacity-60"
               >
                 {portalLoading ? 'Processing…' : 'Unsubscribe'}
               </button>

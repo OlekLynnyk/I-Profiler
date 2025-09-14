@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { priceId } = await req.json().catch(() => ({}));
+  const { priceId, confirm } = await req.json().catch(() => ({}));
   console.log('🧾 Received priceId:', priceId);
   if (!priceId || typeof priceId !== 'string') {
     return NextResponse.json({ error: 'Missing or invalid priceId' }, { status: 400 });
@@ -94,9 +94,31 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3) активная платная → апгрейд действующей подписки, без портала (SCA-safe)
+  // 3) активная платная → апгрейд действующей подписки (через update)
   if (isActivePaid) {
     try {
+      try {
+        const portal = await stripe.billingPortal.sessions.create({
+          customer: customerId!,
+          return_url: `${appUrl}/`,
+        });
+
+        await logUserAction({
+          userId: user.id,
+          action: 'stripe:billing_portal_redirect_from_buy',
+          metadata: {
+            fromPrice: subData?.stripe_price_id ?? null,
+            requestedPrice: priceId,
+            customerId,
+          },
+        });
+
+        return NextResponse.json({ portalUrl: portal.url, url: portal.url }, { status: 200 });
+      } catch (portalErr) {
+        console.warn('⚠️ Billing Portal not available, falling back to upgrade flow:', portalErr);
+        // не возвращаем ответ — продолжаем исполнение СУЩЕСТВУЮЩЕЙ логики апгрейда ниже
+      }
+
       // если уже на этом же price — менять нечего
       if (subData?.stripe_price_id === priceId) {
         return NextResponse.json(
@@ -123,6 +145,45 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // --- PREVIEW STEP (Basil): показываем сумму перед апдейтом; пока НИЧЕГО не списываем ---
+      if (!confirm) {
+        const upcoming = await stripe.invoices.createPreview({
+          customer: customerId!,
+          subscription: currentSubId,
+          subscription_details: {
+            items: [{ id: currentItemId, price: priceId, quantity: 1 }],
+            proration_behavior: 'always_invoice',
+          },
+        });
+
+        const total = (upcoming.total ?? upcoming.amount_due ?? 0) || 0;
+        const currency = (upcoming.currency ?? 'eur').toUpperCase();
+        const prorationLines = (upcoming.lines?.data ?? []).filter((l: any) => l.proration);
+        const prorationAmount = prorationLines.reduce(
+          (s: number, l: any) => s + (l.amount ?? 0),
+          0
+        );
+
+        const confirmUrl = `${appUrl}/settings/subscription?confirm=1&price=${priceId}`;
+        return NextResponse.json(
+          {
+            requiresConfirmation: true,
+            url: confirmUrl,
+            preview: {
+              total,
+              currency,
+              prorationAmount,
+              lines: prorationLines.map((l: any) => ({
+                description: l.description,
+                amount: l.amount,
+              })),
+            },
+          },
+          { status: 200 }
+        );
+      }
+      // --- END PREVIEW STEP ---
+
       // опциональная идемпотентность из заголовка клиента
       const idempotencyKey = req.headers.get('x-idempotency-key') ?? undefined;
 
@@ -140,23 +201,69 @@ export async function POST(req: NextRequest) {
       // ── разбор статуса платежа (прорейт/доплата)
       const latestInvoiceRaw = updated.latest_invoice as string | Stripe.Invoice | null | undefined;
 
-      let paymentIntent: Stripe.PaymentIntent | null = null;
-      if (latestInvoiceRaw && typeof latestInvoiceRaw !== 'string') {
-        const inv = latestInvoiceRaw as InvoiceWithPI;
-        const piField = inv.payment_intent;
+      // Всегда получаем полноценный invoice-объект
+      let invoice: InvoiceWithPI | null = null;
+      if (latestInvoiceRaw) {
+        invoice =
+          typeof latestInvoiceRaw === 'string'
+            ? ((await stripe.invoices.retrieve(latestInvoiceRaw)) as InvoiceWithPI)
+            : (latestInvoiceRaw as InvoiceWithPI);
+      }
 
-        if (piField) {
-          paymentIntent =
-            typeof piField === 'string'
-              ? await stripe.paymentIntents.retrieve(piField)
-              : (piField as Stripe.PaymentIntent);
-        }
+      // Попробуем получить PI (если есть)
+      let paymentIntent: Stripe.PaymentIntent | null = null;
+      if (invoice?.payment_intent) {
+        paymentIntent =
+          typeof invoice.payment_intent === 'string'
+            ? await stripe.paymentIntents.retrieve(invoice.payment_intent)
+            : (invoice.payment_intent as Stripe.PaymentIntent);
+      }
+
+      // Сумма к оплате: если 0 (кредит/нулевой прорейт) — апгрейд можно считать завершённым
+      const total = (invoice?.total ?? invoice?.amount_due ?? 0) || 0;
+
+      // ✅ Случай 1: нулевая сумма ИЛИ инвойс уже оплачен → апгрейд завершён
+      if (invoice?.status === 'paid' || total <= 0) {
+        await logUserAction({
+          userId: user.id,
+          action: 'stripe:subscription_upgraded',
+          metadata: {
+            fromPrice: subData?.stripe_price_id ?? null,
+            toPrice: priceId,
+            subscriptionId: updated.id,
+            paymentIntentId: paymentIntent?.id ?? null,
+            invoiceId: invoice?.id ?? null,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            ok: true,
+            kind: 'upgraded',
+            subscriptionId: updated.id,
+            url: `${appUrl}/account?billing=updated`,
+          },
+          { status: 200 }
+        );
       }
 
       if (paymentIntent) {
         const status = paymentIntent.status;
 
         if (status === 'requires_action') {
+          let hostedInvoiceUrl: string | null = null;
+          try {
+            if (invoice?.hosted_invoice_url) {
+              hostedInvoiceUrl = invoice.hosted_invoice_url;
+            } else if (updated.latest_invoice) {
+              const inv =
+                typeof updated.latest_invoice === 'string'
+                  ? await stripe.invoices.retrieve(updated.latest_invoice)
+                  : (updated.latest_invoice as Stripe.Invoice);
+              hostedInvoiceUrl = inv.hosted_invoice_url ?? null;
+            }
+          } catch {}
+
           await logUserAction({
             userId: user.id,
             action: 'stripe:subscription_upgrade_requires_action',
@@ -165,6 +272,7 @@ export async function POST(req: NextRequest) {
               toPrice: priceId,
               subscriptionId: updated.id,
               paymentIntentId: paymentIntent.id,
+              hostedInvoiceUrl,
             },
           });
 
@@ -174,8 +282,10 @@ export async function POST(req: NextRequest) {
               requiresAction: true,
               clientSecret: paymentIntent.client_secret,
               subscriptionId: updated.id,
+              hostedInvoiceUrl,
+              url: hostedInvoiceUrl ?? `${appUrl}/account?billing=processing`, // fallback, чтобы не падал клиент
             },
-            { status: 200 }
+            { status: 402 }
           );
         }
 
@@ -191,14 +301,15 @@ export async function POST(req: NextRequest) {
             },
           });
 
-          // карта недействительна/отклонена → фронту показать обновление PM
+          // ➜ сразу в Billing Portal (фронт это уже поддерживает)
+          const portal = await stripe.billingPortal.sessions.create({
+            customer: customerId!, // у тебя он уже определён выше
+            return_url: `${appUrl}/`,
+          });
+
           return NextResponse.json(
-            {
-              error: 'payment_method_required',
-              message: 'A valid payment method is required to complete the upgrade.',
-              subscriptionId: updated.id,
-            },
-            { status: 402 } // Payment Required
+            { portalUrl: portal.url, url: portal.url, subscriptionId: updated.id },
+            { status: 402 }
           );
         }
 
@@ -223,11 +334,11 @@ export async function POST(req: NextRequest) {
               subscriptionId: updated.id,
               url: `${appUrl}/account?billing=processing`,
             },
-            { status: 200 }
+            { status: 402 }
           );
         }
 
-        // успех
+        // успех по PI
         if (status === 'succeeded') {
           await logUserAction({
             userId: user.id,
@@ -252,25 +363,26 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // кейс без платежа (нет доплаты/прорейт нулевой) — просто успех
       await logUserAction({
         userId: user.id,
-        action: 'stripe:subscription_upgraded_no_payment_intent',
+        action: 'stripe:subscription_upgrade_requires_payment_method',
         metadata: {
           fromPrice: subData?.stripe_price_id ?? null,
           toPrice: priceId,
           subscriptionId: updated.id,
+          paymentIntentId: paymentIntent?.id ?? null,
+          invoiceId: invoice?.id ?? null,
         },
       });
 
+      const portal = await stripe.billingPortal.sessions.create({
+        customer: customerId!,
+        return_url: `${appUrl}/`,
+      });
+
       return NextResponse.json(
-        {
-          ok: true,
-          kind: 'upgraded',
-          subscriptionId: updated.id,
-          url: `${appUrl}/account?billing=updated`,
-        },
-        { status: 200 }
+        { portalUrl: portal.url, subscriptionId: updated.id },
+        { status: 402 }
       );
     } catch (e: any) {
       console.error('❌ Stripe upgrade error:', e);

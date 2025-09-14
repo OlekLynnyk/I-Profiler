@@ -44,14 +44,14 @@ export function isValidPackageType(pkg: string): pkg is ValidPackageType {
 }
 
 export const PRICE_TO_PACKAGE: Record<string, ValidPackageType> = {
-  price_1RQYE4AGnqjZyhfAY8kOMZwm: 'Smarter',
-  price_1RQYEXAGnqjZyhfAryCzNkqV: 'Business',
+  price_1S2wZsAGnqjZyhfA1267vIzm: 'Smarter',
   price_1S2wOPAGnqjZyhfAqHosAvL3: 'Select',
+  price_1S2wZXAGnqjZyhfANx0tbTyP: 'Business',
 };
 
 export const PACKAGE_TO_PRICE: Partial<Record<ValidPackageType, string>> = {
-  Smarter: 'price_1RQYE4AGnqjZyhfAY8kOMZwm',
-  Business: 'price_1RQYEXAGnqjZyhfAryCzNkqV',
+  Smarter: 'price_1S2wZsAGnqjZyhfA1267vIzm',
+  Business: 'price_1S2wZXAGnqjZyhfANx0tbTyP',
   Select: 'price_1S2wOPAGnqjZyhfAqHosAvL3',
 };
 

@@ -1,10 +1,11 @@
-// lib/stripe.ts
 import 'server-only';
 
 import Stripe from 'stripe';
 import { env } from '@/env.server';
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY /*, { apiVersion: '2024-06-20' } */);
+// Используем версию API, закреплённую в аккаунте — безопасно и без регрессии
+export const stripe = new Stripe(env.STRIPE_SECRET_KEY);
+
 export const DEFAULT_CURRENCY = 'eur';
 
 const ZERO_DECIMAL_CURRENCIES = new Set([

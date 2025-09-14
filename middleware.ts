@@ -50,7 +50,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // 🔐 Защита приватных путей (например: /workspace)
-  const protectedPaths = ['/workspace'];
+  const protectedPaths = ['/workspace', '/settings'];
   const isProtected = protectedPaths.some((prefix) => path.startsWith(prefix));
 
   if (!session && isProtected) {

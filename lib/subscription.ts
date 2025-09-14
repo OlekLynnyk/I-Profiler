@@ -60,6 +60,18 @@ type SubscriptionWithPeriods = {
   current_period?: { start?: number | null; end?: number | null } | null;
 };
 
+function toIsoFromStripeTs(v: unknown): string | null {
+  if (v == null) return null;
+  if (typeof v === 'number') return new Date(v * 1000).toISOString();
+  if (typeof v === 'string') {
+    const n = Number(v);
+    if (Number.isFinite(n) && n > 1_000_000_000) return new Date(n * 1000).toISOString();
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  return null;
+}
+
 export function mapStripeToPlan(subscription: Stripe.Subscription): SubscriptionPlanPayload | null {
   const items = subscription.items?.data ?? [];
   const matchedItem = items.find((it) => {
@@ -73,15 +85,18 @@ export function mapStripeToPlan(subscription: Stripe.Subscription): Subscription
     return null;
   }
 
-  const s = subscription as unknown as SubscriptionWithPeriods;
-  const startUnix = s.current_period_start ?? s.current_period?.start ?? null;
-  const endUnix = s.current_period_end ?? s.current_period?.end ?? null;
+  const s = subscription as unknown as SubscriptionWithPeriods & {
+    current_period?: { start?: any; end?: any } | null;
+  };
+
+  const periodStart = toIsoFromStripeTs(s.current_period_start ?? s.current_period?.start ?? null);
+  const periodEnd = toIsoFromStripeTs(s.current_period_end ?? s.current_period?.end ?? null);
 
   return {
     plan,
     priceId,
-    periodStart: startUnix ? new Date(startUnix * 1000).toISOString() : null,
-    periodEnd: endUnix ? new Date(endUnix * 1000).toISOString() : null,
+    periodStart,
+    periodEnd,
     status: mapStripeStatus(subscription.status),
   };
 }
@@ -94,12 +109,10 @@ export async function syncSubscriptionWithSupabase(
   const mapped = mapStripeToPlan(subscription);
   const now = new Date().toISOString();
 
-  // если не распознали план — выходим мягко
   if (!mapped) {
     return { plan: 'Freemium', status: 'incomplete' };
   }
 
-  // отмена — как было
   if (mapped.status === 'canceled') {
     const { error } = await supabase
       .from('user_subscription')
@@ -120,8 +133,17 @@ export async function syncSubscriptionWithSupabase(
   }
 
   if (mapped.status !== 'active') {
+    await supabase
+      .from('user_subscription')
+      .update({ status: 'incomplete', updated_at: now })
+      .eq('user_id', userId);
     return { plan: mapped.plan, status: 'incomplete' };
   }
+
+  // ======================= [REPLACEMENT #1 START] =======================
+  // Old block (try { ... } catch { ... }) replaced with the enhanced resolver
+  let resolvedPeriodStart = mapped.periodStart;
+  let resolvedPeriodEnd = mapped.periodEnd;
 
   try {
     const li = subscription.latest_invoice;
@@ -131,6 +153,15 @@ export async function syncSubscriptionWithSupabase(
     }
 
     const invoice = typeof li === 'string' ? await stripe.invoices.retrieve(li) : (li as any);
+
+    // Try to resolve period from the first invoice line if missing on subscription
+    const line0 = (invoice?.lines?.data?.[0] as any) ?? null;
+    if (!resolvedPeriodStart && line0?.period?.start != null) {
+      resolvedPeriodStart = toIsoFromStripeTs(line0.period.start);
+    }
+    if (!resolvedPeriodEnd && line0?.period?.end != null) {
+      resolvedPeriodEnd = toIsoFromStripeTs(line0.period.end);
+    }
 
     const total = (invoice.total ?? invoice.amount_due ?? 0) || 0;
     const isZeroOrCredit = total <= 0;
@@ -154,6 +185,7 @@ export async function syncSubscriptionWithSupabase(
   } catch {
     return { plan: mapped.plan, status: 'incomplete' };
   }
+  // ======================= [REPLACEMENT #1 END] =========================
 
   const { data: existing, error: readErr } = await supabase
     .from('user_subscription')
@@ -171,8 +203,10 @@ export async function syncSubscriptionWithSupabase(
     stripe_subscription_id: subscription.id,
     stripe_price_id: mapped.priceId,
     status: mapped.status,
-    subscription_ends_at: mapped.periodEnd ?? null,
-    current_period_start: mapped.periodStart ?? null,
+    // ======================= [REPLACEMENT #2 START] =======================
+    subscription_ends_at: resolvedPeriodEnd ?? null,
+    current_period_start: resolvedPeriodStart ?? null,
+    // ======================= [REPLACEMENT #2 END] =========================
     cancel_at_period_end:
       typeof subscription.cancel_at_period_end === 'boolean'
         ? subscription.cancel_at_period_end
