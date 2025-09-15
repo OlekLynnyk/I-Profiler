@@ -125,6 +125,14 @@ export async function POST(req: Request) {
         const fresh = await stripe.subscriptions.retrieve(subscriptionId);
         await handleSubscriptionChange(fresh, supabase);
 
+        // [ADDED] — идемпотентный сброс месячных лимитов (дополнительно к handleSubscriptionChange)
+        try {
+          const uid = (fresh.metadata?.user_id as string) ?? null;
+          if (uid) {
+            await resetMonthlyUsageIfNeeded(supabase, uid, fresh);
+          }
+        } catch {}
+
         try {
           const customerId = fresh.customer as string;
           await logUserAction({
@@ -180,6 +188,9 @@ async function handleCheckoutCompleted(
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   await syncSubscriptionWithSupabase(supabase, userId, subscription);
+
+  // [ADDED] — сброс лимитов в начале первого оплаченного периода
+  await resetMonthlyUsageIfNeeded(supabase, userId, subscription);
 
   await logUserAction({
     userId,
@@ -254,6 +265,95 @@ async function isPaymentSettledForChange(sub: Stripe.Subscription): Promise<bool
 
   // Инвойс есть, итог положительный, PI нет или не успешен → ещё не оплачено
   return false;
+}
+
+// [ADDED] — хелпер: идемпотентный сброс monthly usage на старте биллингового периода
+async function resetMonthlyUsageIfNeeded(
+  supabase: Awaited<ReturnType<typeof createServerClientForApi>>,
+  userId: string,
+  sub: Stripe.Subscription
+) {
+  try {
+    const settled = await isPaymentSettledForChange(sub);
+    if (!settled) return;
+
+    const { data: limitsRow, error: limitsErr } = await supabase
+      .from('user_limits')
+      .select('plan, active, monthly_reset_at')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (limitsErr || !limitsRow) {
+      if (limitsErr)
+        console.error('⚠️ resetMonthlyUsageIfNeeded: user_limits read failed', limitsErr);
+      return;
+    }
+
+    if (limitsRow.plan === 'Freemium' || limitsRow.active === false) return;
+
+    // — TS-совместимый доступ, независимо от версии типов stripe:
+    const periodStartUnix = (sub as any)?.current_period_start as number | null | undefined;
+    const periodEndUnix = (sub as any)?.current_period_end as number | null | undefined;
+
+    const periodStart = periodStartUnix ? new Date(periodStartUnix * 1000) : null;
+    if (!periodStart) return;
+
+    const alreadyResetAt = limitsRow.monthly_reset_at ? new Date(limitsRow.monthly_reset_at) : null;
+
+    if (!alreadyResetAt || alreadyResetAt.getTime() < periodStart.getTime()) {
+      const { error: updateErr } = await supabase
+        .from('user_limits')
+        .update({
+          used_monthly: 0,
+          monthly_reset_at: periodStart.toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId);
+
+      if (updateErr) {
+        console.error('❌ resetMonthlyUsageIfNeeded: update failed', updateErr);
+        return;
+      }
+
+      try {
+        await logUserAction({
+          userId,
+          action: 'limits:monthly_reset_by_webhook',
+          metadata: {
+            subscriptionId: sub.id,
+            periodStart: periodStart.toISOString(),
+            periodEnd: new Date((periodEndUnix ?? 0) * 1000).toISOString(),
+          },
+        });
+      } catch {}
+      console.log('✅ used_monthly reset by webhook', { userId, subscriptionId: sub.id });
+      return;
+    }
+
+    if (alreadyResetAt) {
+      const driftMs = alreadyResetAt.getTime() - periodStart.getTime();
+      const FIVE_MIN = 5 * 60 * 1000;
+      if (driftMs > FIVE_MIN) {
+        const { error } = await supabase
+          .from('user_limits')
+          .update({
+            monthly_reset_at: periodStart.toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', userId);
+        if (error) {
+          console.warn('⚠️ resetMonthlyUsageIfNeeded: heal failed', error);
+        } else {
+          console.log('🩹 monthly_reset_at healed to period start', {
+            userId,
+            periodStart: periodStart.toISOString(),
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('❌ resetMonthlyUsageIfNeeded: unexpected error', e);
+  }
 }
 
 async function handleSubscriptionChange(
@@ -463,6 +563,9 @@ async function handleSubscriptionChange(
   });
 
   await syncSubscriptionWithSupabase(supabase, userId, fresh);
+
+  // [ADDED] — сброс лимитов сразу после успешного синка
+  await resetMonthlyUsageIfNeeded(supabase, userId, fresh);
 
   await logUserAction({
     userId,

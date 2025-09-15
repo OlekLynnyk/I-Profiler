@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import { stripe, formatAmount, DEFAULT_CURRENCY } from '@/lib/stripe';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
 
@@ -27,8 +29,13 @@ export async function POST(req: NextRequest) {
     .eq('user_id', user.id)
     .single();
 
-  if (subError || !subRecord?.stripe_customer_id) {
-    return NextResponse.json({ error: 'Database error or customer not found' }, { status: 500 });
+  if (subError) {
+    console.warn('⚠️ invoices: user_subscription read failed', subError);
+    return NextResponse.json({ invoices: [] }, { status: 200 });
+  }
+  if (!subRecord?.stripe_customer_id) {
+    // у Freemium клиентов это нормально — просто нет инвойсов
+    return NextResponse.json({ invoices: [] }, { status: 200 });
   }
 
   try {
@@ -49,7 +56,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ invoices: result });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'resource_missing') {
+      // нет инвойсов/клиента в Stripe — отдаём пусто, а не 500
+      return NextResponse.json({ invoices: [] }, { status: 200 });
+    }
     console.error('❌ Stripe invoice fetch error:', error);
     return NextResponse.json({ error: 'Failed to fetch invoices' }, { status: 500 });
   }

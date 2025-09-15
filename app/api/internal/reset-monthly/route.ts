@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClientForApi } from '@/lib/supabase/server';
 import dayjs from 'dayjs';
 import { env } from '@/env.server';
+import { stripe } from '@/lib/stripe';
+import type Stripe from 'stripe';
 
 type LimitsRow = {
   user_id: string;
@@ -14,10 +16,57 @@ type LimitsRow = {
 type SubRow = {
   user_id: string;
   status: string | null;
-  subscription_ends_at: string | null;
+  current_period_start: string | null; // ← сверяемся с началом оплаченного периода (кэш из БД)
+  stripe_subscription_id: string | null; // ← нужен, чтобы проверить оплату в Stripe
+};
+
+// Локальный тип, чтобы не ругались типы Stripe у Invoice
+type InvoiceWithPI = Stripe.Invoice & {
+  payment_intent?: string | Stripe.PaymentIntent | null;
 };
 
 const CHUNK = 200;
+
+// Проверяем, что расчёт/оплата по подписке реально завершены (как в вебхуке)
+async function isPaymentSettledForSubId(subId: string): Promise<boolean> {
+  try {
+    const fresh = await stripe.subscriptions.retrieve(subId, {
+      expand: ['latest_invoice.payment_intent'],
+    });
+
+    const li = fresh.latest_invoice as string | Stripe.Invoice | null | undefined;
+    if (!li) return false;
+
+    let invoice: InvoiceWithPI;
+
+    if (typeof li === 'string') {
+      // latest_invoice — это id, добираем инвойс и расширяем payment_intent
+      invoice = (await stripe.invoices.retrieve(li, {
+        expand: ['payment_intent'],
+      })) as InvoiceWithPI;
+    } else {
+      // latest_invoice уже объект; мог быть расширен expand'ом выше
+      invoice = li as InvoiceWithPI;
+    }
+
+    const total = (invoice.total ?? invoice.amount_due ?? 0) || 0;
+    if (invoice.status === 'paid' || total <= 0) return true;
+
+    const piRef = invoice.payment_intent as string | Stripe.PaymentIntent | null | undefined;
+    if (!piRef) return false;
+
+    const pi =
+      typeof piRef === 'string'
+        ? await stripe.paymentIntents.retrieve(piRef)
+        : (piRef as Stripe.PaymentIntent);
+
+    return pi.status === 'succeeded';
+  } catch (e) {
+    // Не мешаем Stripe: при ошибке считаем, что не settled, и просто пропускаем
+    console.warn('⚠️ isPaymentSettledForSubId: failed to verify', subId, e);
+    return false;
+  }
+}
 
 // 🔐 Только с секретом
 export async function POST(req: NextRequest) {
@@ -27,7 +76,6 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createServerClientForApi();
-  const nowMs = dayjs().valueOf();
 
   let offset = 0;
   let totalUpdated = 0;
@@ -49,11 +97,11 @@ export async function POST(req: NextRequest) {
 
     const paidLimits: LimitsRow[] = limitsData;
 
-    // 2) Подтягиваем подписки одной пачкой
+    // 2) Подтягиваем подписки одной пачкой (включая stripe_subscription_id)
     const userIds = paidLimits.map((r) => r.user_id);
     const { data: subs, error: subsError } = await supabase
       .from('user_subscription')
-      .select('user_id, status, subscription_ends_at')
+      .select('user_id, status, current_period_start, stripe_subscription_id')
       .in('user_id', userIds);
 
     if (subsError) {
@@ -65,48 +113,60 @@ export async function POST(req: NextRequest) {
       subMap.set(s.user_id, {
         user_id: s.user_id,
         status: s.status ?? null,
-        subscription_ends_at: s.subscription_ends_at ?? null,
+        current_period_start: s.current_period_start ?? null,
+        stripe_subscription_id: (s as any).stripe_subscription_id ?? null,
       });
     }
 
     type MonthlyUpdate = { user_id: string; used_monthly: number; monthly_reset_at: string };
     const updates: MonthlyUpdate[] = [];
 
-    // 3) Сброс ровно при наступлении subscription_ends_at, один раз за период
+    // 3) Fallback-аудит: если monthly_reset_at < current_period_start — сбрасываем,
+    // НО только после подтверждения оплаты в Stripe (settled)
     for (const l of paidLimits) {
       const sub = subMap.get(l.user_id);
       if (!sub) continue;
 
-      const endsAtIso = sub.subscription_ends_at;
-      if (sub.status !== 'active' || !endsAtIso) continue;
+      const startIso = sub.current_period_start;
+      if (sub.status !== 'active' || !startIso) continue;
 
-      const endsAtMs = dayjs(endsAtIso).valueOf();
-      const due = nowMs >= endsAtMs;
-
+      const startMs = dayjs(startIso).valueOf();
       const alreadyResetForThisPeriod =
-        l.monthly_reset_at && dayjs(l.monthly_reset_at).valueOf() >= endsAtMs;
+        !!l.monthly_reset_at && dayjs(l.monthly_reset_at).valueOf() >= startMs;
+      if (alreadyResetForThisPeriod) continue;
 
-      if (due && !alreadyResetForThisPeriod) {
-        updates.push({
-          user_id: l.user_id,
-          used_monthly: 0,
-          monthly_reset_at: endsAtIso, // фиксируем ПРОШЕДШИЙ рубеж
-        });
+      const subId = sub.stripe_subscription_id;
+      if (!subId) {
+        // Нет связи со Stripe — пропускаем, чтобы не мешать Stripe
+        continue;
       }
+
+      const settled = await isPaymentSettledForSubId(subId);
+      if (!settled) continue;
+
+      updates.push({
+        user_id: l.user_id,
+        used_monthly: 0,
+        monthly_reset_at: startIso, // фиксируем начало текущего периода (как и раньше)
+      });
     }
 
     // 4) Применяем обновления
     for (const u of updates) {
-      await supabase
+      const { error: updErr } = await supabase
         .from('user_limits')
         .update({
           used_monthly: u.used_monthly,
           monthly_reset_at: u.monthly_reset_at,
         })
         .eq('user_id', u.user_id);
-    }
 
-    totalUpdated += updates.length;
+      if (updErr) {
+        console.warn('⚠️ reset-monthly update failed for', u.user_id, updErr);
+      } else {
+        totalUpdated += 1;
+      }
+    }
 
     if (paidLimits.length < CHUNK) break;
     offset += CHUNK;

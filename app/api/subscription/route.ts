@@ -8,6 +8,9 @@ import { createServerClientForApi } from '@/lib/supabase/server';
 import { isValidPackageType } from '@/types/plan';
 import { logUserAction } from '@/lib/logger';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 type SubscriptionDTO = {
   plan: string;
   packageType: string;
