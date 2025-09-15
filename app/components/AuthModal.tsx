@@ -95,7 +95,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: getRedirectTo() },
+        options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
       });
       if (error) setError(error.message);
       else {

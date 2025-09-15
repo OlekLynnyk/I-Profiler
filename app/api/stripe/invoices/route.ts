@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClientForApi } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { stripe, formatAmount, DEFAULT_CURRENCY } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
 
@@ -11,19 +12,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized: Missing access token' }, { status: 401 });
   }
 
-  const supabase = await createServerClientForApi();
+  const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const SRV = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+  // Проверяем токен анонимным клиентом (без cookies)
+  const authCli = createClient(URL, ANON, { auth: { persistSession: false } });
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser(token);
+  } = await authCli.auth.getUser(token);
 
   if (authError || !user) {
     console.error('❌ Supabase auth error:', authError);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: subRecord, error: subError } = await supabase
+  // Читаем БД админ-клиентом (service-role), без cookies
+  const admin = createClient(URL, SRV, { auth: { persistSession: false } });
+
+  const { data: subRecord, error: subError } = await admin
     .from('user_subscription')
     .select('stripe_customer_id')
     .eq('user_id', user.id)

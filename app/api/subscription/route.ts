@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 import { stripe } from '@/lib/stripe';
-import { createServerClientForApi } from '@/lib/supabase/server';
 import { isValidPackageType } from '@/types/plan';
 import { logUserAction } from '@/lib/logger';
+import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ type SubscriptionDTO = {
   plan: string;
   packageType: string;
   status: string;
-  isActive: boolean; // ✅ добавлено
+  isActive: boolean;
   nextBillingDate: string;
   trialEndDate: string;
   cancelAtPeriodEnd: boolean;
@@ -51,19 +51,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized: Missing access token' }, { status: 401 });
     }
 
-    const supabase = await createServerClientForApi();
+    const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const SRV = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+    // Проверяем токен анонимным клиентом (без cookies)
+    const authCli = createClient(URL, ANON, { auth: { persistSession: false } });
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser(token);
+    } = await authCli.auth.getUser(token);
 
     if (authError || !user) {
       console.error('❌ Supabase auth error:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2) Читаем централизованные данные из БД (жёсткая типизация результата)
-    const { data: sub, error: subError } = await supabase
+    // 2) Читаем централизованные данные из БД (service-role, без cookies)
+    const admin = createClient(URL, SRV, { auth: { persistSession: false } });
+    const { data: sub, error: subError } = await admin
       .from('user_subscription')
       .select(
         [
@@ -92,7 +98,7 @@ export async function POST(req: NextRequest) {
         plan: 'Freemium',
         packageType: 'Freemium',
         status: 'inactive',
-        isActive: false, // ✅
+        isActive: false,
         nextBillingDate: '',
         trialEndDate: '',
         cancelAtPeriodEnd: false,
@@ -106,7 +112,7 @@ export async function POST(req: NextRequest) {
     const packageType = isValidPackageType(pkgRaw) ? pkgRaw : 'Freemium';
     const planForUi = sub.plan ?? packageType ?? 'Freemium';
     const status = sub.status ?? 'inactive';
-    const isActive = status === 'active'; // ✅
+    const isActive = status === 'active';
     const nextBillingDateFromDb = sub.subscription_ends_at ?? '';
 
     let nextBillingDate = nextBillingDateFromDb || '';
@@ -155,10 +161,10 @@ export async function POST(req: NextRequest) {
 
     // ✅ ключ: если НЕ active — возвращаем Freemium (UI не переключится раньше оплаты)
     const dto: SubscriptionDTO = {
-      plan: isActive ? planForUi : 'Freemium', // ✅
-      packageType: isActive ? packageType : 'Freemium', // ✅
+      plan: isActive ? planForUi : 'Freemium',
+      packageType: isActive ? packageType : 'Freemium',
       status,
-      isActive, // ✅
+      isActive,
       nextBillingDate,
       trialEndDate,
       cancelAtPeriodEnd,
