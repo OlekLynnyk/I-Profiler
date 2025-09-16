@@ -283,7 +283,7 @@ export default function HowItWorks() {
         <div className="hidden lg:block pt-20 pb-20">
           <div className="w-full relative grid items-center gap-12 lg:grid-cols-[0.95fr_0.05fr_1fr]">
             {/* ЛЕВАЯ КОЛОНКА — Optic Monolith */}
-            <div className="relative mx-auto w-[360px]">
+            <div className="relative mx-auto w-[360px] translate-x-6">
               {/* Ambient Halo за монолитом */}
               <div
                 aria-hidden
@@ -367,20 +367,6 @@ export default function HowItWorks() {
                   }}
                 />
 
-                {/* Длинный мягкий блик по стеклу (едва «дышит») */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute rounded-[40px]"
-                  style={{
-                    inset: '12% 10% 30% 10%',
-                    transform: 'rotate(14deg)',
-                    background:
-                      'linear-gradient(90deg, rgba(255,255,255,0.24), rgba(255,255,255,0.06))',
-                    opacity: reduceMotion ? 0.28 : 0.34,
-                    animation: reduceMotion ? 'none' : 'glassBreath 28s ease-in-out infinite',
-                  }}
-                />
-
                 {/* Notch — стыковка луча с левым ребром */}
                 <div
                   ref={notchRef}
@@ -446,7 +432,7 @@ export default function HowItWorks() {
 
             {/* ПРАВАЯ КОЛОНКА — шаги (не трогаем) */}
             <div className="max-w-[480px] ml-0 mr-auto">
-              <h2 className="mb-10 text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
+              <h2 className="mb-10 text-3xl font-extrabold tracking-tight text-white xl:text-4xl uppercase">
                 How it works
               </h2>
               <ol role="list" className="space-y-8">

@@ -13,8 +13,8 @@ export default function Footer() {
       {/* верхний hairline — только на мобиле */}
       <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent md:hidden" />
 
-      {/* ===== MOBILE (< md) ===== */}
-      <div className="md:hidden relative z-10 max-w-6xl mx-auto flex flex-col items-center gap-4">
+      {/* ===== MOBILE (< md) — контейнер как у Header: max-w-7xl + общий внешний padding из footer ===== */}
+      <div className="md:hidden relative z-10 mx-auto max-w-7xl flex flex-col items-center gap-4">
         <p className="text-center text-[13px] leading-relaxed text-white/70">
           Questions or feedback? Email us at{' '}
           <a
@@ -105,69 +105,76 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ===== DESKTOP (>= md) ===== */}
+      {/* ===== DESKTOP (>= md) — точное совпадение с контейнером Header ===== */}
       <div className="hidden md:block relative z-10">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6 items-start">
-          {/* Левая колонка — ещё уже, больше строк */}
-          <div className="flex flex-col gap-2 text-[13px] leading-6 text-white/75 max-w-[46ch] md:max-w-[calc(46ch*0.95)]">
-            <p>
-              Questions or feedback? Email us at{' '}
-              <a
-                href={`mailto:${EMAIL}`}
-                className="text-[#A855F7] transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
-              >
-                {EMAIL}
-              </a>
-            </p>
-            <p>123 Example Street, Dublin, Ireland, The British Isles.</p>
+        {/* Внешний контейнер как у Header */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          {/* Внутренние отступы как у Header */}
+          <div className="md:pl-[40px] lg:pl-[72px] md:pr-4 lg:pr-[72px]">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6 items-start">
+              {/* Левая колонка — ещё уже, больше строк */}
+              <div className="flex flex-col gap-2 text-[13px] leading-6 text-white/75 max-w-[46ch] md:max-w-[calc(46ch*0.95)]">
+                <p>
+                  Questions or feedback? Email us at{' '}
+                  <a
+                    href={`mailto:${EMAIL}`}
+                    className="text-[#A855F7] transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                  >
+                    {EMAIL}
+                  </a>
+                </p>
+                <p>123 Example Street, Dublin, Ireland, The British Isles.</p>
 
-            <p className="mt-2 text-white/70">
-              © 2025 H1NTED. Proprietary technology protected by IP and trade-secret laws.
-            </p>
-            <p className="text-[12.5px] leading-relaxed text-white/60">
-              No reverse engineering, scraping, automated extraction, benchmarking, or training AI
-              models on our data or outputs.
-            </p>
-            {/* Отдельная строка в самом низу */}
-            <p className="text-[12.5px] leading-relaxed text-white/60">
-              See{' '}
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
-              >
-                Terms
-              </a>{' '}
-              &{' '}
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
-              >
-                Privacy
-              </a>
-              .
-            </p>
+                <p className="mt-2 text-white/70">
+                  © 2025 H1NTED. Proprietary technology protected by IP and trade-secret laws.
+                </p>
+                <p className="text-[12.5px] leading-relaxed text-white/60">
+                  No reverse engineering, scraping, automated extraction, benchmarking, or training
+                  AI models on our data or outputs.
+                </p>
+                {/* Отдельная строка в самом низу */}
+                <p className="text-[12.5px] leading-relaxed text-white/60">
+                  See{' '}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                  >
+                    Terms
+                  </a>{' '}
+                  &{' '}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                  >
+                    Privacy
+                  </a>
+                  .
+                </p>
+              </div>
+
+              {/* Справа — только LinkedIn */}
+              <nav className="flex items-center gap-6 text-[13px]" aria-label="Footer navigation">
+                <a
+                  href="https://www.linkedin.com/in/oleksandrlynnyk/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-white/12 hover:ring-[#A855F7]/35 hover:bg-[#A855F7]/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60"
+                >
+                  <FaLinkedin size={16} className="text-white/80" />
+                </a>
+              </nav>
+            </div>
+
+            {/* Нижний разделитель внутри тех же внутренних отступов */}
+            <div className="mt-4">
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
+            </div>
           </div>
-
-          {/* Справа — только LinkedIn */}
-          <nav className="flex items-center gap-6 text-[13px]" aria-label="Footer navigation">
-            <a
-              href="https://www.linkedin.com/in/oleksandrlynnyk/"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-white/12 hover:ring-[#A855F7]/35 hover:bg-[#A855F7]/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60"
-            >
-              <FaLinkedin size={16} className="text-white/80" />
-            </a>
-          </nav>
-        </div>
-
-        <div className="mt-4 max-w-6xl mx-auto">
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
         </div>
       </div>
     </footer>

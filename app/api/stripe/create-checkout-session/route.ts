@@ -241,7 +241,7 @@ export async function POST(req: NextRequest) {
             ok: true,
             kind: 'upgraded',
             subscriptionId: updated.id,
-            url: `${appUrl}/account?billing=updated`,
+            url: `${appUrl}/?billing=updated`,
           },
           { status: 200 }
         );
@@ -283,7 +283,7 @@ export async function POST(req: NextRequest) {
               clientSecret: paymentIntent.client_secret,
               subscriptionId: updated.id,
               hostedInvoiceUrl,
-              url: hostedInvoiceUrl ?? `${appUrl}/account?billing=processing`, // fallback, чтобы не падал клиент
+              url: hostedInvoiceUrl ?? `${appUrl}/?billing=processing`,
             },
             { status: 402 }
           );
@@ -332,7 +332,7 @@ export async function POST(req: NextRequest) {
               ok: true,
               kind: 'upgraded_processing',
               subscriptionId: updated.id,
-              url: `${appUrl}/account?billing=processing`,
+              url: `${appUrl}/?billing=processing`,
             },
             { status: 402 }
           );

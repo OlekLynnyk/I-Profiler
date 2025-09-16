@@ -89,20 +89,25 @@ export default function Header({ onLoginClick }: HeaderProps) {
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          {/* компактная высота + точное выравнивание с hero */}
           <div
-            className="h-14 sm:h-[60px] flex items-center justify-between"
+            className={`
+              h-12 sm:h-[56px] flex items-center justify-between
+              md:pl-[40px] lg:pl-[72px] md:pr-4 lg:pr-[72px]
+            `}
             style={{
               transform: isShrunk ? 'scale(0.97)' : 'none',
               transformOrigin: 'center',
               transition: 'transform 220ms cubic-bezier(0.22,1,0.36,1)',
             }}
           >
+            {/* ЛЕВАЯ ГРУППА */}
             <div className="flex items-center gap-6">
+              {/* Логотип без hover-анимаций (оставлен только focus-visible) */}
               <button
                 onClick={confirmAndGoHome}
                 className="
-                  group inline-flex items-center gap-2 rounded-xl px-2 py-1
-                  ring-1 ring-white/10 hover:ring-white/25 transition
+                  inline-flex items-center gap-2 rounded-xl px-2 py-1
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
                 "
                 aria-label="H1NTED — home"
@@ -112,7 +117,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
                   alt="Logo"
                   className="w-6 h-6 rounded-full ring-1 ring-[#A855F7]/30"
                 />
-                <span className="text-white font-semibold tracking-tight group-hover:text-white/90">
+                <span className="text-white font-semibold tracking-tight text-base sm:text-[20px]">
                   H1NTED
                 </span>
               </button>
@@ -123,14 +128,8 @@ export default function Header({ onLoginClick }: HeaderProps) {
                     onClick={() => scrollTo('about')}
                     aria-current={active === 'about' ? 'true' : undefined}
                     className={`
-                      relative text-white/80 hover:text-white transition-colors
+                      text-white/80 hover:text-white transition-colors
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1
-                      after:content-[''] after:pointer-events-none
-                      after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1
-                      after:h-[2px] after:w-0
-                      after:bg-gradient-to-r after:from-transparent after:via-[#A855F7]/65 after:to-transparent
-                      after:transition-[width] after:duration-200
-                      hover:after:w-[120px]
                       ${active === 'about' ? 'text-white after:w-[160px]' : ''}
                     `}
                   >
@@ -141,81 +140,69 @@ export default function Header({ onLoginClick }: HeaderProps) {
                     onClick={() => scrollTo('pricing')}
                     aria-current={active === 'pricing' ? 'true' : undefined}
                     className={`
-                      relative text-white/80 hover:text-white transition-colors
+                      text-white/80 hover:text-white transition-colors
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1
-                      after:content-[''] after:pointer-events-none
-                      after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1
-                      after:h-[2px] after:w-0
-                      after:bg-gradient-to-r after:from-transparent after:via-[#A855F7]/65 after:to-transparent
-                      after:transition-[width] after:duration-200
-                      hover:after:w-[120px]
                       ${active === 'pricing' ? 'text-white after:w-[160px]' : ''}
                     `}
                   >
                     Pricing
                   </button>
-
-                  {/* Disabled until the Gallery page/section is ready */}
-                  <button
-                    type="button"
-                    disabled
-                    aria-disabled="true"
-                    title="Gallery — coming soon"
-                    className={`
-                      relative transition-colors rounded-md px-1
-                      text-white/60 hover:text-white/80
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
-                      after:content-[''] after:pointer-events-none
-                      after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1
-                      after:h-[2px] after:w-0
-                      after:bg-gradient-to-r after:from-transparent after:via-[#A855F7]/35 after:to-transparent
-                      after:transition-[width] after:duration-200
-                      hover:after:w-[120px]
-                      disabled:cursor-not-allowed disabled:opacity-60
-                    `}
-                  >
-                    Gallery
-                  </button>
                 </nav>
               )}
             </div>
 
-            <div className="flex items-center gap-4">
-              {!isLoading && session && (
-                <Link
-                  href="/workspace"
-                  className="
-                    rounded-full px-4 py-1.5 text-sm text-white
-                    bg-[#A855F7]/20 ring-1 ring-[#A855F7]/30 backdrop-blur
-                    transition-colors hover:bg-[#A855F7]/30 hover:ring-[#A855F7]/50
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
-                  "
-                >
-                  My Workspace
-                </Link>
-              )}
+            {/* ПРАВАЯ ГРУППА: Log in/Log out слева, Workspace — справа */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              {!isLoading &&
+                (session ? (
+                  <button
+                    onClick={handleLogout}
+                    className="
+                      text-white/80 hover:text-white transition-colors
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1
+                    "
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <button
+                    onClick={onLoginClick}
+                    className="
+                      text-white/90 hover:text-white transition-colors
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1
+                    "
+                  >
+                    Login
+                  </button>
+                ))}
 
-              {!isLoading && session ? (
-                <button
-                  onClick={handleLogout}
-                  className="
-                    text-white/80 hover:text-white transition-colors
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1
-                  "
-                >
-                  Logout
-                </button>
-              ) : (
-                <button
-                  onClick={onLoginClick}
-                  className="
-                    text-white/90 hover:text-white transition-colors
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-md px-1
-                  "
-                >
-                  Login
-                </button>
-              )}
+              {/* Workspace — всегда видим, активность зависит от session */}
+              {!isLoading &&
+                (session ? (
+                  <Link
+                    href="/workspace"
+                    className="
+                      rounded-full px-4 py-1.5 text-sm text-white
+                      bg-[#A855F7]/20 ring-1 ring-[#A855F7]/30 backdrop-blur
+                      transition-colors hover:bg-[#A855F7]/30 hover:ring-[#A855F7]/50
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
+                    "
+                  >
+                    My Workspace
+                  </Link>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    title="Log in to access workspace"
+                    className="
+                      rounded-full px-4 py-1.5 text-sm
+                      text-white/60 bg-white/5 ring-1 ring-white/10 backdrop-blur
+                      select-none pointer-events-none opacity-70
+                    "
+                  >
+                    My Workspace
+                  </span>
+                ))}
             </div>
           </div>
         </div>

@@ -355,9 +355,9 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
 
         <h2
           id="pricing-title"
-          className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-6 sm:mb-8"
+          className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-10 sm:mb-14 uppercase"
         >
-          Pricing
+          Find your perfect plan
         </h2>
 
         {/* ===== MOBILE (< md) ===== */}

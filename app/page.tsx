@@ -130,7 +130,7 @@ export default function HomePage() {
 
               {/* Subtitle — как на десктопе, с «дыханием» */}
               <motion.div
-                className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(1.1rem,4vw,1.1rem)]"
+                className="font-bold mt-12 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(1.1rem,4vw,1.1rem)]"
                 initial={reduce ? undefined : 'hidden'}
                 whileInView={reduce ? undefined : 'show'}
                 viewport={{ once: true, amount: 0.7 }}
@@ -154,12 +154,12 @@ export default function HomePage() {
                 variants={fadeUp}
                 custom={3}
               >
-                In seconds, you gain the rarest advantage — discerning people through signals they
-                cannot conceal, knowing what words will never reveal
+                In seconds, you gain the rarest advantage of discerning people through little
+                signals they cannot conceal
               </motion.p>
             </div>
 
-            {/* CTA */}
+            {/* CTA (мобайл): только текст заменён */}
             {!session && (
               <motion.button
                 type="button"
@@ -169,7 +169,7 @@ export default function HomePage() {
                   e.preventDefault();
                   setIsAuthModalOpen(true);
                 }}
-                className="relative inline-flex items-center justify-center w-fit rounded-full px-6 py-3 font-semibold tracking-wide text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] md:hover:-translate-y-[1px] transform-gpu will-change-transform"
+                className="relative inline-flex items-center justify-center w-fit rounded-full px-6 py-3 font-normal text-[15px] leading-snug text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] md:hover:-translate-y-[1px] transform-gpu will-change-transform min-w-[220px]"
                 style={{
                   backgroundImage: `
                     radial-gradient(140px 140px at var(--mx, 50%) var(--my, 0%), rgba(168,85,247,0.24), rgba(168,85,247,0) 60%),
@@ -196,7 +196,7 @@ export default function HomePage() {
                       'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
                   }}
                 />
-                <span className="relative z-[1]">ACCESS NOW</span>
+                <span className="relative z-[1]">Request a free trial</span>
               </motion.button>
             )}
           </div>
@@ -210,8 +210,8 @@ export default function HomePage() {
       {/* ===== /MOBILE INTRO ===== */}
 
       {/* ===== DESKTOP HERO ===== */}
-      <main className="hidden md:flex lg:flex-row items-center justify-between flex-grow text-left px-6 mt-8 gap-12 max-w-7xl mx-auto relative z-10">
-        <div className="w-full lg:w-[80%] space-y-2 pl-[20px] relative">
+      <main className="hidden md:flex lg:flex-row items-center justify-between flex-grow text-left px-6 mt-24 gap-12 max-7xl mx-auto relative z-10 max-w-7xl">
+        <div className="w-full lg:w-[90%] space-y-2 pl-[40px] relative lg:ml-8">
           {/* Виньетка за заголовком */}
           <div
             aria-hidden
@@ -222,27 +222,27 @@ export default function HomePage() {
             }}
           />
           <div className="min-h-[4rem]">
+            {/* ⬇️ ЗМЕНШЕНО НА ~30% И ОДИНАКОВЫЙ РАЗМЕР ДЛЯ ОБЕИХ СТРОК */}
             <motion.h1
-              className="font-extrabold uppercase tracking-tight leading-[1.02] [text-wrap:balance] text-[clamp(3.75rem,5vw+1rem,5.75rem)] hero-glow"
+              className="font-extrabold uppercase tracking-tight leading-[1.1] [text-wrap:balance] hero-glow text-[clamp(2.6rem,3.5vw+0.7rem,4rem)]"
               style={{ letterSpacing: '-0.02em' }}
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
               viewport={{ once: true, amount: 0.6 }}
             >
               <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={0}>
-                We Unlock Insights With
+                Unlock Insights
               </motion.span>
               <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={1}>
-                Advanced AI{' '}
-                <span className="text-[clamp(4.75rem,5.75vw,5.75rem)]">Discernment</span>
+                With Advanced AI Discernment
               </motion.span>
             </motion.h1>
 
             {/* Полка-блик */}
-            <div className="mt-3 h-px w-[min(680px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            <div className="mt-4 -ml-4 h-px w-[min(680px,77%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
             <motion.div
-              className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[22.0px]"
+              className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[24.0px]"
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
               viewport={{ once: true, amount: 0.7 }}
@@ -260,54 +260,118 @@ export default function HomePage() {
 
           <div className="space-y-6 text-[1rem] leading-relaxed max-w-[32rem]">
             <motion.p
-              className="text-[15px] leading-snug text-white/70 max-w-[36ch] mt-5"
+              className="text-[16px] leading-[1.6] text-white/75 mt-5 max-w-none md:w-[52ch] lg:w-[56ch] [text-wrap:balance]"
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
               viewport={{ once: true, amount: 0.7 }}
               variants={fadeUp}
               custom={4}
             >
-              In seconds, you gain the rarest advantage — discerning people through signals they
-              cannot conceal, knowing what words will never reveal
+              In seconds, you gain the rarest advantage of discerning people through little signals
+              they cannot conceal
             </motion.p>
 
-            {!session && (
+            {/* ===== CTA (DESKTOP) — только кнопки ===== */}
+            {session ? (
+              // Залогинен: одна кнопка, прозрачная и заблокирована
               <motion.button
+                type="button"
+                aria-disabled="true"
+                tabIndex={-1}
                 onMouseMove={hotspotMove}
-                onClick={() => setIsAuthModalOpen(true)}
-                className="relative inline-flex items-center justify-center rounded-full px-7 py-3.5 font-semibold tracking-wide text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] hover:-translate-y-[1px]"
+                className="relative inline-flex items-center justify-center rounded-full px-5 py-[0.72rem] font-normal text-[15px] leading-snug text-[#F5F3FF] opacity-30 pointer-events-none transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur min-w-[200px]"
                 style={{
-                  backgroundImage: `
-                    radial-gradient(160px 160px at var(--mx, 50%) var(--my, 0%), rgba(168,85,247,0.26), rgba(168,85,247,0) 60%),
-                    linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))
-                  `,
-                  boxShadow:
-                    'inset 0 2px 0 rgba(255,255,255,0.10), inset 0 1px 0 rgba(0,0,0,0.35), 0 14px 32px rgba(168,85,247,0.35)',
+                  background: 'transparent',
+                  boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.10), inset 0 1px 0 rgba(0,0,0,0.35)',
                   borderColor: 'rgba(255,255,255,0.12)',
                 }}
                 initial={reduce ? undefined : { opacity: 0, y: 10 }}
                 whileInView={
                   reduce
                     ? undefined
-                    : { opacity: 1, y: 0, transition: { duration: 0.6, ease: easing, delay: 0.32 } }
+                    : {
+                        opacity: 0.3,
+                        y: 0,
+                        transition: { duration: 0.6, ease: easing, delay: 0.32 },
+                      }
                 }
                 viewport={{ once: true, amount: 0.7 }}
               >
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[6px]"
-                  style={{
-                    background:
-                      'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
-                  }}
-                />
-                <span className="relative z-[1]">ACCESS NOW</span>
+                <span className="relative z-[1]">Take a product tour</span>
               </motion.button>
+            ) : (
+              // Разлогинен: две кнопки — левая активна, правая прозрачная и заблокирована
+              <>
+                {/* Левая: уже + выше */}
+                <motion.button
+                  onMouseMove={hotspotMove}
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="relative inline-flex items-center justify-center rounded-full px-5 py-[0.72rem] font-normal text-[15px] leading-snug text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] hover:-translate-y-[1px] min-w-[200px]"
+                  style={{
+                    backgroundImage: `
+                      radial-gradient(160px 160px at var(--mx, 50%) var(--my, 0%), rgba(168,85,247,0.26), rgba(168,85,247,0) 60%),
+                      linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))
+                    `,
+                    boxShadow:
+                      'inset 0 2px 0 rgba(255,255,255,0.10), inset 0 1px 0 rgba(0,0,0,0.35)',
+                    borderColor: 'rgba(255,255,255,0.12)',
+                  }}
+                  initial={reduce ? undefined : { opacity: 0, y: 10 }}
+                  whileInView={
+                    reduce
+                      ? undefined
+                      : {
+                          opacity: 1,
+                          y: 0,
+                          transition: { duration: 0.6, ease: easing, delay: 0.32 },
+                        }
+                  }
+                  viewport={{ once: true, amount: 0.7 }}
+                >
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[6px]"
+                    style={{
+                      background:
+                        'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
+                    }}
+                  />
+                  <span className="relative z-[1]">Request a free trial</span>
+                </motion.button>
+
+                {/* Правая: заблокирована, прозрачная */}
+                <motion.button
+                  type="button"
+                  aria-disabled="true"
+                  tabIndex={-1}
+                  onMouseMove={hotspotMove}
+                  className="relative inline-flex items-center justify-center rounded-full px-5 py-[0.72rem] font-normal text-[15px] leading-snug text-[#F5F3FF] opacity-30 pointer-events-none transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur ml-3 min-w-[200px]"
+                  style={{
+                    background: 'transparent',
+                    boxShadow:
+                      'inset 0 2px 0 rgba(255,255,255,0.10), inset 0 1px 0 rgba(0,0,0,0.35)',
+                    borderColor: 'rgba(255,255,255,0.12)',
+                  }}
+                  initial={reduce ? undefined : { opacity: 0, y: 10 }}
+                  whileInView={
+                    reduce
+                      ? undefined
+                      : {
+                          opacity: 0.3,
+                          y: 0,
+                          transition: { duration: 0.6, ease: easing, delay: 0.36 },
+                        }
+                  }
+                  viewport={{ once: true, amount: 0.7 }}
+                >
+                  <span className="relative z-[1]">Take a product tour</span>
+                </motion.button>
+              </>
             )}
           </div>
         </div>
 
-        <div className="w-full lg:w-1/2 h-[250px] sm:h-[350px] lg:h-[500px]">
+        <div className="w-full lg:w-1/2 h-[250px] sm:h-[350px] lg:h-[500px] lg:-translate-x-8 xl:-translate-x-12">
           <CubeCanvas />
         </div>
       </main>
@@ -328,14 +392,14 @@ export default function HomePage() {
       >
         <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-px w-[min(760px,92%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         <motion.h2
-          className="text-center text-3xl md:text-4xl font-extrabold tracking-tight text-white"
+          className="text-center text-3xl md:text-4xl font-extrabold tracking-tight text-white uppercase mb-12"
           initial={reduce ? undefined : { opacity: 0, y: 10 }}
           whileInView={
             reduce ? undefined : { opacity: 1, y: 0, transition: { duration: 0.6, ease: easing } }
           }
           viewport={{ once: true, amount: 0.6 }}
         >
-          About
+          Empowering people
         </motion.h2>
 
         <div

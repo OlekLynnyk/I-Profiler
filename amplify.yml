@@ -6,10 +6,16 @@ frontend:
         - npm ci
     build:
       commands:
+        # ❗ Жёсткая проверка наличия секретов перед сборкой
+        - test -n "$STRIPE_SECRET_KEY" || (echo "❌ STRIPE_SECRET_KEY missing"; exit 1)
+        - test -n "$STRIPE_WEBHOOK_SECRET" || (echo "❌ STRIPE_WEBHOOK_SECRET missing"; exit 1)
+
         - printf "SUPABASE_URL=%s\n" "$SUPABASE_URL" >> .env.production
         - printf "SUPABASE_SERVICE_ROLE_KEY=%s\n" "$SUPABASE_SERVICE_ROLE_KEY" >> .env.production
         - printf "NEXT_PUBLIC_SUPABASE_URL=%s\n" "$NEXT_PUBLIC_SUPABASE_URL" >> .env.production
         - printf "NEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n" "$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env.production
+        - printf "STRIPE_SECRET_KEY=%s\n" "$STRIPE_SECRET_KEY" >> .env.production
+        - printf "STRIPE_WEBHOOK_SECRET=%s\n" "$STRIPE_WEBHOOK_SECRET" >> .env.production
         - printf "XAI_API_KEY=%s\n" "$XAI_API_KEY" >> .env.production
         - printf "MY_AWS_ACCESS_KEY_ID=%s\n" "$MY_AWS_ACCESS_KEY_ID" >> .env.production
         - printf "MY_AWS_SECRET_ACCESS_KEY=%s\n" "$MY_AWS_SECRET_ACCESS_KEY" >> .env.production
@@ -18,7 +24,7 @@ frontend:
         - printf "NEXT_PUBLIC_SITE_URL=%s\n" "$NEXT_PUBLIC_SITE_URL" >> .env.production
         - printf "USE_EMAIL_MOCK=%s\n" "$USE_EMAIL_MOCK" >> .env.production
         - printf "SENTRY_DSN=%s\n" "$SENTRY_DSN" >> .env.production
-        - printf "SYNC_SECRET_KEY=%s\n" "$SYNC_SECRET_KEY" >> .env.production 
+        - printf "SYNC_SECRET_KEY=%s\n" "$SYNC_SECRET_KEY" >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next

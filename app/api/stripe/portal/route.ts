@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: subRecord.stripe_customer_id,
-    return_url: `${env.NEXT_PUBLIC_APP_URL}/account`,
+    return_url: `${env.NEXT_PUBLIC_APP_URL}/`,
   });
 
   await logUserAction({

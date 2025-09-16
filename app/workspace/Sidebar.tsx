@@ -7,9 +7,8 @@ import { PlanProgress } from '@/components/PlanProgress';
 import { PackageType } from '@/types/plan';
 import { useUserPlan } from '../hooks/useUserPlan';
 // import { usePlanUsage, PlanUsageProvider } from '../workspace/context/PlanUsageContext'; // УДАЛЕНО
-import { useStripeCheckout } from '../hooks/useStripeCheckout';
 import { useSidebar } from '@/app/context/SidebarContext';
-import { PACKAGE_TO_PRICE } from '@/types/plan';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 
 // Типы
 type SidebarProps = {
@@ -32,7 +31,6 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   const [activeBox, setActiveBox] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const { openSidebar, closeSidebar } = useSidebar();
-  const { handleCheckout } = useStripeCheckout();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   // === ДОБАВЛЕНО: локальный бамп для мгновенного обновления ===
@@ -46,6 +44,35 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
     return () => window.removeEventListener('usage:inc', onInc as EventListener);
   }, []);
   // === КОНЕЦ ДОБАВЛЕНИЯ ===
+
+  const supabase = createPagesBrowserClient();
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleOpenPortal = async () => {
+    try {
+      setPortalLoading(true);
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return;
+
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        console.error('❌ Portal fetch failed:', await res.text());
+        return;
+      }
+
+      const { url } = await res.json();
+      if (url) window.location.href = url;
+    } catch (e) {
+      console.error('❌ Portal error:', e);
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   const handleKeyToggle = (e: KeyboardEvent<HTMLDivElement>, boxId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -81,22 +108,11 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         >
           <MonthlyUsage refreshToken={refreshToken} usageBump={usageBump} />
           <button
-            onClick={() => handleCheckout(PACKAGE_TO_PRICE.Select!)}
+            onClick={handleOpenPortal}
+            disabled={portalLoading}
             className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
           >
-            Choose Select · 15/mo
-          </button>
-          <button
-            onClick={() => handleCheckout(PACKAGE_TO_PRICE.Smarter!)}
-            className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
-          >
-            Choose Smarter · 75/mo
-          </button>
-          <button
-            onClick={() => handleCheckout(PACKAGE_TO_PRICE.Business!)}
-            className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-xl w-full"
-          >
-            Choose Business · 200/mo
+            {portalLoading ? 'Opening…' : 'Update your plan'}
           </button>
         </div>
         // УБРАНО: </PlanUsageProvider>
