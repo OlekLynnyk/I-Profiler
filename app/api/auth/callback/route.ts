@@ -19,12 +19,12 @@ function finalize(res: NextResponse) {
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
-  const jar = await cookies();
+  const jar = await cookies(); // ⬅️ ключевая правка: await
 
   const next = url.searchParams.get('next') || jar.get(RETURN_TO_COOKIE)?.value || SUCCESS_REDIRECT;
 
   const code = url.searchParams.get('code'); // PKCE
-  const token = url.searchParams.get('token') ?? url.searchParams.get('token_hash'); // <-- важно
+  const token = url.searchParams.get('token') ?? url.searchParams.get('token_hash'); // email link
   const verifyType = url.searchParams.get('type') as
     | 'signup'
     | 'recovery'
@@ -49,9 +49,11 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // соблюдаем твою архитектуру: auth-helpers + cookies: async () => jar
   const supabase = createRouteHandlerClient({ cookies: async () => jar });
 
   let error: { message: string } | null = null;
+
   if (code) {
     ({ error } = await supabase.auth.exchangeCodeForSession(code));
   } else {
@@ -67,8 +69,7 @@ export async function GET(req: NextRequest) {
   return finalize(NextResponse.redirect(new URL(dest, url), 303));
 }
 
-// некоторые почтовые клиенты дергают HEAD; ответим тем же редиректом,
-// но без потребления токена.
+// Почтовые клиенты часто делают HEAD-prefetch — отвечаем редиректом без потребления токена
 export async function HEAD(req: NextRequest) {
   const url = new URL(req.url);
   const res = NextResponse.redirect(url, 303);
