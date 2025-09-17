@@ -45,16 +45,16 @@ export function isValidPackageType(pkg: string): pkg is ValidPackageType {
 
 export const PRICE_TO_PACKAGE: Record<string, ValidPackageType> = {
   // CANARY (LIVE) — временно для теста на проде
-  price_1S8L8RAGnqjZyhfASTwZaQjP: 'Business', // t1 €0.10
-  price_1S8L8kAGnqjZyhfAvCn79rcj: 'Smarter', // t2 €0.15
-  price_1S8L91AGnqjZyhfAQiUw4Qey: 'Select', // t3 €0.20
+  price_1S8N4lAGnqjZyhfAbGAxkfkc: 'Business', // t1 €0.10
+  price_1S8N4NAGnqjZyhfAB9KGo9uz: 'Smarter', // t2 €0.15
+  price_1S8N3nAGnqjZyhfA2hXi9OXa: 'Select', // t3 €0.20
 };
 
 export const PACKAGE_TO_PRICE: Partial<Record<ValidPackageType, string>> = {
   // CANARY (LIVE) — временно для теста на проде
-  Business: 'price_1S8L8RAGnqjZyhfASTwZaQjP',
-  Smarter: 'price_1S8L8kAGnqjZyhfAvCn79rcj',
-  Select: 'price_1S8L91AGnqjZyhfAQiUw4Qey',
+  Business: 'price_1S8N4lAGnqjZyhfAbGAxkfkc',
+  Smarter: 'price_1S8N4NAGnqjZyhfAB9KGo9uz',
+  Select: 'price_1S8N3nAGnqjZyhfA2hXi9OXa',
 };
 
 export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';
