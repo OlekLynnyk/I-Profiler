@@ -44,7 +44,6 @@ export async function POST(req: NextRequest) {
       .select(
         'user_id, used_today, used_monthly, monthly_limit, daily_limit, limit_reset_at, timezone'
       )
-      .or('active.is.true,active.is.null')
       .order('user_id', { ascending: true })
       .range(offset, offset + CHUNK - 1);
 

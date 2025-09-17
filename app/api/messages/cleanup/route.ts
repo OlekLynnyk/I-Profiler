@@ -3,10 +3,10 @@ import { createServerClientForApi } from '@/lib/supabase/server';
 import { logUserAction } from '@/lib/logger';
 
 export async function POST(req: Request) {
-  // авторизация по секрету (если уже включили — оставляйте)
-  const secretHeader = req.headers.get('x-sync-secret');
-  const expected = process.env.SYNC_SECRET_KEY || '';
-  if (expected && secretHeader !== expected) {
+  const expected = (process.env.SYNC_SECRET_KEY ?? '').trim();
+  const auth = req.headers.get('authorization');
+  const xsync = req.headers.get('x-sync-secret');
+  if (!expected || !(xsync === expected || auth === `Bearer ${expected}`)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
