@@ -44,17 +44,15 @@ export function isValidPackageType(pkg: string): pkg is ValidPackageType {
 }
 
 export const PRICE_TO_PACKAGE: Record<string, ValidPackageType> = {
-  // CANARY (LIVE) — временно для теста на проде
-  price_1S8N4lAGnqjZyhfAbGAxkfkc: 'Business', // t1 €0.10
-  price_1S8N4NAGnqjZyhfAB9KGo9uz: 'Smarter', // t2 €0.15
-  price_1S8N3nAGnqjZyhfA2hXi9OXa: 'Select', // t3 €0.20
+  price_1S4nT2AGnqjZyhfAUfJwYBIl: 'Business',
+  price_1S4nSgAGnqjZyhfAtPjc1NSY: 'Smarter',
+  price_1S4nRwAGnqjZyhfAcf3A0P4l: 'Select',
 };
 
 export const PACKAGE_TO_PRICE: Partial<Record<ValidPackageType, string>> = {
-  // CANARY (LIVE) — временно для теста на проде
-  Business: 'price_1S8N4lAGnqjZyhfAbGAxkfkc',
-  Smarter: 'price_1S8N4NAGnqjZyhfAB9KGo9uz',
-  Select: 'price_1S8N3nAGnqjZyhfA2hXi9OXa',
+  Business: 'price_1S4nT2AGnqjZyhfAUfJwYBIl',
+  Smarter: 'price_1S4nSgAGnqjZyhfAtPjc1NSY',
+  Select: 'price_1S4nRwAGnqjZyhfAcf3A0P4l',
 };
 
 export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';
@@ -62,13 +60,11 @@ export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';
 export interface SubscriptionPlanPayload {
   plan: ValidPackageType;
   priceId: string;
-  /** могут временно отсутствовать в ранних эвентах */
   periodStart?: string | null;
   periodEnd?: string | null;
   status: NormalizedSubscriptionStatus;
 }
 
-/** статусы — как согласовали на Шаге 3b */
 export function mapStripeStatus(status: string): NormalizedSubscriptionStatus {
   switch (status) {
     case 'active':
