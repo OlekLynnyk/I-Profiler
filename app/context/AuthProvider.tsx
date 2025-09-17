@@ -10,7 +10,7 @@ const supabase = createPagesBrowserClient({
     process.env.NODE_ENV === 'production'
       ? {
           name: 'sb',
-          domain: 'h1nted.com',
+          domain: '.h1nted.com',
           path: '/',
           sameSite: 'lax',
           secure: true,
