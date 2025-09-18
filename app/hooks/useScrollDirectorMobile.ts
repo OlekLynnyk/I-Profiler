@@ -18,14 +18,41 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
   const lastTouchX = useRef<number | null>(null);
   const startAt = useRef<number>(0);
   const deltaY = useRef(0);
-  const startedInCorridor = useRef(false);
 
   const animCancel = useRef<null | (() => void)>(null);
   const isAnimating = useRef(false);
   const lastAutoAt = useRef(0);
-  const unblockInputsRef = useRef<null | (() => void)>(null);
 
-  // Политики
+  // сохранение/восстановление временных стилей для полного лок-скролла в момент анимации
+  const prevTouchAction = useRef<{ html?: string; body?: string }>({});
+  const prevOverscroll = useRef<{ html?: string; body?: string }>({});
+
+  const lockScrollInteractions = (lock: boolean) => {
+    const html = document.documentElement;
+    const body = document.body;
+
+    if (lock) {
+      prevTouchAction.current = {
+        html: html.style.touchAction,
+        body: body.style.touchAction,
+      };
+      prevOverscroll.current = {
+        html: (html.style as any).overscrollBehaviorY,
+        body: (body.style as any).overscrollBehaviorY,
+      };
+      html.style.touchAction = 'none';
+      body.style.touchAction = 'none';
+      (html.style as any).overscrollBehaviorY = 'none';
+      (body.style as any).overscrollBehaviorY = 'none';
+    } else {
+      html.style.touchAction = prevTouchAction.current.html ?? '';
+      body.style.touchAction = prevTouchAction.current.body ?? '';
+      (html.style as any).overscrollBehaviorY = prevOverscroll.current.html ?? '';
+      (body.style as any).overscrollBehaviorY = prevOverscroll.current.body ?? '';
+    }
+  };
+
+  // Политики: НЕ отключаем поведение, только делаем анимацию мгновенной при reduce/saveData
   const reduceMotion = useMemo(() => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
@@ -42,98 +69,60 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
 
   const active = enabled && !detached && isMobile;
 
-  // Геометрия
-  const getTop = (el: HTMLElement) => el.getBoundingClientRect().top + window.scrollY;
-  const getBottom = (el: HTMLElement) => getTop(el) + el.offsetHeight;
+  // easeOutCubic — мягко; при желании заменить на quint для ещё более “шёлкового” финиша
+  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
-  // Зона «коридора»
-  const withinCorridor = (
-    target: EventTarget | null,
-    heroEl: HTMLElement,
-    videoEl: HTMLElement
-  ) => {
-    if (!(target instanceof Node)) return false;
-    return heroEl.contains(target) || videoEl.contains(target);
+  // Динамическая верхняя зона для iOS/мобильных браузеров (адрес-бар/toolbar)
+  const getTopSnapZone = () => {
+    if (typeof window === 'undefined') return 96;
+    const vh = window.innerHeight || 0;
+    // 12% вьюпорта, но не меньше 64 и не больше 160
+    return Math.max(64, Math.min(160, Math.round(vh * 0.12)));
   };
 
-  // Блокировка ввода только на контейнерах коридора (во время анимации)
-  const blockInputsInCorridor = (heroEl: HTMLElement, videoEl: HTMLElement) => {
-    const prevent = (e: Event) => {
-      if (!isAnimating.current) return;
-      e.preventDefault();
-      e.stopPropagation();
-    };
-    // Нужны non-passive для preventDefault
-    heroEl.addEventListener('touchmove', prevent as EventListener, { passive: false });
-    videoEl.addEventListener('touchmove', prevent as EventListener, { passive: false });
-    heroEl.addEventListener('wheel', prevent as EventListener, { passive: false });
-    videoEl.addEventListener('wheel', prevent as EventListener, { passive: false });
+  // rAF-аниматор с блокировкой нативного скролла во время автоскролла
+  const animateScrollTo = (targetY: number, distanceHint = 0) => {
+    const dist = Math.abs(targetY - window.scrollY);
+    const base = distanceHint || dist;
 
-    const keydown = (e: KeyboardEvent) => {
-      if (!isAnimating.current) return;
-      const k = e.key;
-      if (
-        k === 'PageDown' ||
-        k === 'PageUp' ||
-        k === 'Home' ||
-        k === 'End' ||
-        k === 'ArrowDown' ||
-        k === 'ArrowUp'
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-    window.addEventListener('keydown', keydown, { passive: false });
+    // Чуть медленнее и плавнее (люкс)
+    const DURATION_PER_PX = 1.45; // было 1.2
+    const MIN_DUR = 750; // было 720
+    const MAX_DUR = 1400; // было 1280
+    const duration = Math.max(MIN_DUR, Math.min(MAX_DUR, base * DURATION_PER_PX));
 
-    return () => {
-      heroEl.removeEventListener('touchmove', prevent as EventListener);
-      videoEl.removeEventListener('touchmove', prevent as EventListener);
-      heroEl.removeEventListener('wheel', prevent as EventListener);
-      videoEl.removeEventListener('wheel', prevent as EventListener);
-      window.removeEventListener('keydown', keydown as EventListener);
-    };
-  };
-
-  // Пружинная анимация (критически демпфированная «дотяжка»)
-  const animateScrollTo = (targetY: number, heroEl: HTMLElement, videoEl: HTMLElement) => {
     if (reduceMotion || saveData) {
       window.scrollTo(0, Math.round(targetY));
       return () => {};
     }
+
     if (animCancel.current) animCancel.current();
 
-    // Включаем эксклюзивный режим в коридоре
-    isAnimating.current = true;
-    unblockInputsRef.current = blockInputsInCorridor(heroEl, videoEl);
-
-    const STIFFNESS = 0.08; // «жёсткость»
-    const DAMPING = 0.92; // демпфирование (0..1)
-    const MAX_MS = 1400; // страховка
-    const SNAP_EPS = 0.75; // эпсилон прилипания (px)
-    const V_EPS = 0.2; // эпсилон скорости
-
-    let y = window.scrollY;
-    let v = 0;
     let raf = 0;
-    let prev = performance.now();
-    const start = prev;
+    const startY = window.scrollY;
+    const total = targetY - startY;
+    const startT = performance.now();
 
-    const step = () => {
-      const now = performance.now();
-      const dt = Math.min(1 / 60, (now - prev) / 1000);
-      prev = now;
+    isAnimating.current = true;
+    lockScrollInteractions(true); // ← блокируем нативный скролл только на время анимации
 
-      const force = (targetY - y) * STIFFNESS;
-      v = v * DAMPING + force;
-      y = y + v * (dt * 60); // нормируем под ~60fps
+    const preventWhileAnimating = (e: TouchEvent) => {
+      if (isAnimating.current) e.preventDefault();
+    };
+    window.addEventListener('touchmove', preventWhileAnimating, { passive: false });
 
+    const cleanup = () => {
+      isAnimating.current = false;
+      window.removeEventListener('touchmove', preventWhileAnimating);
+      lockScrollInteractions(false); // ← вернуть всё как было
+      animCancel.current = null;
+    };
+
+    const step = (now: number) => {
+      const t = Math.min(1, (now - startT) / duration);
+      const y = startY + total * ease(t);
       window.scrollTo(0, Math.round(y));
-
-      const timeUp = now - start > MAX_MS;
-      const done = Math.abs(targetY - y) < SNAP_EPS && Math.abs(v) < V_EPS;
-
-      if (!done && !timeUp) {
+      if (t < 1) {
         raf = requestAnimationFrame(step);
       } else {
         window.scrollTo(0, Math.round(targetY));
@@ -141,38 +130,39 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       }
     };
 
-    const cleanup = () => {
-      isAnimating.current = false;
-      if (unblockInputsRef.current) {
-        unblockInputsRef.current();
-        unblockInputsRef.current = null;
-      }
-      animCancel.current = null;
+    const cancelOnUser = () => {
+      if (raf) cancelAnimationFrame(raf);
+      cleanup();
     };
 
     raf = requestAnimationFrame(step);
-    const cancel = () => {
-      cancelAnimationFrame(raf);
-      cleanup();
-    };
-    animCancel.current = cancel;
-    return cancel;
-  };
 
-  // Динамическая верхняя зона (для возврата вверх из Video)
-  const getTopSnapZone = () => {
-    if (typeof window === 'undefined') return 96;
-    const vh = window.innerHeight || 0;
-    return Math.max(64, Math.min(160, Math.round(vh * 0.12)));
+    const onUserInput = () => cancelOnUser();
+    window.addEventListener('touchstart', onUserInput, { passive: true, once: true });
+    window.addEventListener('wheel', onUserInput, { passive: true, once: true });
+    window.addEventListener('keydown', onUserInput, { passive: true, once: true });
+
+    animCancel.current = cancelOnUser;
+    return cancelOnUser;
   };
 
   useEffect(() => {
     if (!enabled || !isMobile) return;
 
-    const heroEl = heroRef.current!;
-    const videoEl = videoRef.current!;
+    const heroEl = heroRef.current;
+    const videoEl = videoRef.current;
     if (!heroEl || !videoEl) return;
 
+    const getTop = (el: HTMLElement) => el.getBoundingClientRect().top + window.scrollY;
+    const getBottom = (el: HTMLElement) => getTop(el) + el.offsetHeight;
+    const scrollToEl = (el: HTMLElement) => {
+      const top = getTop(el);
+      requestAnimationFrame(() => {
+        animateScrollTo(top);
+      });
+    };
+
+    // Зоны
     const inHeroZone = () => window.scrollY < getBottom(heroEl) - 24;
     const inVideoZone = () => {
       const top = getTop(videoEl);
@@ -180,25 +170,29 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       return window.scrollY >= top - 4 && window.scrollY <= bot + 4;
     };
 
-    // IO: синхронизация snappedToVideo
+    // IO для синхронизации snappedToVideo
     const ioHero = new IntersectionObserver(
       (entries) => {
         const max = Math.max(...entries.map((e) => e.intersectionRatio));
-        if (max >= 0.5 && snappedToVideo) setSnappedToVideo(false);
+        if (max >= 0.5) {
+          if (snappedToVideo) setSnappedToVideo(false);
+        }
       },
       { threshold: [0, 0.25, 0.5, 0.75, 1] }
     );
     const ioVideo = new IntersectionObserver(
       (entries) => {
         const max = Math.max(...entries.map((e) => e.intersectionRatio));
-        if (max >= 0.5 && !snappedToVideo) setSnappedToVideo(true);
+        if (max >= 0.5) {
+          if (!snappedToVideo) setSnappedToVideo(true);
+        }
       },
       { threshold: [0, 0.25, 0.5, 0.75, 1] }
     );
     ioHero.observe(heroEl);
     ioVideo.observe(videoEl);
 
-    // Пороги намерений
+    // Пороговые параметры
     const DOWN_INTENT_PX = 8;
     const UP_INTENT_PX = 8;
     const MIN_REARM_MS = 260;
@@ -209,21 +203,10 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       lastTouchY.current = null;
       lastTouchX.current = null;
       deltaY.current = 0;
-      startedInCorridor.current = false;
     };
 
-    // TOUCH: обрабатываем только если жест начался внутри коридора
     const onTouchStart = (e: TouchEvent) => {
-      // Если шла анимация и жест начался вне коридора — отменяем
-      if (isAnimating.current && !withinCorridor(e.target, heroEl, videoEl)) {
-        if (animCancel.current) animCancel.current();
-        return;
-      }
-      if (!withinCorridor(e.target, heroEl, videoEl)) return;
-
-      if (animCancel.current) animCancel.current(); // вернуть управление перед новым циклом
-      startedInCorridor.current = true;
-
+      if (animCancel.current) animCancel.current(); // отдаём управление пользователю
       startTouchY.current = e.touches[0]?.clientY ?? null;
       startTouchX.current = e.touches[0]?.clientX ?? null;
       lastTouchY.current = startTouchY.current;
@@ -233,8 +216,6 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      if (!startedInCorridor.current) return;
-
       const y = e.touches[0]?.clientY ?? lastTouchY.current;
       const x = e.touches[0]?.clientX ?? lastTouchX.current;
       if (y == null || x == null || lastTouchY.current == null || lastTouchX.current == null)
@@ -243,16 +224,12 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       deltaY.current += lastTouchY.current - y; // + вниз, - вверх
       lastTouchY.current = y;
       lastTouchX.current = x;
-      // Никаких preventDefault здесь — блокировка идёт точечно на контейнерах в animateScrollTo
+
+      if (isAnimating.current) e.preventDefault();
     };
 
     const onTouchEnd = () => {
-      if (!startedInCorridor.current) {
-        resetTouch();
-        return;
-      }
-
-      const d = deltaY.current; // суммарный сдвиг (px): +вниз, -вверх
+      const d = deltaY.current;
       const dx =
         startTouchX.current != null && lastTouchX.current != null
           ? Math.abs(lastTouchX.current - startTouchX.current)
@@ -269,7 +246,6 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
         return;
       }
 
-      // Позиции
       const videoTop = getTop(videoEl);
       const atVideoTopZone = Math.abs(window.scrollY - videoTop) <= getTopSnapZone();
 
@@ -277,16 +253,19 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
         // из Hero вниз → к Video
         if (inHeroZone() && d > DOWN_INTENT_PX && !snappedToVideo) {
           lastAutoAt.current = now;
-          requestAnimationFrame(() => animateScrollTo(videoTop, heroEl, videoEl));
+          const distance = Math.abs(videoTop - window.scrollY);
+          requestAnimationFrame(() => animateScrollTo(videoTop, distance));
           setSnappedToVideo(true);
           resetTouch();
           return;
         }
-        // в Video, в верхней зоне, жест вверх → к Hero
+
+        // в Video (верхняя зона), жест вверх → к Hero
         if (inVideoZone() && atVideoTopZone && d < -UP_INTENT_PX) {
           const heroTop = getTop(heroEl);
           lastAutoAt.current = now;
-          requestAnimationFrame(() => animateScrollTo(heroTop, heroEl, videoEl));
+          const distance = Math.abs(window.scrollY - heroTop);
+          requestAnimationFrame(() => animateScrollTo(heroTop, distance));
           setSnappedToVideo(false);
           resetTouch();
           return;
@@ -296,16 +275,15 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       resetTouch();
     };
 
-    // Отслеживаем уход ниже видео — отключаем автоснап до возврата
+    // Отслеживаем уход ниже видео — отключаем автоснап до возвращения
     const onScroll = () => {
       const vBottom = getBottom(videoEl);
       const below = window.scrollY > vBottom + 24;
       setDetached(below);
     };
 
-    // Навешиваем слушатели
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove as EventListener, { passive: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: false });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
 
@@ -315,14 +293,11 @@ export function useScrollDirectorMobile({ heroRef, videoRef, enabled = true }: O
       ioHero.disconnect();
       ioVideo.disconnect();
       window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove as EventListener);
+      window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('scroll', onScroll);
       if (animCancel.current) animCancel.current();
-      if (unblockInputsRef.current) {
-        unblockInputsRef.current();
-        unblockInputsRef.current = null;
-      }
+      lockScrollInteractions(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, isMobile, heroRef, videoRef]);

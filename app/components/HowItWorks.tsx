@@ -235,11 +235,11 @@ export default function HowItWorks() {
     <section ref={sectionRef} className="bg-transparent text-white relative overflow-hidden">
       <div className="w-full relative px-4">
         {/* ===== MOBILE (под видео) ===== */}
-        <div className="lg:hidden w-full mx-auto max-w-[520px]">
+        <div className="lg:hidden w-full mx-auto max-w-[520px] mb-12">
           {/* ⛔️ Заголовок How it works скрыт на мобайле */}
           <div className="px-4 pb-[env(safe-area-inset-bottom)]" aria-label="How it works — steps">
             {/* Отступ от видео до первого текста: 20px */}
-            <div className="h-5" aria-hidden />
+            <div className="h-[10px]" aria-hidden />
 
             {/* Единственный текст — полный месседж из шага 3 */}
             <p className="hidden sm:block text-[15px] leading-[1.6] text-white/80 max-w-[46ch] mx-auto">

@@ -353,12 +353,33 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           aria-hidden
         />
 
+        {/* --- ТОЛЬКО ДОБАВЛЕНО: мобильный стиль + десктоп как было --- */}
         <h2
           id="pricing-title"
           className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-[#CDB4FF] md:text-white mb-10 sm:mb-14 uppercase"
         >
-          Find your perfect plan
+          {/* Мобильный вид как “EMPOWERING PEOPLE” */}
+          <span
+            className="md:hidden block font-extrabold tracking-tight text-[clamp(1.6rem,6.5vw,2rem)]"
+            style={{
+              letterSpacing: '-0.02em',
+              WebkitTextFillColor: 'transparent',
+              WebkitBackgroundClip: 'text',
+              backgroundImage:
+                'linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.86))',
+              textShadow:
+                '0 0 14px rgba(255,255,255,0.12), 1px 0 0 rgba(168,85,247,0.20), -1px 0 0 rgba(99,102,241,0.20)',
+            }}
+          >
+            Find your perfect plan
+          </span>
+
+          {/* Десктоп — оригинальный вид */}
+          <span className="hidden md:inline">Find your perfect plan</span>
         </h2>
+
+        {/* --- ТОЛЬКО ДОБАВЛЕНО: линия под заголовком (мобайл) --- */}
+        <div className="md:hidden mx-auto mt-3 h-px w-[72%] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
 
         {/* ===== MOBILE (< md) ===== */}
         <LayoutGroup>
@@ -391,7 +412,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               ))}
             </motion.div>
 
-            <div className="pb-[calc(16px+env(safe-area-inset-bottom))]" />
+            <div className="pb-4" />
           </div>
         </LayoutGroup>
 

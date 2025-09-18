@@ -17,7 +17,7 @@ export default function Footer() {
   const reduce = useReducedMotion();
 
   return (
-    <footer className="mt-1 sm:mt-2 px-4 sm:px-6 pt-12 sm:pt-12 pb-12 md:pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
+    <footer className="mt-6 sm:mt-2 px-4 sm:px-6 pt-12 sm:pt-12 pb-12 md:pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
       {/* верхний hairline — только на мобиле (оставил как было) */}
       <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent md:hidden" />
 
