@@ -77,9 +77,9 @@ export default function HomePage() {
         style={{ overscrollBehaviorY: 'contain' }}
       >
         {/* --- HERO (мобильный) --- */}
-        <section ref={heroSectionRef} className="px-6 mt-10">
+        <section ref={heroSectionRef} className="px-6 mt-[3rem]">
           <div
-            className="flex flex-col justify-start min-h-[100svh] pt-8"
+            className="flex flex-col justify-start min-h-[100svh] pt-[2.4rem]"
             style={{
               paddingTop: 'env(safe-area-inset-top)',
               paddingBottom: 'env(safe-area-inset-bottom)',
@@ -101,7 +101,7 @@ export default function HomePage() {
               {/* ▶️ H1 (одинаковый размер + креативный визуал) */}
               <div className="font-extrabold uppercase tracking-tight leading-[1.08] [text-wrap:balance] hero-glow">
                 <motion.p
-                  className="text-[clamp(2.2rem,9vw,3rem)]"
+                  className="text-[clamp(2.64rem,10.8vw,3.6rem)]"
                   style={heroTextFx}
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
@@ -121,7 +121,7 @@ export default function HomePage() {
                 </motion.p>
 
                 <motion.p
-                  className="text-[clamp(2.2rem,9vw,3rem)]"
+                  className="text-[clamp(2.64rem,10.8vw,3.6rem)]"
                   style={heroTextFx}
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
@@ -137,7 +137,7 @@ export default function HomePage() {
                 </motion.p>
 
                 <motion.p
-                  className="text-[clamp(2.2rem,9vw,3rem)]"
+                  className="text-[clamp(2.64rem,10.8vw,3.6rem)]"
                   style={heroTextFx}
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}

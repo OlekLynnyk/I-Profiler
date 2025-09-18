@@ -241,27 +241,10 @@ export default function HowItWorks() {
             {/* Отступ от видео до первого текста: 20px */}
             <div className="h-5" aria-hidden />
 
-            {/* Шаги: компактно, строка шага — всегда в одну линию */}
-            <ol role="list" className="space-y-6 max-w-[480px] mx-auto text-left">
-              {STEPS.map((s) => (
-                <li role="listitem" key={s.id} className="space-y-3">
-                  <div className="text-[12px] uppercase tracking-wide text-[#CDB4FF]/90">
-                    {s.tagline}
-                  </div>
-
-                  {/* одна строка, не переносим */}
-                  <div className="text-[15px] leading-[1.12] font-semibold tracking-tight whitespace-nowrap text-white">
-                    <span className="hidden sm:inline">— </span>
-                    {s.title}
-                  </div>
-
-                  <p
-                    className="text-[14px] leading-[1.45] text-white/80"
-                    dangerouslySetInnerHTML={{ __html: s.desc }}
-                  />
-                </li>
-              ))}
-            </ol>
+            {/* Единственный текст — полный месседж из шага 3 */}
+            <p className="hidden sm:block text-[15px] leading-[1.6] text-white/80 max-w-[46ch] mx-auto">
+              {STEPS[2].desc}
+            </p>
 
             {/* Разделитель */}
             <div
@@ -269,7 +252,7 @@ export default function HowItWorks() {
               aria-hidden
             />
 
-            {/* Теглайн (маленький капс, по центру, в две строки как на референсе) */}
+            {/* Теглайн (оставляем как есть и где есть) */}
             <p className="text-center text-[12px] uppercase tracking-widest text-white/75 font-light">
               DO BETTER. MOVE FURTHER
               <br className="block" />
@@ -458,13 +441,17 @@ export default function HowItWorks() {
                           </span>
                           <span className="text-white/60">—</span>
                           <span
-                            className={`text-xl xl:text-2xl font-semibold transition-colors ${isActive ? 'text-white' : 'text-white/90 group-hover:text-white'}`}
+                            className={`text-xl xl:text-2xl font-semibold transition-colors ${
+                              isActive ? 'text-white' : 'text-white/90 group-hover:text-white'
+                            }`}
                           >
                             {s.title}
                           </span>
                         </div>
                         <div
-                          className={`h-[2px] mt-1 w-0 transition-all duration-200 bg-gradient-to-r from-transparent via-[#A855F7]/65 to-transparent ${isActive ? 'w-[180px]' : 'group-hover:w-[120px]'}`}
+                          className={`h-[2px] mt-1 w-0 transition-all duration-200 bg-gradient-to-r from-transparent via-[#A855F7]/65 to-transparent ${
+                            isActive ? 'w-[180px]' : 'group-hover:w-[120px]'
+                          }`}
                         />
                         <p className="mt-2 max-w-prose text-base leading-relaxed text-white/70">
                           {s.desc}
@@ -495,7 +482,6 @@ export default function HowItWorks() {
                   <stop offset="45%" stopColor="rgba(168,85,247,0.65)" />
                   <stop offset="100%" stopColor="rgba(168,85,247,0.0)" />
                 </linearGradient>
-                {/* keyframes для "дыхания" блика */}
                 <style>{`
                   @keyframes glassBreath {
                     0% { opacity: 0.30; transform: rotate(14deg) translateX(0px); }
