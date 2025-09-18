@@ -95,7 +95,7 @@ export default function HomePage() {
                   className="text-[#F7F7F7] text-[clamp(3.7rem,9vw,6rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
-                  viewport={{ once: true, amount: 0.6 }}
+                  viewport={{ once: true, amount: 0.3 }}
                   variants={fadeUp}
                   custom={0}
                 >
@@ -106,7 +106,7 @@ export default function HomePage() {
                   className="text-[#F7F7F7] text-[clamp(3.1rem,8vw,5.2rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
-                  viewport={{ once: true, amount: 0.6 }}
+                  viewport={{ once: true, amount: 0.3 }}
                   variants={fadeUp}
                   custom={1}
                 >
@@ -117,7 +117,7 @@ export default function HomePage() {
                   className="text-[#F7F7F7] text-[clamp(2.9rem,6vw,4rem)]"
                   initial={reduce ? undefined : 'hidden'}
                   whileInView={reduce ? undefined : 'show'}
-                  viewport={{ once: true, amount: 0.6 }}
+                  viewport={{ once: true, amount: 0.3 }}
                   variants={fadeUp}
                   custom={2}
                 >
@@ -155,7 +155,7 @@ export default function HomePage() {
                 custom={3}
               >
                 In seconds, you gain the rarest advantage of discerning people through little
-                signals they cannot conceal
+                signals they cannot ever conceal
               </motion.p>
             </div>
 
@@ -228,7 +228,7 @@ export default function HomePage() {
               style={{ letterSpacing: '-0.02em' }}
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
-              viewport={{ once: true, amount: 0.6 }}
+              viewport={{ once: true, amount: 0.3 }}
             >
               <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={0}>
                 Unlock Insights
@@ -242,7 +242,7 @@ export default function HomePage() {
             <div className="mt-4 -ml-4 h-px w-[min(680px,77%)] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
             <motion.div
-              className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[24.0px]"
+              className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[27.0px]"
               initial={reduce ? undefined : 'hidden'}
               whileInView={reduce ? undefined : 'show'}
               viewport={{ once: true, amount: 0.7 }}
@@ -268,7 +268,7 @@ export default function HomePage() {
               custom={4}
             >
               In seconds, you gain the rarest advantage of discerning people through little signals
-              they cannot conceal
+              they cannot ever conceal
             </motion.p>
 
             {/* ===== CTA (DESKTOP) — только кнопки ===== */}

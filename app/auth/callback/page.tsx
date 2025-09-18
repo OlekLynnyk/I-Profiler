@@ -12,6 +12,14 @@ export default function CallbackPage() {
   useEffect(() => {
     const run = async () => {
       try {
+        // 👇 ДОБАВЛЕНО: если открылись на www.*, перенаправляем на apex с сохранением query
+        if (typeof window !== 'undefined' && window.location.hostname.startsWith('www.')) {
+          const u = new URL(window.location.href);
+          u.hostname = u.hostname.replace(/^www\./, '');
+          window.location.replace(u.toString());
+          return; // дальше не выполняем — продолжим уже на apex домене
+        }
+
         try {
           await supabase.auth.exchangeCodeForSession(window.location.href);
         } catch (_) {}

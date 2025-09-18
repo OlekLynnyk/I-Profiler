@@ -227,9 +227,9 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             type="submit"
             disabled={!email || !password}
             className="mt-4 w-full rounded-full px-5 py-3
-                       bg-purple-500/20 text-white
-                       ring-1 ring-purple-300/30 backdrop-blur
-                       hover:bg-purple-500/30 hover:ring-purple-300/50
+                       text-white backdrop-blur ring-1
+                       bg-purple-500/15 hover:bg-purple-500/25 ring-purple-300/20 hover:ring-purple-300/35
+                       md:bg-purple-500/20 md:hover:bg-purple-500/30 md:ring-purple-300/30 md:hover:ring-purple-300/50
                        disabled:opacity-60
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60"
           >
