@@ -12,6 +12,10 @@ export default function CallbackPage() {
   useEffect(() => {
     const run = async () => {
       try {
+        try {
+          await supabase.auth.exchangeCodeForSession(window.location.href);
+        } catch (_) {}
+
         const {
           data: { session },
         } = await supabase.auth.getSession();
