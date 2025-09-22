@@ -1,442 +1,559 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import GlobalLoading from '@/app/loading';
 
-/**
- * Gallery White Cube — premium, desktop‑first implementation
- * Route: /gallery (App Router)
- * Visual goals:
- *  - White cube room with 3 frames on the back wall and 1 on each side wall (total 5)
- *  - Slim black frames, grey floor, ceiling track with spotlights, central black bench
- *  - Right-side slide-over panel with artwork info (EN-GB)
- *  - Subtle hover cue to show clickability
- *  - A11y: Esc to close, focus trap in panel, ARIA labels
- *
- * Notes:
- *  - Place placeholder assets in `/public/artworks/01.jpg` ... `/public/artworks/05.jpg` (vertical 3:4 recommended)
- *  - You can replace titles/descriptions later; UI copy is British English only
- */
+// =============================
+// Pininfarina Mosaic Gallery (App Router page)
+// =============================
+// Правки по ТЗ:
+// - 50 изображений, рандом при каждой загрузке, мозаика без швов.
+// - Лоадер заменён на GlobalLoading и показывается до ПОЛНОЙ предзагрузки фото.
+// - 1-й клик (когда сайдбар закрыт) — подъём; 2-й клик/клик по i — открыть сайдбар.
+// - Когда сайдбар открыт: клик по любой карточке обновляет контент сайдбара (не закрывает его).
+// - Кнопка закрытия — крестик (X), Esc также закрывает.
+// - Ширина сайдбара: переключатель 1/3 (по умолчанию) ↔ 1/4, мягкая анимация.
+// - Заголовок «H1NTED Gallery» в шапке.
 
-// —————————————————————————— Data (placeholder) ——————————————————————————
-const ARTWORKS: Array<{
+// -----------------------------
+// ДАННЫЕ
+// -----------------------------
+// Источник данных демонстрационный. В проде используйте свой CDN/Supabase.
+
+type ImageItem = {
   id: string;
   src: string;
   title: string;
-  byline?: string;
   description: string;
-}> = [
+};
+
+const BASE_IMAGES: ImageItem[] = [
   {
-    id: 'a1',
-    src: '/artworks/01.jpg',
-    title: 'Sunlit Stillness',
-    byline: 'Pigment print, 60 × 80 cm, 2024',
-    description:
-      'An exercise in restraint: a quiet field of light and edges that rewards unhurried looking.',
+    id: '1',
+    src: 'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 01',
+    description: 'Гладкая поверхность, холодный хром, диагональная динамика.',
   },
   {
-    id: 'a2',
-    src: '/artworks/02.jpg',
-    title: 'Quiet Geometry',
-    byline: 'Oil on panel, 55 × 73 cm, 2023',
-    description:
-      'Where shape meets hush: measured forms, balanced tensions, and a whisper of warmth.',
+    id: '2',
+    src: 'https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 02',
+    description: 'Мягкий свет и графитовый градиент — премиум настроение.',
   },
   {
-    id: 'a3',
-    src: '/artworks/03.jpg',
-    title: 'Silver Noon',
-    byline: 'Gelatin silver print, 50 × 67 cm, 1976',
-    description:
-      'A minimal horizon, a dense atmosphere; a precise memory of light at its highest point.',
+    id: '3',
+    src: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 03',
+    description: 'Купольные формы, отражения, высокая полировка.',
   },
   {
-    id: 'a4',
-    src: '/artworks/04.jpg',
-    title: 'Inner Harbour',
-    byline: 'Acrylic on linen, 80 × 120 cm, 2022',
-    description: 'A restrained palette and long, calm strokes that suggest distance and arrival.',
+    id: '4',
+    src: 'https://images.unsplash.com/photo-1493238792000-8113da705763?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 04',
+    description: 'Тонкие ребра, продольные линии, аэродинамика.',
   },
   {
-    id: 'a5',
-    src: '/artworks/05.jpg',
-    title: 'Trace',
-    byline: 'Mixed media on cotton rag, 42 × 59 cm, 2021',
-    description:
-      'A luminous residue of gesture; the image appears almost after you have looked away.',
+    id: '5',
+    src: 'https://images.unsplash.com/photo-1520975661595-6453be3f7070?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 05',
+    description: 'Контролируемая асимметрия, спокойная геометрия.',
+  },
+  {
+    id: '6',
+    src: 'https://images.unsplash.com/photo-1520952525235-33dfc1b8a1dc?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 06',
+    description: 'Светотень с мягким падением — ощущение скорости.',
+  },
+  {
+    id: '7',
+    src: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 07',
+    description: 'Текстуры металла и стекла, уверенная простота.',
+  },
+  {
+    id: '8',
+    src: 'https://images.unsplash.com/photo-1520975808909-2bcf4a6bdfa2?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 08',
+    description: 'Сечение форм, острые и мягкие грани в балансе.',
+  },
+  {
+    id: '9',
+    src: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 09',
+    description: 'Городской свет и плотная композиция.',
+  },
+  {
+    id: '10',
+    src: 'https://images.unsplash.com/photo-1493238792000-8113da705763?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 10',
+    description: 'Вертикальные рёбра, резкая грань и гладкая поверхность.',
+  },
+  {
+    id: '11',
+    src: 'https://images.unsplash.com/photo-1483721310020-03333e577078?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 11',
+    description: 'Студийная чистота, минимализм без компромиссов.',
+  },
+  {
+    id: '12',
+    src: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 12',
+    description: 'Тонкие рефлексы, инженерная точность линий.',
+  },
+  {
+    id: '13',
+    src: 'https://images.unsplash.com/photo-1474433188271-d3f339f41911?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 13',
+    description: 'Пересечение траекторий, динамика переходов.',
+  },
+  {
+    id: '14',
+    src: 'https://images.unsplash.com/photo-1451188502541-13943edb6acb?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 14',
+    description: 'Световой рез, тонкая грань и чистая плоскость.',
+  },
+  {
+    id: '15',
+    src: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 15',
+    description: 'Глубина пространства и мягкая перспектива.',
+  },
+  {
+    id: '16',
+    src: 'https://images.unsplash.com/photo-1468276311594-df7cb65d8df6?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 16',
+    description: 'Ламинарные потоки света, плавные дуги.',
+  },
+  {
+    id: '17',
+    src: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 17',
+    description: 'Гармония матовых и глянцевых поверхностей.',
+  },
+  {
+    id: '18',
+    src: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 18',
+    description: 'Чёткая ось симметрии и взвешенные массы.',
+  },
+  {
+    id: '19',
+    src: 'https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 19',
+    description: 'Техника + поэзия формы, премиум характер.',
+  },
+  {
+    id: '20',
+    src: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop',
+    title: 'Linea 20',
+    description: 'Плавная кинетика, чистая траектория.',
   },
 ];
 
-// —————————————————————————— Utility ——————————————————————————
-function classNames(...xs: Array<string | false | null | undefined>) {
-  return xs.filter(Boolean).join(' ');
+// -----------------------------
+// УТИЛИТЫ
+// -----------------------------
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
-// A tiny focus trap for the slide-over (no dependency)
-function useFocusTrap<T extends HTMLElement>(
-  enabled: boolean,
-  containerRef: React.RefObject<T | null>
-) {
+// Прелоад изображений, чтобы не мигало при появлении
+function useImagesPreload(urls: string[]) {
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (!enabled) return;
-    const el = containerRef.current;
-    if (!el) return;
-
-    const focusables = () =>
-      Array.from(
-        el.querySelectorAll<HTMLElement>(
-          [
-            'a[href]',
-            'button:not([disabled])',
-            'textarea:not([disabled])',
-            'input[type="text"]:not([disabled])',
-            'input[type="search"]:not([disabled])',
-            'input[type="email"]:not([disabled])',
-            'input[type="url"]:not([disabled])',
-            'select:not([disabled])',
-            '[tabindex]:not([tabindex="-1"])',
-          ].join(', ')
-        )
-      );
-
-    const firstFocus = () => focusables()[0];
-    const lastFocus = () => {
-      const list = focusables();
-      return list[list.length - 1];
-    };
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab') {
-        const first = firstFocus();
-        const last = lastFocus();
-        if (!first || !last) return;
-        if (e.shiftKey) {
-          if (document.activeElement === first) {
-            last.focus();
-            e.preventDefault();
-          }
-        } else {
-          if (document.activeElement === last) {
-            first.focus();
-            e.preventDefault();
-          }
-        }
-      }
-      if (e.key === 'Escape') {
-        (el.querySelector('[data-close]') as HTMLButtonElement | null)?.click();
-      }
-    };
-
-    const prev = document.activeElement as HTMLElement | null;
-    firstFocus()?.focus();
-    document.addEventListener('keydown', onKeyDown);
+    let alive = true;
+    const tasks = urls.map(
+      (src) =>
+        new Promise<void>((res) => {
+          const img = new Image();
+          img.onload = () => res();
+          img.onerror = () => res();
+          img.src = src;
+        })
+    );
+    Promise.all(tasks).then(() => alive && setReady(true));
     return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      prev?.focus?.();
+      alive = false;
     };
-  }, [enabled, containerRef]);
+  }, [urls]);
+  return ready;
 }
 
-// —————————————————————————— Components ——————————————————————————
+// -----------------------------
+// СТРАНИЦА
+// -----------------------------
+export default function Page() {
+  // Подготовим пул >= 50 изображений за счёт повторений с новыми id (до замены на реальные 50+ в проде)
+  const duplicated: ImageItem[] = useMemo(() => {
+    const need = 50;
+    const out: ImageItem[] = [];
+    let c = 0;
+    while (out.length < need) {
+      for (const base of BASE_IMAGES) {
+        if (out.length >= need) break;
+        c += 1;
+        out.push({ ...base, id: `${base.id}-${c}` });
+      }
+    }
+    return out;
+  }, []);
 
-// Thin black frame with hover affordances
-function Frame({
-  item,
-  onOpen,
-  style,
-  className,
-  infoHint = true,
-}: {
-  item: (typeof ARTWORKS)[number];
-  onOpen: () => void;
-  style?: React.CSSProperties;
-  className?: string;
-  infoHint?: boolean;
-}) {
-  const reduce = useReducedMotion();
+  const images = useMemo(() => shuffle(duplicated).slice(0, 50), [duplicated]);
+  const ready = useImagesPreload(images.map((i) => i.src));
+
+  const [elevatedId, setElevatedId] = useState<string | null>(null);
+  const [sidebarId, setSidebarId] = useState<string | null>(null);
+  const [sidebarSize, setSidebarSize] = useState<'third' | 'quarter'>('third'); // по умолчанию 1/3
+
+  const openSidebar = useCallback((id: string) => {
+    setSidebarId(id);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setSidebarId(null);
+  }, []);
+
+  // Esc закрывает сайдбар
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeSidebar();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [closeSidebar]);
+
+  // Клик по карточке
+  const onCardClick = (id: string) => {
+    if (sidebarId) {
+      // При открытом сайдбаре — обновляем его контент
+      openSidebar(id);
+      setElevatedId(null);
+      return;
+    }
+    // При закрытом: 1-й клик — приподнять; 2-й клик — открыть сайдбар
+    if (elevatedId === id) {
+      openSidebar(id);
+    } else {
+      setElevatedId(id);
+    }
+  };
+
+  // Для клавиатуры: Enter/Space дублирует клик, i открывает/обновляет сайдбар
+  const onCardKey = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onCardClick(id);
+    }
+    if (e.key.toLowerCase() === 'i') {
+      e.preventDefault();
+      openSidebar(id);
+    }
+  };
+
+  if (!ready) return <GlobalLoading />; // Используем фирменный лоадер до полной загрузки фото
+
+  const sidebarWidthClass = sidebarSize === 'third' ? 'lg:w-[33.33vw]' : 'lg:w-[25vw]';
+  const gridShiftClass = sidebarId
+    ? sidebarSize === 'third'
+      ? 'lg:ml-[33.33vw]'
+      : 'lg:ml-[25vw]'
+    : 'ml-0';
+
   return (
-    <button
-      onClick={onOpen}
-      aria-label={`Open details for ${item.title}`}
-      className={classNames(
-        'group relative block overflow-hidden ring-1 ring-black/80 bg-white',
-        'transition-transform will-change-transform',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-black',
-        // Frame proportions & inset mount shadow
-        'shadow-[inset_0_0_0_2px_#111,inset_0_0_0_3px_#111,inset_0_0_0_1px_#000000]',
-        className || ''
-      )}
-      style={{
-        aspectRatio: '3 / 4',
-        ...style,
-      }}
-    >
-      {/* Artwork image */}
-      <Image
-        src={item.src}
-        alt={item.title}
-        fill
-        sizes="(max-width: 1024px) 40vw, 18vw"
-        className={classNames(
-          'object-cover object-center',
-          'transition-transform duration-500',
-          'group-hover:scale-[1.02]'
-        )}
-        priority={false}
+    <div className="relative">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-[var(--background)]/70 backdrop-blur supports-[backdrop-filter]:bg-[var(--background)]/60">
+        <div className="mx-auto max-w-[1600px] px-4 py-4">
+          <h1 className="text-base font-medium tracking-[0.2em] uppercase text-white/80">
+            H1NTED Gallery
+          </h1>
+        </div>
+      </header>
+
+      {/* SIDEBAR */}
+      <Sidebar
+        item={images.find((i) => i.id === sidebarId) || null}
+        onClose={closeSidebar}
+        size={sidebarSize}
+        setSize={setSidebarSize}
       />
 
-      {/* Hover aura to suggest click */}
-      <div
-        aria-hidden
-        className={classNames(
-          'pointer-events-none absolute inset-0 rounded-[2px]',
-          'opacity-0 group-hover:opacity-100 transition-opacity duration-300',
-          'shadow-[0_0_0_1px_rgba(0,0,0,0.9),0_12px_26px_rgba(0,0,0,0.25)]'
-        )}
-      />
-
-      {/* Info dot (affordance) */}
-      {infoHint && (
-        <motion.span
-          aria-hidden
-          initial={reduce ? false : { opacity: 0, scale: 0.9 }}
-          animate={reduce ? undefined : { opacity: 1, scale: 1 }}
-          transition={{ duration: 0.45, delay: 0.3 }}
-          className={classNames(
-            'absolute right-2 top-2 grid h-6 w-6 place-items-center',
-            'rounded-full bg-black/80 text-white text-[11px] font-semibold',
-            'shadow-[0_1px_2px_rgba(0,0,0,0.35)]'
-          )}
-          title="Open details"
+      {/* MOSAIC GRID */}
+      <div className={['transition-[margin] duration-300', gridShiftClass].join(' ')}>
+        <ul
+          className={[
+            'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6',
+            'auto-rows-[10px] gap-0 select-none',
+            'mx-auto max-w-[1600px] px-2 sm:px-4',
+          ].join(' ')}
+          aria-label="Pininfarina Gallery"
         >
-          i
-        </motion.span>
-      )}
-    </button>
-  );
-}
-
-function Bench() {
-  return (
-    <div
-      aria-hidden
-      className="absolute left-1/2 -translate-x-1/2 bottom-[12%] w-[42%] max-w-[680px]"
-    >
-      {/* Seat */}
-      <div className="h-6 bg-black rounded-[6px] shadow-[0_6px_18px_rgba(0,0,0,0.35)]" />
-      {/* Legs */}
-      <div className="grid grid-cols-4 gap-0 mt-2">
-        <div className="h-12 w-[2px] mx-auto bg-black" />
-        <div className="h-12 w-[2px] mx-auto bg-black" />
-        <div className="h-12 w-[2px] mx-auto bg-black" />
-        <div className="h-12 w-[2px] mx-auto bg-black" />
+          {images.map((item, idx) => (
+            <MosaicTile
+              key={item.id}
+              item={item}
+              elevated={elevatedId === item.id && sidebarId === null}
+              onClick={() => onCardClick(item.id)}
+              onOpenInfo={() => openSidebar(item.id)}
+              onKey={(e) => onCardKey(e, item.id)}
+              spanHint={randomSpan(idx)}
+            />
+          ))}
+        </ul>
       </div>
     </div>
   );
 }
 
-function LightRail() {
+// Размер плитки — ритм коллажа; grid-auto-rows=10px
+function randomSpan(seed: number) {
+  const r = (seed * 9301 + 49297) % 233280;
+  const p = r / 233280;
+  if (p < 0.55) return 18;
+  if (p < 0.8) return 24;
+  if (p < 0.95) return 32;
+  return 48;
+}
+
+// -----------------------------
+// ПЛИТКА
+// -----------------------------
+function MosaicTile({
+  item,
+  elevated,
+  onClick,
+  onOpenInfo,
+  onKey,
+  spanHint,
+}: {
+  item: ImageItem;
+  elevated: boolean;
+  onClick: () => void;
+  onOpenInfo: () => void;
+  onKey: (e: React.KeyboardEvent) => void;
+  spanHint: number;
+}) {
+  const style = { gridRowEnd: `span ${spanHint}` } as React.CSSProperties;
+
   return (
-    <div aria-hidden className="absolute left-1/2 -translate-x-1/2 top-3 w-[70%]">
-      {/* Track */}
-      <div className="h-[6px] bg-neutral-300/60 rounded" />
-      {/* Spots */}
-      <div className="flex justify-between mt-2">
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="w-6 h-6 rounded-full bg-gradient-to-b from-neutral-300 to-neutral-100"
-          />
-        ))}
-      </div>
-    </div>
+    <li style={style} className="relative">
+      <article
+        tabIndex={0}
+        aria-label={item.title}
+        onClick={onClick}
+        onKeyDown={onKey}
+        className={[
+          'group relative h-full w-full overflow-hidden',
+          'outline-none',
+          'transition-transform duration-200 ease-out will-change-transform',
+          elevated ? 'z-10 scale-[1.03] -translate-y-[2px] shadow-2xl' : '',
+        ].join(' ')}
+      >
+        <img
+          src={item.src}
+          alt={item.title}
+          loading="lazy"
+          className="block h-full w-full object-cover select-none"
+          draggable={false}
+        />
+
+        {/* Hover accent line */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          aria-hidden
+        >
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent mix-blend-overlay" />
+        </div>
+
+        {/* Info button */}
+        <button
+          aria-label="Подробнее"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenInfo();
+          }}
+          className={[
+            'absolute left-2 top-2 z-10 grid place-items-center',
+            'h-8 w-8 rounded-full bg-black/40 backdrop-blur-sm',
+            'text-white/90 hover:text-white',
+            'transition-colors',
+          ].join(' ')}
+        >
+          <InfoIcon />
+        </button>
+      </article>
+    </li>
   );
 }
 
-function ArtworkPanel({
-  open,
+// -----------------------------
+// САЙДБАР
+// -----------------------------
+function Sidebar({
   item,
   onClose,
+  size,
+  setSize,
 }: {
-  open: boolean;
-  item: (typeof ARTWORKS)[number] | null;
+  item: ImageItem | null;
   onClose: () => void;
+  size: 'third' | 'quarter';
+  setSize: (s: 'third' | 'quarter') => void;
 }) {
-  const reduce = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
-  useFocusTrap<HTMLDivElement>(open, ref);
+  const open = Boolean(item);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // Close on outside click
-  const onBackdrop = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose();
-    },
-    [onClose]
-  );
+  // Убираем автозакрытие по клику вне — сайдбар живёт пока X или Esc
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (!panelRef.current) return;
+      // намеренно ничего не делаем
+    }
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const widthClass = size === 'third' ? 'lg:w-[33.33vw]' : 'lg:w-[25vw]';
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 bg-black/20"
-          onMouseDown={onBackdrop}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
-        >
-          <motion.aside
-            ref={ref}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="artwork-title"
-            className="absolute right-0 top-0 h-full w-full sm:w-[420px] md:w-[480px] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.25)] focus:outline-none"
-            initial={reduce ? { x: 0 } : { x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'tween', ease: [0.22, 1, 0.36, 1], duration: 0.38 }}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200">
-              <h3
-                id="artwork-title"
-                className="text-neutral-900 text-lg font-semibold tracking-tight"
-              >
-                {item?.title}
-              </h3>
-              <button
-                data-close
-                onClick={onClose}
-                className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-neutral-300 text-neutral-700 hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-              >
-                <span className="sr-only">Close</span>×
-              </button>
-            </div>
-            <div className="p-5 space-y-4 overflow-y-auto h-[calc(100%-56px)]">
-              {item && (
-                <div className="relative w-full aspect-[4/3] bg-neutral-100">
-                  <Image
-                    src={item.src}
-                    alt={item.title}
-                    fill
-                    className="object-contain"
-                    sizes="(max-width: 768px) 100vw, 480px"
-                    priority={false}
-                  />
-                </div>
-              )}
-              {item?.byline && (
-                <p className="text-[13px] text-neutral-500 leading-relaxed">{item.byline}</p>
-              )}
-              <p className="text-[15px] text-neutral-800 leading-7">{item?.description}</p>
-            </div>
-          </motion.aside>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      {/* Затемнение на мобильном без закрытия по клику */}
+      <div
+        className={[
+          'fixed inset-0 z-40 bg-black/30 lg:hidden',
+          open ? 'opacity-100' : 'pointer-events-none opacity-0',
+          'transition-opacity duration-200',
+        ].join(' ')}
+      />
+
+      <aside
+        ref={panelRef}
+        className={[
+          'fixed left-0 top-0 bottom-0 z-50 w-[85vw] max-w-[520px]',
+          widthClass,
+          'bg-neutral-950 text-neutral-100 border-r border-white/10',
+          'px-6 py-6',
+          'transition-transform duration-300 will-change-transform',
+          open ? 'translate-x-0' : '-translate-x-full',
+        ].join(' ')}
+        aria-hidden={!open}
+        aria-label="Информация о изображении"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold tracking-wide">{item?.title ?? ''}</h2>
+
+          <div className="flex items-center gap-2">
+            {/* Переключатель ширины */}
+            <SizeSwitch size={size} setSize={setSize} />
+
+            {/* Кнопка закрытия X */}
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="grid place-items-center h-8 w-8 rounded-xl bg-white/10 hover:bg-white/15"
+            >
+              <CloseIcon />
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-2xl overflow-hidden">
+          {item && (
+            <img
+              src={item.src}
+              alt={item.title}
+              className="w-full h-48 object-cover"
+              draggable={false}
+            />
+          )}
+        </div>
+
+        <p className="mt-5 text-sm leading-relaxed text-neutral-300">{item?.description ?? ''}</p>
+      </aside>
+    </>
   );
 }
 
-// —————————————————————————— Page ——————————————————————————
-export default function GalleryPage() {
-  const [openId, setOpenId] = useState<string | null>(null);
-  const reduce = useReducedMotion();
-
-  const openItem = useMemo(() => ARTWORKS.find((a) => a.id === openId) ?? null, [openId]);
-
-  // Page background and perspective container
+function SizeSwitch({
+  size,
+  setSize,
+}: {
+  size: 'third' | 'quarter';
+  setSize: (s: 'third' | 'quarter') => void;
+}) {
+  const isThird = size === 'third';
   return (
-    <main
-      className={classNames(
-        'relative min-h-screen w-full text-neutral-900',
-        'select-none' // gallery is passive
-      )}
-      style={{ background: '#fff' }}
-    >
-      {/* Room scaffold */}
-      <div
-        className="relative mx-auto h-[100svh] max-h-[960px] w-full overflow-hidden"
-        style={{ perspective: '1200px', perspectiveOrigin: '50% 38%' }}
+    <div className="relative flex h-8 items-center rounded-xl bg-white/10 px-1">
+      <button
+        className={[
+          'relative z-10 px-2 text-xs leading-none h-6 rounded-lg',
+          isThird ? 'text-white' : 'text-white/70',
+        ].join(' ')}
+        onClick={() => setSize('third')}
+        aria-pressed={isThird}
       >
-        {/* Ceiling halo & light rail */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-[24%]"
-          style={{
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.06), rgba(0,0,0,0.0))',
-          }}
-        />
-        <LightRail />
+        1/3
+      </button>
+      <button
+        className={[
+          'relative z-10 px-2 text-xs leading-none h-6 rounded-lg',
+          !isThird ? 'text-white' : 'text-white/70',
+        ].join(' ')}
+        onClick={() => setSize('quarter')}
+        aria-pressed={!isThird}
+      >
+        1/4
+      </button>
+      <span
+        className={[
+          'absolute top-1 bottom-1 w-[44px] rounded-lg bg-white/15 transition-transform',
+          isThird ? 'translate-x-1' : 'translate-x-[50px]',
+        ].join(' ')}
+        aria-hidden
+      />
+    </div>
+  );
+}
 
-        {/* Floor gradient */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-[34%]"
-          style={{
-            background: 'linear-gradient(to top, rgba(0,0,0,0.10), rgba(0,0,0,0.02))',
-          }}
-        />
+function InfoIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="8" />
+    </svg>
+  );
+}
 
-        {/* Back wall */}
-        <div className="absolute left-1/2 top-[12%] -translate-x-1/2 w-[72%] h-[54%] bg-white" />
-
-        {/* Left wall */}
-        <div
-          className="absolute left-[0%] top-[14%] h-[58%] w-[28%] bg-white origin-right"
-          style={{ transform: 'rotateY(18deg)' }}
-        />
-        {/* Right wall */}
-        <div
-          className="absolute right-[0%] top-[14%] h-[58%] w-[28%] bg-white origin-left"
-          style={{ transform: 'rotateY(-18deg)' }}
-        />
-
-        {/* Subtle corner seams */}
-        <div className="absolute left-1/2 top-[14%] -translate-x-1/2 h-[58%] w-px bg-neutral-200" />
-        <div className="absolute left-[28%] top-[14%] h-[58%] w-px bg-neutral-200/60" />
-        <div className="absolute right-[28%] top-[14%] h-[58%] w-px bg-neutral-200/60" />
-
-        {/* Frames — back wall (3) */}
-        <div className="absolute left-1/2 top-[18%] -translate-x-1/2 grid grid-cols-3 gap-[4%] w-[62%]">
-          {ARTWORKS.slice(0, 3).map((item) => (
-            <Frame key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
-          ))}
-        </div>
-
-        {/* Left wall (1) */}
-        <div
-          className="absolute left-[6%] top-[20%]"
-          style={{ transform: 'translateZ(0) rotateY(18deg)' }}
-        >
-          <div className="w-[220px]">
-            <Frame item={ARTWORKS[3]} onOpen={() => setOpenId(ARTWORKS[3].id)} />
-          </div>
-        </div>
-
-        {/* Right wall (1) */}
-        <div
-          className="absolute right-[6%] top-[20%]"
-          style={{ transform: 'translateZ(0) rotateY(-18deg)' }}
-        >
-          <div className="w-[220px]">
-            <Frame item={ARTWORKS[4]} onOpen={() => setOpenId(ARTWORKS[4].id)} />
-          </div>
-        </div>
-
-        {/* Bench */}
-        <Bench />
-      </div>
-
-      {/* Slide-over panel */}
-      <ArtworkPanel open={!!openId} item={openItem} onClose={() => setOpenId(null)} />
-
-      {/* Page padding for small screens so nothing is clipped when URL bars overlap */}
-      <div className="pb-[env(safe-area-inset-bottom)]" />
-
-      {/* Minimal instruction for users (desktop only) */}
-      <div className="hidden md:block absolute left-1/2 -translate-x-1/2 bottom-6 text-[12px] text-neutral-500">
-        Click a frame to view details
-      </div>
-    </main>
+function CloseIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
   );
 }

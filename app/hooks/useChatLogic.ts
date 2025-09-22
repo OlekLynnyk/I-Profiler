@@ -263,7 +263,7 @@ export function useChatLogic(): UseChatLogicResult {
       }
 
       if (attachments && attachments.length > 0) {
-        body.imageBase64 = attachments[0].base64.split(',')[1];
+        body.imageBase64 = attachments[0].base64;
       }
 
       const aiResponse = await fetch('/api/ai/grok-3', {

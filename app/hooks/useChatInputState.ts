@@ -84,7 +84,54 @@ export function useChatInputState() {
           continue;
         }
       } else {
-        newFiles.push(file);
+        // ✅ ТОЛЬКО для больших изображений включаем мягкую компрессию/ресайз
+        const BIG_FILE_COMPRESS_THRESHOLD_MB = 8; // >8MB → сжимаем
+        const BIG_IMAGE_MAX_WIDTH = 1400; // ширина после ресайза
+        const BIG_IMAGE_JPEG_QUALITY = 0.72; // качество JPEG
+
+        try {
+          if (file.type.startsWith('image/')) {
+            const isBig = file.size > BIG_FILE_COMPRESS_THRESHOLD_MB * 1024 * 1024;
+
+            if (isBig) {
+              // PNG сохраняем PNG (прозрачность), остальные → JPEG
+              const targetMime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+
+              const resizedBlob = await resizeImage(
+                file,
+                BIG_IMAGE_MAX_WIDTH,
+                targetMime,
+                BIG_IMAGE_JPEG_QUALITY
+              );
+
+              // Берём результат только если он меньше оригинала
+              const chosenBlob = resizedBlob.size < file.size ? resizedBlob : file;
+
+              const safeName =
+                targetMime === 'image/png'
+                  ? file.name.replace(/\.(jpe?g|webp)$/i, '.png')
+                  : file.name.replace(/\.(png|webp)$/i, '.jpg');
+
+              const finalFile = new File([chosenBlob], safeName, { type: targetMime });
+
+              if (finalFile.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+                newErrors.push(
+                  `File ${file.name} is too large even after compression (>${MAX_FILE_SIZE_MB}MB).`
+                );
+              } else {
+                newFiles.push(finalFile);
+              }
+            } else {
+              // не большой — оставляем как есть
+              newFiles.push(file);
+            }
+          } else {
+            newFiles.push(file);
+          }
+        } catch (e) {
+          console.warn('Conditional resize failed, using original:', file.name, e);
+          newFiles.push(file);
+        }
       }
     }
 

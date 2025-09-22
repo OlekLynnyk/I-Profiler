@@ -102,18 +102,35 @@ function normalizeExcelImage(input: string): string | null {
   return null;
 }
 
-/**
- * Строит корректный data URL для пользовательской картинки из чата.
- * Принимает как «голый» base64, так и готовый data:...;base64, ...
- */
+// добавить рядом (выше) вспомогательную функцию определения MIME по сигнатуре base64
+function sniffMimeFromBase64(b64: string): string | null {
+  const head = b64.slice(0, 24);
+  // JPEG обычно начинается с /9j/
+  if (head.startsWith('/9j/')) return 'image/jpeg';
+  // PNG обычно начинается с iVBORw0KG
+  if (head.startsWith('iVBORw0KG')) return 'image/png';
+  // WEBP (часто из Telegram) начинается с UklGR (RIFF...WEBP...)
+  if (head.startsWith('UklGR')) return 'image/webp';
+  return null;
+}
+
+// заменить существующую buildUserImageDataUrl на эту версию
 function buildUserImageDataUrl(raw: string): string {
   const s = String(raw || '')
     .trim()
     .replace(/\s+/g, '');
-  if (s.startsWith('data:')) return s; // уже готовый data URL
-  return `data:image/png;base64,${s}`; // строго сохраняем png, как было (без поведенческих изменений)
+  if (!s) return s;
+
+  // Если уже пришёл корректный data URL — не трогаем
+  if (s.startsWith('data:image/')) return s;
+
+  // Если вдруг это http(s) — пропускаем (на случай будущих сценариев)
+  if (URL_RE.test(s)) return s;
+
+  // Пришёл "голый" base64: пытаемся определить тип; по умолчанию jpeg
+  const mime = sniffMimeFromBase64(s) || 'image/jpeg';
+  return `data:${mime};base64,${s}`;
 }
-// ─────────────────────────────────────────────────────────────
 
 // ── RETRY HELPERS (без изменения внешнего поведения) ────────
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
