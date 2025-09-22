@@ -7,7 +7,7 @@ export async function logUserAction(
   metadata?: Record<string, any>
 ) {
   try {
-    await supabase.from('user_logs').insert({
+    await supabase.from('user_log').insert({
       user_id: userId,
       action,
       metadata: metadata || {},

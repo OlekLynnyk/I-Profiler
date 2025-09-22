@@ -127,7 +127,7 @@ export default function SaveProfileModal({
   onClose,
   aiResponse: initialAiResponse,
   onSave,
-  defaultProfileName = 'Profiling #1',
+  defaultProfileName = 'Discernment Report #1',
   readonly = false,
   isNew = false,
 }: SaveProfileModalProps) {
@@ -253,7 +253,11 @@ export default function SaveProfileModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={handleOutsideClick}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleOutsideClick();
+          }}
         >
           <motion.div
             onClick={(e) => e.stopPropagation()}

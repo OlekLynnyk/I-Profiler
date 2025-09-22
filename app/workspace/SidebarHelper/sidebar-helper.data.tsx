@@ -39,20 +39,20 @@ export const getSidebarBoxes = (): BoxData[] => {
   ];
 
   const contents = [
-    'Based on the results of the analysis: what hidden drivers and collaboration risks should I expect, and how should I collaborate effectively?',
-    'Based on the results of the analysis: which negotiation approach is most likely to work? What words are better to use, and what Intrinsic motivation to address?',
-    'Based on the results of the analysis: what decision-making style is this person most likely to use unconsciously?',
-    'Based on the results of the analysis: what is the best role per the Nine Belbin Team Roles, and how should I use this person in the team to improve dynamics?',
-    `Based on the results of the analysis: which conflict-handling approach should I use, incl. best opening words + hidden command & motivation? Structure the answer to the user's question like the following:  a) Persona calibration → b) Predicted reactions & triggers → c) Suggest how to find out what is the root cause of a conflict  → d) suggest how to reframe in their language → e) Joint resolution protecting their values.`,
-    'Based on the results of the analysis: what is the hidden command, and the basic unbalanced contradiction, is this person a good fit (game-theory rationale) for: [YOUR SITUATION]?',
-    'Based on the results of the analysis: which primary motivators should I address in this person, and list all relevant Intrinsic motivators?',
-    'Based on the results of the analysis: what are executive-interaction tendencies (potential C-level role fit) + hiring risks to investigate? The possible role the person is considered is [TYPE THE ROLE].',
-    'Based on the results of the analysis: what is the development potential (taking into account that people show who they want to be, but mostly they act from shadow traits)? Also: what approach, words, and motivators keep this person engaged/staying & developing?',
-    'Based on the results of the analysis: how to align likely drivers and Basic Unbalanced Contradiction with business goals/approaches? [TYPE IN BUSINESS GOAL / TASK / COMPANY CULTURE].',
-    'Based on the results of the analysis: how should I tailor a sales pitch — words, approach, style, motivators for a ‘Yes’, and the proof types that will convince this person?',
-    'Based on the results of the analysis: what signals indicate innovation/creativity level, and how should I engage it?',
-    'Based on the results of the analysis: what is the best meeting setting (formal/informal with details why), a tailored icebreaker, and the first line to transition into business; plus a cold-reaction fallback?',
-    'Based on the results of the analysis: calibrate feedback delivery for the person to protect their dignity, keep standards, etc. Suggest: Tone note, Best words to use, Opening line, Avoid-phrases, Follow-up check.',
+    'Based on the results of the analysis, what are the person’s intrinsic drivers (hidden drivers) and key collaboration risks, and what would be the most effective collaboration tactic?',
+    'Based on the results of the analysis, what negotiation approach is most likely to work, which words/phrases should be used, and which intrinsic motivations should be addressed?',
+    'Based on the results of the analysis, what unconscious decision-making style is most likely, and which biases/risks accompany it?',
+    'Based on the results of the analysis: identify the person’s primary and secondary Belbin Team Roles, and how to leverage them in the team; include one key risk to watch.',
+    `Based on the results of the analysis, which conflict-handling approach should I use, including best opening words, a hidden command, and the intrinsic motivation to address? Structure the answer as: (a) Persona calibration → (b) Predicted reactions & triggers → (c) How to find the root cause → (d) How to reframe in their language → (e) Joint resolution protecting their values.`,
+    'Based on the results of the analysis, what is the person’s basic unbalanced contradiction, what risks does it carry, and does this contradiction fit [YOUR SITUATION] (game-theory Yes/No)?',
+    'Based on the results of the analysis, which primary motivators should I address in this person, list all relevant intrinsic motivators, and how will this person evolve over time based on the basic unbalanced contradiction?',
+    'Based on the results of the analysis, what are the person’s executive-interaction tendencies, their potential C-level role fit, and the hiring risks to investigate for the role of [TYPE THE ROLE]?',
+    'Based on the results of the analysis, what is the person’s personal development potential (considering that people often act from shadow traits and can develop toward expressed strengths relative to the basic unbalanced contradiction)? Also, what approach, words, and motivators should I use to communicate a development plan?',
+    'Based on the results of the analysis, how aligned are the person’s hidden drivers and Basic Unbalanced Contradiction with the business goals/approaches? What is perfectly aligned, and what contradicts [STATE BUSINESS GOAL AND TRADE SECTOR]?',
+    'Based on the results of the analysis, how should I tailor a sales pitch to the person’s needs — words to use, approaches, style, motivators to leverage for a “Yes” answer, and the proof types that will convince this person?',
+    'Based on the results of the analysis, does this person show potential for innovation/creativity, at what level (0–10), how should I work with it, and what risks does the person carry?',
+    'Based on the results of the analysis, provide: (a) Best meeting setting (formal vs. informal) (b) Details that matter & why (c) Tailored icebreaker (d) First line to transition into business (e) Cold-reaction scenario & how to respond.',
+    'Based on the results of the analysis, calibrate feedback delivery for this person to protect their dignity while maintaining standards. Provide: Tone note, Best words to use, Opening line, Avoid-phrases, Follow-up check.',
   ];
 
   const templates: Template[] = titles.map((title, i) => ({
@@ -66,9 +66,12 @@ export const getSidebarBoxes = (): BoxData[] => {
       {templates.map((t, idx) => (
         <div
           key={t.id}
-          onClick={() => {
+          onMouseDown={(e) => e.stopPropagation()} // ← гасим всплытие ещё до click
+          onClick={(e) => {
+            e.stopPropagation(); // ← клики внутри контента не схлопывают SidebarBox
+            e.preventDefault();
             flushSync(() => {
-              injectPrompt(t.content);
+              injectPrompt(t.content); // вставляем текст, остаёмся открытыми
             });
           }}
           className="cursor-pointer hover:text-[var(--accent)]"

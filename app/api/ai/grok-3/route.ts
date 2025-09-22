@@ -335,7 +335,7 @@ INSTRUCTION:
       model: 'grok-2-vision-1212',
       messages, // ← тот же объект, без мутаций после этого места
       temperature: 0.3,
-      max_tokens: 2000,
+      max_tokens: 3500,
       stream: false,
     };
     const bodyString = JSON.stringify(payload); // ← один и тот же JSON на все попытки

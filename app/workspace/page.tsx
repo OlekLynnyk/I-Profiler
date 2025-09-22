@@ -255,7 +255,7 @@ export default function WorkspacePage() {
     const hasInput = inputValue.trim() !== '';
     const hasFiles = attachedFiles.length > 0;
     if (chatMode === 'none') {
-      alert('Please select how you want to interact: Chat or Profiling.');
+      alert('Please select how you want to interact: Chat or AI Discernment.');
       return;
     }
 
@@ -763,7 +763,7 @@ export default function WorkspacePage() {
               setShowSaveModal(false);
               refetch?.();
             }}
-            defaultProfileName={`Profiling #${Date.now()}`}
+            defaultProfileName={`Discernment Report #${Date.now()}`}
           />
 
           {overlay}

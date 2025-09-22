@@ -94,7 +94,11 @@ export default function SavedProfileList() {
               {profile.profile_name}
             </span>
             <button
-              onClick={() => handleDelete(profile.id)}
+              onClick={(e) => {
+                e.stopPropagation(); // ← не даём клику дойти до SidebarBox (не схлопываем блок)
+                e.preventDefault();
+                handleDelete(profile.id); // ← удаляем
+              }}
               className="text-[var(--text-secondary)] hover:text-[var(--danger)] text-sm"
             >
               ✕

@@ -29,6 +29,27 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next({ request: { headers: req.headers } });
   res.headers.set('x-trace-id', traceId);
 
+  // 🛡️ CSP (Report-Only) — мониторинг без блокировок
+  const reportOnlyCSP = `
+    default-src 'self' https: data: blob:;
+    base-uri 'self';
+    object-src 'none';
+    frame-ancestors 'none';
+    script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com;
+    style-src 'self' 'unsafe-inline' https:;
+    img-src 'self' data: blob: https:;
+    connect-src 'self' https://*.supabase.co https://*.supabase.in https://api.stripe.com https://r.stripe.com https://www.google-analytics.com https://region1.google-analytics.com;
+    frame-src https://js.stripe.com https://checkout.stripe.com https://hooks.stripe.com;
+    worker-src 'self' blob:;
+  `;
+  res.headers.set(
+    'Content-Security-Policy-Report-Only',
+    reportOnlyCSP
+      .replace(/\n/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+  );
+
   const supabase = createMiddlewareClient({ req, res });
 
   // 💥 Обязательное обновление куков

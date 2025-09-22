@@ -117,6 +117,8 @@ export type Database = {
           is_deleted: boolean | null;
           role: string | null;
           updated_at: string | null;
+          onboarding_home_desktop_seen: boolean;
+          onboarding_home_mobile_seen: boolean;
         };
         Insert: {
           agreed_to_terms?: boolean | null;
@@ -130,6 +132,8 @@ export type Database = {
           is_deleted?: boolean | null;
           role?: string | null;
           updated_at?: string | null;
+          onboarding_home_desktop_seen?: boolean;
+          onboarding_home_mobile_seen?: boolean;
         };
         Update: {
           agreed_to_terms?: boolean | null;
@@ -143,6 +147,8 @@ export type Database = {
           is_deleted?: boolean | null;
           role?: string | null;
           updated_at?: string | null;
+          onboarding_home_desktop_seen?: boolean;
+          onboarding_home_mobile_seen?: boolean;
         };
         Relationships: [];
       };

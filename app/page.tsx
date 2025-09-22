@@ -16,6 +16,12 @@ import { motion, useReducedMotion } from 'framer-motion';
 import HowItWorksVideoMobile from './components/HowItWorksVideoMobile';
 import { useScrollDirectorMobile } from './hooks/useScrollDirectorMobile';
 
+// ▶️ ОНБОРДИНГ: ХУК + ленивый компонент спотлайта
+import { useOnboardingHome } from './hooks/useOnboardingHome';
+const OnboardingSpotlight = dynamic(() => import('./components/onboarding/OnboardingSpotlight'), {
+  ssr: false,
+});
+
 const CubeCanvas = dynamic(() => import('./components/CubeCanvas'), {
   ssr: false,
   loading: () => null,
@@ -47,6 +53,7 @@ export default function HomePage() {
   const { session } = useAuth();
   const router = useRouter();
   const reduce = useReducedMotion();
+  const { ready, shouldShow, markSeen, device, targetSelector } = useOnboardingHome();
 
   // ▶️ refs для дирижёра скролла (мобайл)
   const heroSectionRef = useRef<HTMLElement | null>(null);
@@ -70,6 +77,25 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col font-inter text-[#E5E5E5] relative overflow-hidden bg-[#1A1E23] no-scrollbar">
       <BlackCognitiveSand />
       <Header onLoginClick={() => setIsAuthModalOpen(true)} />
+
+      {session && ready && shouldShow && (
+        <OnboardingSpotlight
+          targetSelector={targetSelector}
+          text={
+            device === 'mobile'
+              ? 'Tap here to open your workspace'
+              : 'Click here to open your workspace'
+          }
+          ctaLabel="Open Workspace"
+          onProceed={() => {
+            markSeen();
+            router.push('/workspace');
+          }}
+          onDismiss={() => {
+            markSeen();
+          }}
+        />
+      )}
 
       {/* ===== MOBILE INTRO (Hero → Fullscreen Video) ===== */}
       <section

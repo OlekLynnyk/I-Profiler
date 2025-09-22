@@ -84,7 +84,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
         className={`
           relative transition-colors duration-200 motion-reduce:transition-none
           ${isShrunk ? 'bg-[rgba(10,12,14,0.56)]' : 'bg-[rgba(10,12,14,0.48)]'}
-          supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:bg-[rgba(10,12,14,0.40)]
+          supports-[backdrop-filter]:bg-[rgba(10,12,14,0.40)]
         `}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
@@ -180,10 +180,11 @@ export default function Header({ onLoginClick }: HeaderProps) {
               {!isLoading &&
                 (session ? (
                   <Link
+                    id="nav-workspace"
                     href="/workspace"
                     className="
                       rounded-full px-4 py-1.5 text-sm text-white
-                      bg-[#A855F7]/20 ring-1 ring-[#A855F7]/30 backdrop-blur
+                      bg-[#A855F7]/20 ring-1 ring-[#A855F7]/30
                       transition-colors hover:bg-[#A855F7]/30 hover:ring-[#A855F7]/50
                       focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
                     "
@@ -196,7 +197,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
                     title="Log in to access workspace"
                     className="
                       rounded-full px-4 py-1.5 text-sm
-                      text-white/60 bg-white/5 ring-1 ring-white/10 backdrop-blur
+                      text-white/60 bg-white/5 ring-1 ring-white/10
                       select-none pointer-events-none opacity-70
                     "
                   >
