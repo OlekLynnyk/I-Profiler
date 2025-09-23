@@ -87,7 +87,7 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
         'Everything in Freemium',
         `${PACKAGE_LIMITS.Select.requestsPerMonth} AI analyses`,
         'Enhanced Discernment Tools',
-        'Private workspace (single seat)',
+        'Private workspace',
       ],
       highlight: false,
     },

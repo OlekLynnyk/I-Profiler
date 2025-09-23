@@ -249,7 +249,7 @@ export default function HomePage() {
                 }
                 viewport={{ once: true, amount: 0.7 }}
               >
-                <span className="relative z-[1]">Take a product tour</span>
+                <span className="relative z-[1]">Take a gallery tour</span>
               </motion.button>
 
               {/* Request a free trial — ТОЛЬКО когда !session */}
@@ -293,7 +293,7 @@ export default function HomePage() {
                         'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
                     }}
                   />
-                  <span className="relative z-[1]">Request a free trial</span>
+                  <span className="relative z-[1]">Activate a free trial</span>
                 </motion.button>
               )}
             </div>
@@ -391,7 +391,7 @@ export default function HomePage() {
                 }
                 viewport={{ once: true, amount: 0.7 }}
               >
-                <span className="relative z-[1]">Take a product tour</span>
+                <span className="relative z-[1]">Take a gallery tour</span>
               </motion.button>
             ) : (
               <>
@@ -428,7 +428,7 @@ export default function HomePage() {
                         'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
                     }}
                   />
-                  <span className="relative z-[1]">Request a free trial</span>
+                  <span className="relative z-[1]">Activate a free trial</span>
                 </motion.button>
 
                 <motion.button
@@ -455,7 +455,7 @@ export default function HomePage() {
                   }
                   viewport={{ once: true, amount: 0.7 }}
                 >
-                  <span className="relative z-[1]">Take a product tour</span>
+                  <span className="relative z-[1]">Take a gallery tour</span>
                 </motion.button>
               </>
             )}
@@ -539,7 +539,7 @@ export default function HomePage() {
               style={{ hyphens: 'auto' }}
             >
               We don’t claim to read minds. Instead, we interpret silent signals — how someone
-              dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
+              dresses, reacts or decides reveals deeper drives, hidden needs and what truly moves
               them. Powered by advanced AI, we blend behavioural science with elegant inference to
               transform fragments into full pictures.
             </p>
@@ -595,9 +595,9 @@ export default function HomePage() {
             >
               Much like Pininfarina designs beauty into motion, we design insight into human nature.
               Every person carries a unique internal compass — we help you interpret it. Not to
-              label, but to understand. To lead. To connect. Whether you're a strategist, founder or
-              curious, H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance.
-              Because influence begins with pure understanding.
+              label, but to understand. To lead. To connect. Whether you're a Strategist, Founder or
+              Curious, H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance.
+              Influence begins with pure understanding.
             </p>
 
             {/* второй мягкий shimmer с иным ритмом */}
@@ -660,7 +660,7 @@ export default function HomePage() {
             custom={0}
           >
             We don’t claim to read minds. Instead, we interpret silent signals — how someone
-            dresses, reacts or decides to reveal deeper drives, hidden needs and what truly moves
+            dresses, reacts or decides reveals deeper drives, hidden needs and what truly moves
             them. Powered by advanced AI, we blend behavioural science with elegant inference to
             transform fragments into full pictures.
           </motion.p>
@@ -675,9 +675,9 @@ export default function HomePage() {
           >
             Much like Pininfarina designs beauty into motion, we design insight into human nature.
             Every person carries a unique internal compass — we help you interpret it. Not to label,
-            but to understand. To lead. To connect. Whether you're a strategist, founder or curious,
-            H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance. Because
-            influence begins with pure understanding.
+            but to understand. To lead. To connect. Whether you're a Strategist, Founder or Curious,
+            H1NTED offers a new lens. See nuance. Sense motivation. Speak with resonance. Influence
+            begins with pure understanding.
           </motion.p>
         </div>
 

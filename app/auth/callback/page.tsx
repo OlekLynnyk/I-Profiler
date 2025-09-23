@@ -12,7 +12,7 @@ export default function CallbackPage() {
   useEffect(() => {
     const run = async () => {
       try {
-        // 👇 ДОБАВЛЕНО: если открылись на www.*, перенаправляем на apex с сохранением query
+        // 👇 если открылись на www.*, перенаправляем на apex с сохранением query
         if (typeof window !== 'undefined' && window.location.hostname.startsWith('www.')) {
           const u = new URL(window.location.href);
           u.hostname = u.hostname.replace(/^www\./, '');
@@ -24,14 +24,38 @@ export default function CallbackPage() {
           await supabase.auth.exchangeCodeForSession(window.location.href);
         } catch (_) {}
 
+        // ---- ЗАМЕНЁННЫЙ БЛОК НАЧАЛО ----
+        // читаем query один раз
+        const sp = new URLSearchParams(window.location.search);
+        const email = sp.get('email') ?? '';
+        const returnTo = sp.get('next') ?? '/';
+
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
         if (!session) {
-          router.replace('/login');
+          // нет сессии в этом контейнере → уводим на ввод кода
+          router.replace(
+            `/auth/verify-code${email ? `?email=${encodeURIComponent(email)}` : ''}${
+              returnTo ? `${email ? '&' : '?'}return_to=${encodeURIComponent(returnTo)}` : ''
+            }`
+          );
           return;
         }
+
+        // логин успешно завершён в этой вкладке → оповещаем другие
+        try {
+          if ('BroadcastChannel' in window) {
+            const bc = new BroadcastChannel('auth-events');
+            bc.postMessage({ type: 'SIGNED_IN', returnTo });
+            bc.close();
+          } else {
+            // резерв через storage event
+            localStorage.setItem('auth:last', String(Date.now()));
+          }
+        } catch {}
+        // ---- ЗАМЕНЁННЫЙ БЛОК КОНЕЦ ----
 
         try {
           // Читаем флаг из localStorage, но если пусто — всё равно шлём true,
@@ -42,7 +66,7 @@ export default function CallbackPage() {
           await fetch('/api/user/init', {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${session.access_token}`,
+              Authorization: `Bearer ${session!.access_token}`,
               'x-agreed-to-terms': agreedToTerms,
             },
           });
@@ -50,7 +74,8 @@ export default function CallbackPage() {
           console.warn('Failed to call /api/user/init:', err);
         }
 
-        router.replace('/');
+        // финальный редирект
+        router.replace(returnTo || '/');
       } catch (err) {
         console.error('Callback error:', err);
         setError(true);

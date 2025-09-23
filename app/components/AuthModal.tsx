@@ -45,6 +45,52 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     };
   }, [onClose]);
 
+  // ✅ Автозакрытие модалки, когда логин завершился (в этой или другой вкладке)
+  useEffect(() => {
+    const goHome = () => router.replace('/'); // если есть return_to — можете подставить
+
+    // A) События Supabase: если сессия появилась в этой вкладке
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        onClose();
+        goHome();
+      }
+    });
+
+    // B) BroadcastChannel: сигнал с /auth/callback (другая вкладка)
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('auth-events');
+      bc.onmessage = (ev) => {
+        if (ev?.data?.type === 'SIGNED_IN') {
+          onClose();
+          goHome();
+        }
+      };
+    }
+
+    // C) Резерв: когда пользователь вернулся в эту вкладку
+    const onFocus = () => {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          onClose();
+          goHome();
+        }
+      });
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+
+    return () => {
+      subscription.unsubscribe();
+      bc?.close();
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [router, supabase, onClose]);
+
   // клик по фону
   const onBackdrop = (e: React.MouseEvent) => {
     if (e.target === shellRef.current) onClose();
@@ -95,7 +141,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` },
       });
       if (error) setError(error.message);
       else {
