@@ -31,6 +31,13 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   const [activeBox, setActiveBox] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const { openSidebar, closeSidebar } = useSidebar();
+
+  useEffect(() => {
+    if (!openSidebar.right) {
+      setActiveBox(null); // свернуть все секции при закрытии правого сайдбара
+    }
+  }, [openSidebar.right]);
+
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   // === ДОБАВЛЕНО: локальный бамп для мгновенного обновления ===
@@ -82,18 +89,27 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   };
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        openSidebar.right &&
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target as Node)
-      ) {
-        closeSidebar('right');
-      }
-    }
+    const onPointerDown = (e: PointerEvent) => {
+      if (!openSidebar.right) return;
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+      const root = sidebarRef.current;
+      if (!root) return;
+
+      // 1) Надёжная проверка по пути события (работает до ре-рендера)
+      const path = (e as any).composedPath?.() as EventTarget[] | undefined;
+      if (path && path.includes(root)) return; // клик ВНУТРИ — не закрываем
+
+      // 2) Подстраховка для любых вложенных элементов / порталов
+      const el = e.target as Element | null;
+      if (el && el.closest?.('[data-sidebar="right"]')) return; // тоже считаем «внутри»
+
+      // 3) Всё остальное — ВНЕ сайдбара
+      closeSidebar('right');
+    };
+
+    // capture=true и pointerdown — сработаем раньше любых stopPropagation и до коммитов React
+    window.addEventListener('pointerdown', onPointerDown, true);
+    return () => window.removeEventListener('pointerdown', onPointerDown, true);
   }, [openSidebar.right, closeSidebar]);
 
   const boxes: SectionBox[] = [
@@ -220,6 +236,8 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   return (
     <aside
       ref={sidebarRef}
+      data-sidebar="right"
+      onClick={(e) => e.stopPropagation()}
       className={`
         fixed right-0 top-12
         w-full max-w-sm md:w-80

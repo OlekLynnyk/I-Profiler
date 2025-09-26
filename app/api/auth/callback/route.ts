@@ -19,7 +19,7 @@ function finalize(res: NextResponse) {
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
-  const jar = await cookies(); // важно: await
+  const jar = await cookies(); // ⬅️ ключевая правка: await
 
   const next = url.searchParams.get('next') || jar.get(RETURN_TO_COOKIE)?.value || SUCCESS_REDIRECT;
 
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Supabase client на основе cookie jar
+  // соблюдаем твою архитектуру: auth-helpers + cookies: async () => jar
   const supabase = createRouteHandlerClient({ cookies: async () => jar });
 
   let error: { message: string } | null = null;
@@ -64,28 +64,9 @@ export async function GET(req: NextRequest) {
     error = vErr ?? null;
   }
 
-  // ---- Fallback-логика для email-сценариев (устойчиво к mail webview) ----
-  const email = url.searchParams.get('email') || '';
+  const dest = error ? `/auth/callback?error=${encodeURIComponent(error.message)}` : next;
 
-  if (error) {
-    return finalize(
-      NextResponse.redirect(
-        new URL(`/auth/callback?error=${encodeURIComponent(error.message)}`, url),
-        303
-      )
-    );
-  }
-
-  // Если это email-верификация/магик/смена почты — отправляем на ввод кода в «нужном» браузере
-  if (verifyType || url.searchParams.has('token_hash')) {
-    const u = new URL('/auth/verify-code', url);
-    if (email) u.searchParams.set('email', email);
-    if (next) u.searchParams.set('return_to', next);
-    return finalize(NextResponse.redirect(u, 303));
-  }
-
-  // Обычный PKCE → дальше по флоу
-  return finalize(NextResponse.redirect(new URL(next, url), 303));
+  return finalize(NextResponse.redirect(new URL(dest, url), 303));
 }
 
 // Почтовые клиенты часто делают HEAD-prefetch — отвечаем редиректом без потребления токена

@@ -32,7 +32,7 @@ const STEPS: Step[] = [
     id: 3,
     title: 'Step 3 — Your Advantage',
     tagline: 'Your clarity …',
-    desc: 'Leverage the edge — orchestrate your business with more YES, deliver the NOs when needed, and move precisely where you intend. Rarefied poise. Risks reduced. Decisions sharpened.',
+    desc: 'Leverage the edge — orchestrate your business with more YES, deliver the NOs when needed, and move precisely. Rarefied poise. Risks reduced. Decisions sharpened.',
     start: 6,
     end: 9,
   },

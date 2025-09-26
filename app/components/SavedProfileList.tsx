@@ -75,9 +75,9 @@ export default function SavedProfileList() {
   return (
     <div className="flex flex-col gap-1">
       {loading ? (
-        <p className="text-sm text-[var(--text-secondary)]">Loading saved profiles…</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading saved reports…</p>
       ) : profiles.length === 0 ? (
-        <p className="text-sm text-[var(--text-secondary)] italic">No saved profiles yet.</p>
+        <p className="text-sm text-[var(--text-secondary)] italic">No saved reports yet.</p>
       ) : (
         profiles.map((profile) => (
           <div

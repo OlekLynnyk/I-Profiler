@@ -3,7 +3,7 @@
 import { FaLinkedin } from 'react-icons/fa';
 import { motion, useReducedMotion } from 'framer-motion';
 
-const EMAIL = 'support@hinted.ai';
+const EMAIL = 'hello@h1nted.com';
 
 // палитра и акцент — согласованы со стилем Pricing
 const PANEL_BG = '#F6F5ED';
@@ -76,7 +76,7 @@ export default function Footer() {
             </p>
 
             <p className="mt-2 text-center text-[13px] leading-6" style={{ color: '#374151' }}>
-              123 Example Street, Dublin, Ireland, The British Isles.
+              Dublin, Ireland, The British Isles.
             </p>
 
             <div className="mt-6 h-px w-full" style={{ backgroundColor: PANEL_RING }} />
@@ -169,7 +169,7 @@ export default function Footer() {
                     {EMAIL}
                   </a>
                 </p>
-                <p>123 Example Street, Dublin, Ireland, The British Isles.</p>
+                <p>Dublin, Ireland, The British Isles.</p>
 
                 <p className="mt-2 text-white/70">
                   © 2025 H1NTED. Proprietary technology protected by IP and trade-secret laws.

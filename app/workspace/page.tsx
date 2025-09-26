@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, Suspense } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthProvider';
 import dynamic from 'next/dynamic';
@@ -8,7 +8,15 @@ import HeaderBar from '@/app/components/HeaderBar';
 import ChatBubble from '@/app/components/ChatBubble';
 import { ErrorBoundary } from '@/app/components/ErrorBoundary';
 import { useUserPlan } from '@/app/hooks/useUserPlan';
-import { Plus, SendHorizonal, X, Loader, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import {
+  Plus,
+  SendHorizonal,
+  X,
+  Loader,
+  ChevronDown,
+  Image as ImageIcon,
+  Layers,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useChatLogic } from '@/app/hooks/useChatLogic';
 import React from 'react';
@@ -21,6 +29,9 @@ import { FaLinkedin } from 'react-icons/fa';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import SessionBridge from '@/app/components/SessionBridge';
 import GlobalLoading from '@/app/loading';
+import { useSidebar } from '@/app/context/SidebarContext';
+
+type Attachment = { name: string; base64: string };
 
 function AmbientBackdrop({ src }: { src: string }) {
   return (
@@ -78,6 +89,7 @@ export default function WorkspacePage() {
     historyLoaded,
     profilingMode,
     setProfilingMode,
+    bypassHistoryCheckOnce,
   } = useChatLogic();
 
   const {
@@ -140,6 +152,29 @@ export default function WorkspacePage() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isHelperOpen, setIsHelperOpen] = useState(false);
+  const { openSidebar, toggleSidebar, closeAllSidebars } = useSidebar();
+
+  useEffect(() => {
+    // открыть локальные панели UI
+    setIsHelperOpen(true);
+    setIsSidebarOpen(true);
+
+    // открыть глобальные сайдбары контекста
+    if (!openSidebar?.left) toggleSidebar('left');
+    if (!openSidebar?.right) toggleSidebar('right');
+
+    // при уходе со страницы — закрыть оба
+    return () => {
+      closeAllSidebars();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('theme')) {
+      localStorage.setItem('theme', 'dark');
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -167,6 +202,9 @@ export default function WorkspacePage() {
 
   const [attachmentError, setAttachmentError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmMode, setConfirmMode] = useState<'manual' | 'pregenerate'>('manual');
+  const pendingInputRef = useRef<string>('');
+  const pendingFilesRef = useRef<File[]>([]);
   const confirmRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -268,13 +306,20 @@ export default function WorkspacePage() {
       return;
     }
 
-    resetInput();
+    // Предварительное подтверждение очистки только для режима Image
+    if (chatMode === 'image' && attachedFiles.length > 0 && messages.length > 0) {
+      pendingInputRef.current = inputValue;
+      pendingFilesRef.current = attachedFiles;
+      setConfirmMode('pregenerate');
+      setShowConfirm(true);
+      return;
+    }
 
     try {
-      const attachments = await Promise.all(
+      const attachments: Attachment[] = await Promise.all(
         attachedFiles.map(
           (file) =>
-            new Promise<{ name: string; base64: string }>((resolve, reject) => {
+            new Promise<Attachment>((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = () => resolve({ name: file.name, base64: reader.result as string });
               reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
@@ -282,6 +327,8 @@ export default function WorkspacePage() {
             })
         )
       );
+
+      resetInput();
 
       await handleGenerate(inputValue.trim(), attachments);
       refetch().catch(console.error);
@@ -426,7 +473,10 @@ export default function WorkspacePage() {
                 {messages.length > 0 && (
                   <div className="w-full text-center my-4">
                     <button
-                      onClick={() => setShowConfirm(true)}
+                      onClick={() => {
+                        setConfirmMode('manual');
+                        setShowConfirm(true);
+                      }}
                       className="text-xs text-[var(--text-secondary)] opacity-60 hover:opacity-100 transition"
                     >
                       Clear history
@@ -505,11 +555,20 @@ export default function WorkspacePage() {
                       <button
                         type="button"
                         onClick={() => {
-                          const next = !isImageActive;
-                          setIsImageActive(next);
-                          setChatMode(next ? 'image' : 'none');
+                          if (!isImageActive) {
+                            setIsImageActive(true);
+                            setChatMode('image');
+                            setIsChatActive(false);
+                            setProfilingMode(true);
+                            return;
+                          }
+                          if (attachedFiles.length > 0) {
+                            return;
+                          }
+                          setIsImageActive(false);
+                          setChatMode('none');
                           setIsChatActive(false);
-                          setProfilingMode(next);
+                          setProfilingMode(false);
                         }}
                         className={`
                       flex items-center gap-1 h-8 px-3
@@ -517,7 +576,7 @@ export default function WorkspacePage() {
                       text-xs font-medium
                       ${
                         isImageActive
-                          ? 'bg-[#C084FC] text-white hover:bg-[#a05adb]'
+                          ? 'bg-[#C084FC] text-white hover:bg-[#a05adb] dark:bg-[var(--button-hover-bg)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--button-hover-bg)] dark:ring-1 dark:ring-[var(--card-border)]'
                           : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]'
                       }
                     `}
@@ -531,16 +590,16 @@ export default function WorkspacePage() {
                         type="button"
                         onClick={() => alert('Currently not available.')}
                         className="
-                        flex items-center gap-1 h-8 px-3
+                       flex items-center gap-1 h-8 px-3
                        rounded-full shadow-sm transition
                        bg-[var(--button-bg)] text-[var(--text-primary)]
                        hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
                        text-xs font-medium
-                    "
-                        aria-label="LinkedIn Button"
+                      "
+                        aria-label="CDRs Button"
                       >
-                        <FaLinkedin className="w-3.5 h-3.5" />
-                        LinkedIn
+                        <Layers className="w-4 h-4" />
+                        CDRs
                       </button>
 
                       <div className="relative">
@@ -589,19 +648,22 @@ export default function WorkspacePage() {
                                 setShowMoreDropdown(false);
                               }}
                             >
-                              💬 Chat
+                              💬 Grok 4
                             </button>
                             <button
                               className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
-                              onClick={() => alert('Option 2 clicked')}
+                              onClick={() => alert('Currently not available.')}
                             >
-                              Option 2
+                              <span className="inline-flex items-center gap-2">
+                                <FaLinkedin className="w-3.5 h-3.5" />
+                                LinkedIn
+                              </span>
                             </button>
                             <button
                               className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition"
-                              onClick={() => alert('Option 3 clicked')}
+                              onClick={() => alert('Currently not available.')}
                             >
-                              Option 3
+                              DISC/BIG 5
                             </button>
                           </motion.div>
                         )}
@@ -702,18 +764,59 @@ export default function WorkspacePage() {
                 ref={confirmRef}
                 className="bg-[var(--card-bg)] text-[var(--text-primary)] rounded-xl px-5 py-3 shadow-md border border-[var(--card-border)] max-w-[350px] w-full text-sm"
               >
-                <p className="text-left mb-3">Are you sure you want to delete the history?</p>
+                <p className="text-left mb-3">
+                  {confirmMode === 'manual'
+                    ? 'Clear history? Save it first if needed.'
+                    : 'The previous message will be deleted. Save it first if needed. Ready to proceed?'}
+                </p>
                 <div className="flex justify-end gap-4">
                   <button
                     onClick={() => setShowConfirm(false)}
                     className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   >
-                    Cancel
+                    No
                   </button>
                   <button
-                    onClick={() => {
-                      clearMessages();
+                    onClick={async () => {
+                      if (confirmMode === 'manual') {
+                        await clearMessages();
+                        setShowConfirm(false);
+                        return;
+                      }
+                      // pregenerate: очистить историю и запустить генерацию с буферами
+                      await clearMessages();
+                      resetInput();
+                      setProfilingMode(false);
                       setShowConfirm(false);
+                      await new Promise((r) => requestAnimationFrame(() => r(null)));
+                      await new Promise((r) => setTimeout(r, 16)); // ~1 кадр
+                      try {
+                        const files = pendingFilesRef.current;
+                        const attachments: Attachment[] = await Promise.all(
+                          files.map(
+                            (file) =>
+                              new Promise<Attachment>((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () =>
+                                  resolve({ name: file.name, base64: reader.result as string });
+                                reader.onerror = () =>
+                                  reject(new Error(`Failed to read file: ${file.name}`));
+                                reader.readAsDataURL(file);
+                              })
+                          )
+                        );
+
+                        bypassHistoryCheckOnce();
+                        await handleGenerate((pendingInputRef.current || '').trim(), attachments);
+                        refetch().catch(console.error);
+                        setAttachmentError('');
+                      } catch (err: any) {
+                        console.error(err);
+                        setAttachmentError(err.message || 'Failed to process file.');
+                      } finally {
+                        pendingInputRef.current = '';
+                        pendingFilesRef.current = [];
+                      }
                     }}
                     className="text-sm text-[var(--text-primary)] hover:underline"
                   >

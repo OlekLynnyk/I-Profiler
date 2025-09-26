@@ -25,7 +25,7 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
       aria-label={`Toggle ${box.title}`}
       onClick={() => !disabled && onToggle()}
       onKeyDown={handleKeyDown}
-      title={disabled ? 'Upgrade required to access this feature' : ''} // 👈 нейтрально и без хардкода планов
+      title={disabled ? 'Upgrade required to access this feature' : ''}
       className={`
         transition-all duration-300 mb-4 rounded-xl border
         ${
@@ -47,7 +47,11 @@ export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps)
 
       {/* content */}
       {isActive && (
-        <div className="px-4 pb-4 text-sm text-[var(--text-primary)]">
+        <div
+          className="px-4 pb-4 text-sm text-[var(--text-primary)]"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
           {box.renderContent && <div className="mt-2">{box.renderContent}</div>}
         </div>
       )}

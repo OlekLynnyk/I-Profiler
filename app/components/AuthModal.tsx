@@ -23,6 +23,10 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   const [info, setInfo] = useState('');
   const [redirecting, setRedirecting] = useState(false);
 
+  // NEW: mobile gating state
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileNoteOpen, setMobileNoteOpen] = useState(false);
+
   // lock scroll + esc + focus
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -30,6 +34,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     const isTouch =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(hover: none) and (pointer: coarse)')?.matches === true;
+    setIsMobile(isTouch);
     // Фокусируем email только на десктопе, чтобы на мобиле не открывалась клавиатура
     if (!isTouch) {
       setTimeout(() => emailRef.current?.focus(), 0);
@@ -45,51 +50,27 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     };
   }, [onClose]);
 
-  // ✅ Автозакрытие модалки, когда логин завершился (в этой или другой вкладке)
+  // 🔒 Блок: авто-закрытие модала, если сессия уже есть или появилась
   useEffect(() => {
-    const goHome = () => router.replace('/'); // если есть return_to — можете подставить
+    let unsub: { unsubscribe: () => void } | null = null;
 
-    // A) События Supabase: если сессия появилась в этой вкладке
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
         onClose();
-        goHome();
+        router.refresh();
       }
     });
 
-    // B) BroadcastChannel: сигнал с /auth/callback (другая вкладка)
-    let bc: BroadcastChannel | null = null;
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      bc = new BroadcastChannel('auth-events');
-      bc.onmessage = (ev) => {
-        if (ev?.data?.type === 'SIGNED_IN') {
-          onClose();
-          goHome();
-        }
-      };
-    }
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        onClose();
+        router.refresh();
+      }
+    });
+    unsub = data.subscription;
 
-    // C) Резерв: когда пользователь вернулся в эту вкладку
-    const onFocus = () => {
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) {
-          onClose();
-          goHome();
-        }
-      });
-    };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onFocus);
-
-    return () => {
-      subscription.unsubscribe();
-      bc?.close();
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onFocus);
-    };
-  }, [router, supabase, onClose]);
+    return () => unsub?.unsubscribe();
+  }, [supabase, onClose, router]);
 
   // клик по фону
   const onBackdrop = (e: React.MouseEvent) => {
@@ -126,7 +107,18 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       return;
     }
     if (!email || !password) {
+      // Разрешаем клик на мобильном в режиме Create ради показа поповера
+      if (!isLogin && isMobile) {
+        setMobileNoteOpen(true);
+        return;
+      }
       setError('Email and password are required.');
+      return;
+    }
+
+    // Блокируем email sign-up на мобильных: показываем мини-поповер и не выполняем signUp
+    if (!isLogin && isMobile) {
+      setMobileNoteOpen(true);
       return;
     }
 
@@ -141,7 +133,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` },
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) setError(error.message);
       else {
@@ -269,24 +261,81 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           {error && <div className="text-red-300 text-xs">{error}</div>}
           {info && <div className="text-green-300 text-xs">{info}</div>}
 
-          <button
-            type="submit"
-            disabled={!email || !password}
-            className="mt-4 w-full rounded-full px-5 py-3
-                       text-white backdrop-blur ring-1
-                       bg-purple-500/25 hover:bg-purple-500/30 ring-purple-300/30 hover:ring-purple-300/40
-                       md:bg-purple-500/20 md:hover:bg-purple-500/30 md:ring-purple-300/30 md:hover:ring-purple-300/50
-                       disabled:opacity-60
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300/60"
-          >
-            {isLogin ? 'Login' : 'Create Account'}
-          </button>
+          <div className="relative">
+            <button
+              type="submit"
+              // Не используем disabled для mobile create, чтобы поймать клик и показать поповер
+              disabled={(!email || !password) && !(isMobile && !isLogin)}
+              aria-describedby={mobileNoteOpen ? 'mobile-signup-note' : undefined}
+              className={
+                `mt-4 w-full rounded-full px-5 py-3 text-white backdrop-blur ring-1 focus:outline-none
+                 focus-visible:ring-2 focus-visible:ring-purple-300/60 ` +
+                // ТОЛЬКО на мобильных и ТОЛЬКО в режиме Create делаем кнопку тёмной
+                (!isLogin && isMobile
+                  ? 'bg-white/5 ring-white/10 text-white/60 hover:bg-white/5 hover:ring-white/10'
+                  : 'bg-purple-500/25 hover:bg-purple-500/30 ring-purple-300/30 hover:ring-purple-300/40 ' +
+                    'md:bg-purple-500/20 md:hover:bg-purple-500/30 md:ring-purple-300/30 md:hover:ring-purple-300/50 disabled:opacity-60')
+              }
+            >
+              {isLogin ? 'Login' : 'Create Account'}
+            </button>
+
+            {/* Мини-поповер — очень маленькое уведомление строго для mobile sign-up */}
+            {mobileNoteOpen && (
+              <div
+                id="mobile-signup-note"
+                role="dialog"
+                aria-live="polite"
+                className="absolute left-1/2 -translate-x-1/2 bottom-[52px]
+                           w-[240px] rounded-xl bg-black/80 text-white text-xs
+                           ring-1 ring-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.4)]
+                           p-3 z-10"
+              >
+                <button
+                  type="button"
+                  onClick={() => setMobileNoteOpen(false)}
+                  aria-label="Close"
+                  className="absolute top-1 right-1 px-2 py-1 text-white/60 hover:text-white"
+                >
+                  ✕
+                </button>
+                <div className="flex items-start gap-2 pr-6">
+                  <div className="mt-[2px]">⚠️</div>
+                  <div className="leading-snug">
+                    Email sign-up unavailable on mobile. Try Google instead.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  className="mt-2 w-full rounded-lg px-3 py-1.5 text-xs
+                             bg-white/10 hover:bg-white/15 ring-1 ring-white/15"
+                >
+                  Continue with Google
+                </button>
+                {/* треугольник-указатель */}
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-0 h-0
+                                border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-black/80"
+                />
+              </div>
+            )}
+          </div>
         </form>
 
         {/* нижняя панель */}
         <div className="mt-4 flex items-center justify-between text-sm">
           <button
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => {
+              const next = !isLogin;
+              setIsLogin(next);
+              if (next === false && isMobile) {
+                // Переключились в Create на мобильном — сразу показать уведомление
+                setMobileNoteOpen(true);
+              } else {
+                setMobileNoteOpen(false);
+              }
+            }}
             className="text-purple-300 hover:text-purple-200 underline underline-offset-4 decoration-purple-300/40"
           >
             {isLogin ? 'Create an account' : 'Already have an account? Log in'}

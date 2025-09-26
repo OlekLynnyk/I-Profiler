@@ -250,6 +250,7 @@ export default function SaveProfileModal({
       {open && (
         <motion.div
           className="fixed inset-0 z-50 flex justify-center items-center bg-black/30 backdrop-blur-[2px]"
+          data-modal="open"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -260,6 +261,9 @@ export default function SaveProfileModal({
           }}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Saved profile"
             onClick={(e) => e.stopPropagation()}
             className="
               relative

@@ -122,7 +122,7 @@ export const getSidebarBoxes = (): BoxData[] => {
       id: 'saved-messages',
       title: 'Saved messages',
       description: 'Your collection of saved messages.',
-      renderContent: <SavedMessagesContent />,
+      renderContent: <SavedProfileList />,
     },
     {
       id: 'library',
@@ -136,14 +136,18 @@ export const getSidebarBoxes = (): BoxData[] => {
       title: 'Support email',
       description: 'Contact support via email for assistance.',
       renderContent: (
-        <div className="text-sm">
-          <p className="mb-1">If you need help or have questions, please reach out to us at:</p>
-          <p className="font-semibold text-[var(--accent)]">
+        <div
+          className="text-sm select-text"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="font-semibold">
+            Contact us at:{' '}
             <a
-              href="mailto:support@iprofiler.ai"
-              className="underline hover:text-[var(--text-primary)]"
+              href="mailto:hello@h1nted.com"
+              className="underline text-[var(--accent)] hover:text-[var(--text-primary)]"
             >
-              support@iprofiler.ai
+              hello@h1nted.com
             </a>
           </p>
         </div>

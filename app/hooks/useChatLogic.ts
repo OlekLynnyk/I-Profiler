@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useUserPlan } from '@/app/hooks/useUserPlan';
 import { v4 as uuidv4 } from 'uuid';
@@ -41,6 +41,7 @@ export interface UseChatLogicResult {
   createNewProfileId: () => Promise<string>;
   profilingMode: boolean;
   setProfilingMode: (value: boolean) => void;
+  bypassHistoryCheckOnce: () => void;
 }
 
 export function useChatLogic(): UseChatLogicResult {
@@ -60,6 +61,10 @@ export function useChatLogic(): UseChatLogicResult {
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [currentProfileName, setCurrentProfileName] = useState<string | null>(null);
   const [profilingMode, setProfilingMode] = useState<boolean>(false);
+  const bypassHistoryOnceRef = useRef(false);
+  const bypassHistoryCheckOnce = () => {
+    bypassHistoryOnceRef.current = true;
+  };
 
   const { hasReachedLimit, refetch } = useUserPlan(refreshToken);
 
@@ -137,6 +142,7 @@ export function useChatLogic(): UseChatLogicResult {
     setCurrentProfileName(null);
     setMessages([]);
     setProfilingMode(false);
+    await new Promise((r) => setTimeout(r, 0));
     return newId;
   };
 
@@ -153,8 +159,13 @@ export function useChatLogic(): UseChatLogicResult {
 
     if (isGenerating) return;
 
-    if (profilingMode && historyLoaded && messages.length > 0) {
-      setErrorMessage('Очистите историю перед началом нового профайлинга.');
+    const bypass = bypassHistoryOnceRef.current;
+    bypassHistoryOnceRef.current = false;
+
+    const baseMessages: ChatMessage[] = bypass ? [] : messages;
+
+    if (profilingMode && historyLoaded && messages.length > 0 && !bypass) {
+      setErrorMessage('Clear history before starting a new AI DISCERNMENT session.');
       return;
     }
 
@@ -211,7 +222,7 @@ export function useChatLogic(): UseChatLogicResult {
         [userMessage.id]: 'pending',
       }));
 
-      const newMessages = [...messages, userMessage];
+      const newMessages = [...baseMessages, userMessage];
       applyFilteredMessages(newMessages);
 
       const { data: sessionData } = await supabase.auth.getSession();
@@ -315,7 +326,7 @@ export function useChatLogic(): UseChatLogicResult {
         [aiMessage.id]: 'done',
       }));
 
-      const updatedMessages = [...messages, userMessage, aiMessage];
+      const updatedMessages = [...baseMessages, userMessage, aiMessage];
       applyFilteredMessages(updatedMessages);
 
       setIsGenerating(false);
@@ -334,7 +345,7 @@ export function useChatLogic(): UseChatLogicResult {
       );
 
       setErrorMessage(`An unexpected error occurred. Please try again. (Trace ID: ${traceId})`);
-      setGenerationError({ index: messages.length - 1 });
+      setGenerationError({ index: baseMessages.length });
       setMessageStatuses((prev) => ({
         ...prev,
         [userMessage.id]: 'error',
@@ -423,5 +434,6 @@ export function useChatLogic(): UseChatLogicResult {
     createNewProfileId,
     profilingMode,
     setProfilingMode,
+    bypassHistoryCheckOnce,
   };
 }

@@ -22,10 +22,34 @@ export default function HeaderBar({
   const { session, isLoading } = useAuth();
   const router = useRouter();
   const { plan: packageType, used: demoAttempts } = useUserPlan(0);
-  const { toggleSidebar, openSidebar } = useSidebar();
+  const { toggleSidebar, openSidebar, closeSidebar } = useSidebar(); // есть closeSidebar
+
+  const handleHomeClick = () => {
+    closeSidebar('left');
+    closeSidebar('right');
+    requestAnimationFrame(() => onLogout());
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter') onLogout();
+    if (e.key === 'Enter') handleHomeClick();
+  };
+
+  // ← новый: корректный клик по ЛЕВОЙ панели
+  const handleLeftPanelClick = () => {
+    if (openSidebar.left) {
+      closeSidebar('left');
+    } else {
+      toggleSidebar('left');
+    }
+  };
+
+  // уже был: корректный клик по ПРАВОЙ панели
+  const handleAccountPanelClick = () => {
+    if (openSidebar.right) {
+      closeSidebar('right');
+    } else {
+      toggleSidebar('right');
+    }
   };
 
   useEffect(() => {
@@ -49,8 +73,10 @@ export default function HeaderBar({
       {/* Left buttons */}
       <div className="flex gap-2 items-center">
         <button
-          onClick={() => toggleSidebar('left')}
+          data-sidebar="left" // важно: считаем «внутри» левого сайдбара для pointerdown
+          onClick={handleLeftPanelClick} // вместо прямого toggle
           className="text-[var(--text-primary)] text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)]"
+          type="button"
         >
           Resources Hub
         </button>
@@ -67,7 +93,7 @@ export default function HeaderBar({
         aria-label="Go to home"
         onKeyDown={handleKeyDown}
         className="text-sm sm:text-sm font-inter font-semibold text-[var(--text-primary)] cursor-pointer focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]"
-        onClick={onLogout}
+        onClick={handleHomeClick}
       >
         Home
       </div>
@@ -80,14 +106,17 @@ export default function HeaderBar({
           className={`flex items-center gap-1 text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)] ${
             disableSaveProfiling ? 'opacity-50 pointer-events-none' : ''
           }`}
+          type="button"
         >
           <Upload size={14} className="text-[var(--text-primary)]" />
           <span className="text-[var(--text-primary)]">Save</span>
         </button>
 
         <button
-          onClick={() => toggleSidebar('right')}
+          data-sidebar="right" // уже добавляли для правого
+          onClick={handleAccountPanelClick}
           className="text-[var(--text-primary)] text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)]"
+          type="button"
         >
           Account Panel
         </button>
