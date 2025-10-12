@@ -3,11 +3,11 @@
 /* Светлая тема — переменные по умолчанию */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: rgba(23, 23, 23, 0.92);
 
   --surface: #f5f5f5;
   --surface-secondary: #e5e5e5;
-  --text-primary: #171717;
+  --text-primary: rgba(23, 23, 23, 0.92);
   --text-secondary: #4a4a4a;
   --accent: #6366f1;
   --accent-hover: #4f46e5;
@@ -85,20 +85,9 @@ input, textarea, select, button, label {
   user-select: text;
 }
 
-/* ✅ Добавляем translate-x классы */
-@layer utilities {
-  .translate-x-0 {
-    transform: translateX(0);
-  }
-  .-translate-x-full {
-    transform: translateX(-100%);
-  }
-  .translate-x-full {
-    transform: translateX(100%);
-  }
-}
+/* ⛔️ УДАЛЕНО: самодельные translate-x-утилиты, чтобы не ломать transform-стек Tailwind */
 
-/* ✅ Лёгкое свечение за текстом */
+/* Лёгкое свечение за текстом */
 .hero-glow {
   text-shadow:
     0 1px 2px rgba(255, 255, 255, 0.15),
@@ -109,11 +98,11 @@ input, textarea, select, button, label {
 /* iOS only: anti-zoom c визуальными ~15px и без сужения ширины */
 @supports (-webkit-touch-callout: none) {
   .ios-no-zoom {
-    font-size: 16px;              /* iOS не зумит при фокусе */
-    --s: 0.9375;                  /* 15 / 16 → визуально ~15px */
+    font-size: 16px;
+    --s: 0.9375;
     transform: scale(var(--s));
     transform-origin: left center;
-    width: calc(100% / var(--s)); /* компенсируем сжатие по ширине */
+    width: calc(100% / var(--s));
   }
 }
 
@@ -121,21 +110,72 @@ input, textarea, select, button, label {
 .pb-safe {
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
+
 /* === Loading: octopus pulse === */
 @layer utilities {
   @keyframes octo-pulse {
     0%   { opacity: 0.25; transform: scale(1); }
-    50%  { opacity: 0.80; transform: scale(1.02); } /* едва заметный масштаб, очень лёгкий */
+    50%  { opacity: 0.48; transform: scale(1.012); }
     100% { opacity: 0.25; transform: scale(1); }
   }
 
   .animate-octo-pulse {
     animation: octo-pulse 2.4s ease-in-out infinite;
-    will-change: opacity, transform; /* даём GPU-хинт, безопасно */
+    will-change: opacity, transform;
   }
 
-  /* Доступность: если пользователь просит «меньше анимации» — выключаем полностью */
   @media (prefers-reduced-motion: reduce) {
     .animate-octo-pulse { animation: none !important; }
   }
+}
+
+/* ✅ Безопасно отключаем неинтерактивные оверлеи (по маркеру) */
+[data-overlay]:not([data-interactive="true"]) {
+  pointer-events: none !important;
+}
+
+/* Декоративные/скрытые баннеры/бэкдропы — безопасно */
+.cookie-banner[hidden],
+.cookie-banner.is-hidden,
+#cookie-banner[hidden],
+#cookieBanner[hidden],
+.cookie-banner[aria-hidden="true"],
+.cookieBanner[aria-hidden="true"] {
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* Стабилизируем рендеринг шрифтов ТОЛЬКО на контейнерах (не на строках) */
+[data-templates],
+[data-cdr-selection] {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Маркер для заголовков файлов/элементов списков */
+.file-title::before {
+  content: "• ";
+  color: var(--text-secondary);
+}
+.file-title {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* У строк — без переходов цвета текста, чтобы убрать «мигание» на hover */
+[data-templates] [data-row] .file-title,
+[data-cdr-selection] [data-row] .file-title {
+  transition: none;
+}
+
+/* Разрешаем клики внутри панелей */
+[data-templates],
+[data-cdr-selection] {
+  pointer-events: auto;
+}
+
+/* Утилита: запрещает текстовую селекцию на кликабельных строках */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
 }

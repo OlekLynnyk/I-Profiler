@@ -115,7 +115,7 @@ export default function Header({ onLoginClick }: HeaderProps) {
                 <img
                   src="/images/octopus-logo.png"
                   alt="Logo"
-                  className="w-6 h-6 rounded-full ring-1 ring-[#A855F7]/30"
+                  className="w-8 h-8 shrink-0 align-middle"
                 />
                 <span className="text-white font-semibold tracking-tight text-base sm:text-[20px]">
                   H1NTED

@@ -14,25 +14,25 @@ export const PACKAGE_LIMITS: Record<
   }
 > = {
   Freemium: {
-    requestsPerMonth: 3,
-    dailyGenerations: 3,
+    requestsPerMonth: 4,
+    dailyGenerations: 4,
     allowExport: false,
     allowCustomBranding: false,
   },
   Select: {
-    requestsPerMonth: 15,
+    requestsPerMonth: 30,
     dailyGenerations: 15,
     allowExport: true,
     allowCustomBranding: true,
   },
   Smarter: {
-    requestsPerMonth: 75,
+    requestsPerMonth: 50,
     dailyGenerations: 25,
     allowExport: true,
     allowCustomBranding: true,
   },
   Business: {
-    requestsPerMonth: 200,
+    requestsPerMonth: 100,
     dailyGenerations: 25,
     allowExport: true,
     allowCustomBranding: true,
@@ -46,13 +46,13 @@ export function isValidPackageType(pkg: string): pkg is ValidPackageType {
 export const PRICE_TO_PACKAGE: Record<string, ValidPackageType> = {
   price_1S4nT2AGnqjZyhfAUfJwYBIl: 'Business',
   price_1S4nSgAGnqjZyhfAtPjc1NSY: 'Smarter',
-  price_1S4nRwAGnqjZyhfAcf3A0P4l: 'Select',
+  price_1SCLW8AGnqjZyhfAloUDulsW: 'Select',
 };
 
 export const PACKAGE_TO_PRICE: Partial<Record<ValidPackageType, string>> = {
   Business: 'price_1S4nT2AGnqjZyhfAUfJwYBIl',
   Smarter: 'price_1S4nSgAGnqjZyhfAtPjc1NSY',
-  Select: 'price_1S4nRwAGnqjZyhfAcf3A0P4l',
+  Select: 'price_1SCLW8AGnqjZyhfAloUDulsW',
 };
 
 export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';

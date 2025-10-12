@@ -87,7 +87,7 @@ export default function HomePage() {
               : 'Click here to open your workspace'
           }
           ctaLabel="Open Workspace"
-          onProceed={() => {
+          onAccept={() => {
             markSeen();
             router.push('/workspace');
           }}
@@ -126,34 +126,13 @@ export default function HomePage() {
             <div className="space-y-3 relative">
               {/* ▶️ H1 (одинаковый размер + креативный визуал) */}
               <div className="font-extrabold uppercase tracking-tight leading-[1.08] [text-wrap:balance] hero-glow">
-                <motion.p
-                  className="text-[clamp(2.64rem,10.8vw,3.6rem)]"
-                  style={heroTextFx}
-                  initial={reduce ? undefined : 'hidden'}
-                  whileInView={reduce ? undefined : 'show'}
-                  viewport={{ once: true, amount: 0.3 }}
-                  variants={fadeUp}
-                  custom={0}
-                  animate={
-                    reduce
-                      ? undefined
-                      : { filter: ['saturate(1)', 'saturate(1.08)', 'saturate(1)'] }
-                  }
-                  transition={
-                    reduce ? undefined : { duration: 6, repeat: Infinity, ease: 'easeInOut' }
-                  }
-                >
+                <motion.p className="text-[clamp(2.64rem,10.8vw,3.6rem)]" style={heroTextFx}>
                   WE UNLOCK INSIGHTS WITH
                 </motion.p>
 
                 <motion.p
                   className="text-[clamp(2.64rem,10.8vw,3.6rem)]"
                   style={heroTextFx}
-                  initial={reduce ? undefined : 'hidden'}
-                  whileInView={reduce ? undefined : 'show'}
-                  viewport={{ once: true, amount: 0.3 }}
-                  variants={fadeUp}
-                  custom={1}
                   animate={reduce ? undefined : { opacity: [0.96, 1, 0.96] }}
                   transition={
                     reduce ? undefined : { duration: 7.2, repeat: Infinity, ease: 'easeInOut' }
@@ -165,11 +144,6 @@ export default function HomePage() {
                 <motion.p
                   className="text-[clamp(2.64rem,10.8vw,3.6rem)]"
                   style={heroTextFx}
-                  initial={reduce ? undefined : 'hidden'}
-                  whileInView={reduce ? undefined : 'show'}
-                  viewport={{ once: true, amount: 0.3 }}
-                  variants={fadeUp}
-                  custom={2}
                   animate={
                     reduce
                       ? undefined
@@ -195,11 +169,6 @@ export default function HomePage() {
               {/* Subtitle — без изменений */}
               <motion.div
                 className="font-bold mt-12 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[clamp(1.1rem,4vw,1.1rem)]"
-                initial={reduce ? undefined : 'hidden'}
-                whileInView={reduce ? undefined : 'show'}
-                viewport={{ once: true, amount: 0.7 }}
-                variants={fadeUp}
-                custom={2}
                 animate={reduce ? undefined : { opacity: [0.94, 1, 0.94] }}
                 transition={
                   reduce ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut' }
@@ -210,14 +179,7 @@ export default function HomePage() {
               </motion.div>
 
               {/* Description — без изменений */}
-              <motion.p
-                className="mt-5 mb-10 text-[13px] leading-snug text-white/70 max-w-[36ch]"
-                initial={reduce ? undefined : 'hidden'}
-                whileInView={reduce ? undefined : 'show'}
-                viewport={{ once: true, amount: 0.7 }}
-                variants={fadeUp}
-                custom={3}
-              >
+              <motion.p className="mt-5 mb-10 text-[13px] leading-snug text-white/70 max-w-[36ch]">
                 In seconds, you gain the rarest advantage of discerning people through little
                 signals they cannot ever conceal
               </motion.p>
@@ -238,7 +200,7 @@ export default function HomePage() {
                   borderColor: 'rgba(255,255,255,0.12)',
                 }}
                 initial={reduce ? undefined : { opacity: 0, y: 10 }}
-                whileInView={
+                animate={
                   reduce
                     ? undefined
                     : {
@@ -247,7 +209,6 @@ export default function HomePage() {
                         transition: { duration: 0.6, ease: easing, delay: 0.22 },
                       }
                 }
-                viewport={{ once: true, amount: 0.7 }}
               >
                 <span className="relative z-[1]">Take a gallery tour</span>
               </motion.button>
@@ -274,7 +235,7 @@ export default function HomePage() {
                     borderColor: 'rgba(255,255,255,0.12)',
                   }}
                   initial={reduce ? undefined : { opacity: 0, y: 10 }}
-                  whileInView={
+                  animate={
                     reduce
                       ? undefined
                       : {
@@ -283,7 +244,6 @@ export default function HomePage() {
                           transition: { duration: 0.6, ease: easing, delay: 0.28 },
                         }
                   }
-                  viewport={{ once: true, amount: 0.7 }}
                 >
                   <span
                     aria-hidden
@@ -323,7 +283,8 @@ export default function HomePage() {
               className="font-extrabold uppercase tracking-tight leading-[1.1] [text-wrap:balance] hero-glow text-[clamp(2.6rem,3.5vw+0.7rem,4rem)]"
               style={{ letterSpacing: '-0.02em' }}
               initial={reduce ? undefined : 'hidden'}
-              whileInView={reduce ? undefined : 'show'}
+              animate={reduce ? undefined : 'show'}
+              variants={fadeUp}
               viewport={{ once: true, amount: 0.3 }}
             >
               <motion.span className="block text-[#F7F7F7]" variants={fadeUp} custom={0}>
@@ -339,9 +300,8 @@ export default function HomePage() {
             <motion.div
               className="font-bold mt-6 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#B98AF6] via-[#A855F7] to-[#B98AF6] text-[27.0px]"
               initial={reduce ? undefined : 'hidden'}
-              whileInView={reduce ? undefined : 'show'}
-              viewport={{ once: true, amount: 0.7 }}
-              animate={reduce ? undefined : { opacity: [0.94, 1, 0.94] }}
+              animate={reduce ? undefined : 'show'}
+              variants={fadeUp}
               transition={reduce ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut' }}
             >
               <motion.div variants={fadeUp} custom={2}>
@@ -357,8 +317,7 @@ export default function HomePage() {
             <motion.p
               className="text-[16px] leading-[1.6] text-white/75 mt-5 max-w-none md:w-[52ch] lg:w-[56ch] [text-wrap:balance]"
               initial={reduce ? undefined : 'hidden'}
-              whileInView={reduce ? undefined : 'show'}
-              viewport={{ once: true, amount: 0.7 }}
+              animate={reduce ? undefined : 'show'}
               variants={fadeUp}
               custom={4}
             >
@@ -380,7 +339,7 @@ export default function HomePage() {
                   borderColor: 'rgba(255,255,255,0.12)',
                 }}
                 initial={reduce ? undefined : { opacity: 0, y: 10 }}
-                whileInView={
+                animate={
                   reduce
                     ? undefined
                     : {
@@ -389,7 +348,6 @@ export default function HomePage() {
                         transition: { duration: 0.6, ease: easing, delay: 0.32 },
                       }
                 }
-                viewport={{ once: true, amount: 0.7 }}
               >
                 <span className="relative z-[1]">Take a gallery tour</span>
               </motion.button>
@@ -409,7 +367,7 @@ export default function HomePage() {
                     borderColor: 'rgba(255,255,255,0.12)',
                   }}
                   initial={reduce ? undefined : { opacity: 0, y: 10 }}
-                  whileInView={
+                  animate={
                     reduce
                       ? undefined
                       : {
@@ -418,7 +376,6 @@ export default function HomePage() {
                           transition: { duration: 0.6, ease: easing, delay: 0.32 },
                         }
                   }
-                  viewport={{ once: true, amount: 0.7 }}
                 >
                   <span
                     aria-hidden
@@ -444,7 +401,7 @@ export default function HomePage() {
                     borderColor: 'rgba(255,255,255,0.12)',
                   }}
                   initial={reduce ? undefined : { opacity: 0, y: 10 }}
-                  whileInView={
+                  animate={
                     reduce
                       ? undefined
                       : {
@@ -453,7 +410,6 @@ export default function HomePage() {
                           transition: { duration: 0.6, ease: easing, delay: 0.36 },
                         }
                   }
-                  viewport={{ once: true, amount: 0.7 }}
                 >
                   <span className="relative z-[1]">Take a gallery tour</span>
                 </motion.button>

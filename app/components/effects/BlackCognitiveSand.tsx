@@ -3,7 +3,11 @@ import Image from 'next/image';
 
 export default function BlackCognitiveSand() {
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none" style={{ background: '#0b0b0c' }}>
+    <div
+      data-interactive="true"
+      className="fixed inset-0 z-0 pointer-events-none"
+      style={{ background: '#0b0b0c' }}
+    >
       <Image
         src="/images/bg-cognitive-sand-v1.webp"
         alt=""

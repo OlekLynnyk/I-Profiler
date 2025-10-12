@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const OAUTH_STATE_COOKIE = 'oauth_state';
 const RETURN_TO_COOKIE = 'return_to';
-const SUCCESS_REDIRECT = '/auth/callback';
+const SUCCESS_REDIRECT = '/login?verified=1';
 
 function finalize(res: NextResponse) {
   res.headers.set('Cache-Control', 'no-store');
@@ -34,9 +34,8 @@ export async function GET(req: NextRequest) {
     | null;
 
   if (!code && (!token || !verifyType)) {
-    return finalize(
-      NextResponse.redirect(new URL('/auth/callback?error=missing_code_or_token', url), 303)
-    );
+    // никаких редиректов обратно на этот же /auth/callback
+    return finalize(NextResponse.redirect(new URL(SUCCESS_REDIRECT, url), 303));
   }
 
   if (code) {

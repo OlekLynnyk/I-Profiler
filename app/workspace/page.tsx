@@ -30,6 +30,7 @@ import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import SessionBridge from '@/app/components/SessionBridge';
 import GlobalLoading from '@/app/loading';
 import { useSidebar } from '@/app/context/SidebarContext';
+import { useOnboardingWorkspace } from '@/app/hooks/useOnboardingWorkspace';
 
 type Attachment = { name: string; base64: string };
 
@@ -67,6 +68,11 @@ const SidebarHelper = dynamic(() => import('./SidebarHelper'), {
   loading: () => <div className="p-8 text-[var(--text-secondary)]">Loading Helper...</div>,
   ssr: false,
 });
+
+const OnboardingSpotlight = dynamic(
+  () => import('@/app/components/onboarding/OnboardingSpotlight'),
+  { ssr: false }
+);
 
 export default function WorkspacePage() {
   const { session, user, isLoading } = useAuth();
@@ -155,18 +161,33 @@ export default function WorkspacePage() {
   const { openSidebar, toggleSidebar, closeAllSidebars } = useSidebar();
 
   useEffect(() => {
-    // открыть локальные панели UI
-    setIsHelperOpen(true);
-    setIsSidebarOpen(true);
+    const mq = window.matchMedia('(min-width: 768px)'); // md-брейкпоинт
+    const apply = (isDesktop: boolean) => {
+      setIsHelperOpen(isDesktop);
+      setIsSidebarOpen(isDesktop);
 
-    // открыть глобальные сайдбары контекста
-    if (!openSidebar?.left) toggleSidebar('left');
-    if (!openSidebar?.right) toggleSidebar('right');
+      if (isDesktop) {
+        if (!openSidebar?.left) toggleSidebar('left');
+        if (!openSidebar?.right) toggleSidebar('right');
+      } else {
+        closeAllSidebars();
+      }
+    };
 
-    // при уходе со страницы — закрыть оба
+    apply(mq.matches);
+
+    const onChange = (e: MediaQueryListEvent) => apply(e.matches);
+    mq.addEventListener?.('change', onChange);
+    // @ts-ignore (Safari fallback)
+    mq.addListener?.(onChange);
+
     return () => {
+      mq.removeEventListener?.('change', onChange);
+      // @ts-ignore
+      mq.removeListener?.(onChange);
       closeAllSidebars();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useLayoutEffect(() => {
@@ -198,7 +219,19 @@ export default function WorkspacePage() {
     hasErrors,
     error,
     resetInput,
+    fileStatus,
   } = useChatInputState();
+
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    // safe previews without memory leaks
+    const urls = attachedFiles.map((f) => URL.createObjectURL(f));
+    setPreviewUrls(urls);
+    return () => {
+      urls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [attachedFiles]);
 
   const [attachmentError, setAttachmentError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -214,9 +247,46 @@ export default function WorkspacePage() {
 
   const { isAtBottom } = useScrollObserver(bottomRef, scrollRef, historyLoaded);
 
-  const { saveProfile } = useSavedProfiles();
+  const { saveProfile, getFolders } = useSavedProfiles();
+
+  const {
+    ready,
+    showStep1,
+    showStep2,
+    showStep3,
+    showStep4,
+    showFirstImageDrag,
+    showStep6,
+    acceptStep1,
+    dismissStep1,
+    acceptStep2,
+    dismissStep2,
+    acceptStep3,
+    dismissStep3,
+    acceptStep4,
+    dismissStep4,
+    acceptFirstImageDrag,
+    laterFirstImageDrag,
+    acceptStep6,
+    triggerFirstAssistantReply,
+    triggerSaveModalOpened,
+    triggerFirstImage,
+    triggerCdrsEnabled,
+  } = useOnboardingWorkspace();
+
+  const proceedStep1 = acceptStep1;
+  const proceedStep2 = acceptStep2;
 
   const [showSaveModal, setShowSaveModal] = useState(false);
+
+  useEffect(() => {
+    if (showSaveModal) {
+      requestAnimationFrame(() => {
+        triggerSaveModalOpened();
+      });
+    }
+  }, [showSaveModal]);
+
   const [aiResponseToSave, setAiResponseToSave] = useState<string>('');
   const [isNewProfile, setIsNewProfile] = useState(true);
 
@@ -224,6 +294,28 @@ export default function WorkspacePage() {
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
   const [isChatActive, setIsChatActive] = useState(false);
   const [chatMode, setChatMode] = useState<'none' | 'image' | 'chat'>('none');
+
+  const [isCdrMode, setIsCdrMode] = useState(false);
+  const [folders, setFolders] = useState<string[]>([]);
+
+  type CdrItem = { id: string; profile_name: string };
+  const [cdrSelected, setCdrSelected] = useState<CdrItem[]>([]);
+
+  const handleSelectForCdr = (profile: { id: string; profile_name: string }) => {
+    setCdrSelected((prev) => {
+      const exists = prev.some((x) => x.id === profile.id);
+      if (exists) {
+        return prev.filter((x) => x.id !== profile.id);
+      }
+      if (prev.length >= 5) {
+        alert('You can attach up to 5 saved reports.');
+        return prev;
+      }
+      return [...prev, { id: profile.id, profile_name: profile.profile_name }];
+    });
+  };
+
+  const imageBlockedByCdrs = cdrSelected.length > 0;
 
   const scrollToBottom = () => {
     scrollRef.current?.scrollTo({
@@ -235,6 +327,15 @@ export default function WorkspacePage() {
   useEffect(() => {
     if (!isLoading && !session) router.push('/');
   }, [session, isLoading, router]);
+
+  useEffect(() => {
+    (async () => {
+      const uid = session?.user?.id;
+      if (!uid) return;
+      const list = await getFolders(uid);
+      setFolders(list.filter((f) => f !== 'CDRs'));
+    })();
+  }, [session?.user?.id, getFolders]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -252,6 +353,17 @@ export default function WorkspacePage() {
       scrollToBottom();
     }
   }, [historyLoaded, messages]);
+
+  // === ONBOARDING: Step 3 trigger — first assistant reply (после готовности) ===
+  useEffect(() => {
+    if (!historyLoaded || !ready) return;
+    const hasAssistant = messages.some((m) => m.role === 'assistant');
+    if (hasAssistant) {
+      requestAnimationFrame(() => {
+        triggerFirstAssistantReply();
+      });
+    }
+  }, [historyLoaded, ready, messages]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -292,14 +404,14 @@ export default function WorkspacePage() {
   const submit = async () => {
     const hasInput = inputValue.trim() !== '';
     const hasFiles = attachedFiles.length > 0;
-    if (chatMode === 'none') {
+    if (!isCdrMode && chatMode === 'none') {
       alert('Please select how you want to interact: Chat or AI Discernment.');
       return;
     }
 
     if (hasReachedMonthlyLimit) {
       setShowLimitModal(true);
-      return; // ⬅️ НЕ даём дневному появиться
+      return;
     }
     if (hasReachedDailyLimit) {
       setShowDailyModal(true);
@@ -315,6 +427,17 @@ export default function WorkspacePage() {
       return;
     }
 
+    if (isCdrMode) {
+      if (cdrSelected.length < 2) {
+        alert('Select at least 2 saved reports for CDRs.');
+        return;
+      }
+      if (attachedFiles.length > 1) {
+        alert('Only 1 photo is allowed in CDRs mode.');
+        return;
+      }
+    }
+
     try {
       const attachments: Attachment[] = await Promise.all(
         attachedFiles.map(
@@ -328,9 +451,32 @@ export default function WorkspacePage() {
         )
       );
 
+      // CDRs: зафиксировать выбор и очистить чипы ДО запроса
+      const selectedIds = cdrSelected.map((x) => x.id);
+      const selectedDisplay = cdrSelected.map(({ id, profile_name }) => ({ id, profile_name }));
+      if (isCdrMode) setCdrSelected([]);
+
       resetInput();
 
-      await handleGenerate(inputValue.trim(), attachments);
+      await handleGenerate(
+        inputValue.trim(),
+        attachments,
+        isCdrMode
+          ? {
+              mode: 'cdrs',
+              savedMessageIds: selectedIds,
+              cdrDisplay: selectedDisplay,
+            }
+          : chatMode === 'image'
+            ? { mode: 'image' }
+            : { mode: 'chat' }
+      );
+
+      // сообщаем левому сайдбару перезагрузить Saved messages
+      if (isCdrMode) {
+        window.dispatchEvent(new Event('savedMessages:refresh'));
+      }
+
       refetch().catch(console.error);
       setAttachmentError('');
     } catch (err: any) {
@@ -343,13 +489,24 @@ export default function WorkspacePage() {
     e.preventDefault();
     e.stopPropagation();
 
+    if (isCdrMode) {
+      if (attachedFiles.length >= 1 || e.dataTransfer.files.length > 1) {
+        alert('Only 1 photo is allowed in CDRs mode.');
+        setIsDragging(false);
+        queueMicrotask(() => setIsDragging(false));
+        return;
+      }
+    }
+
     if (e.dataTransfer.files.length) {
       const event = {
         target: { files: e.dataTransfer.files },
       } as unknown as React.ChangeEvent<HTMLInputElement>;
 
       handleFileChange(event);
+      triggerFirstImage();
       setIsDragging(false);
+      queueMicrotask(() => setIsDragging(false));
 
       // Автоматическая активация режима Image
       setIsImageActive(true);
@@ -377,7 +534,12 @@ export default function WorkspacePage() {
         <div className="relative z-10 flex w-full">
           {isHelperOpen && (
             <ErrorBoundary>
-              <SidebarHelper />
+              <SidebarHelper
+                key={isCdrMode ? 'cdr' : 'normal'}
+                isCdrMode={isCdrMode}
+                onSelectForCdr={handleSelectForCdr}
+                preselectedIds={cdrSelected.map((x) => x.id)}
+              />
             </ErrorBoundary>
           )}
           {isSidebarOpen && (
@@ -390,6 +552,11 @@ export default function WorkspacePage() {
             onLogout={handleLogoutConfirm}
             onSaveProfiling={handleSaveClick}
             disableSaveProfiling={isGenerating || messages.length === 0}
+          />
+
+          <div
+            id="ws-onb-anchor"
+            className="pointer-events-none absolute top-[60px] left-1/2 -translate-x-1/2 h-1 w-1 z-[31]"
           />
 
           <div
@@ -423,10 +590,17 @@ export default function WorkspacePage() {
                     className="flex flex-col items-center justify-center text-center w-full py-12 px-4 mt-28"
                   >
                     {/* Лого */}
-                    <img src="/images/logo.png" alt="Logo" className="w-10 h-10 mb-2" />
+                    <img
+                      src="/images/logo.png"
+                      alt="Logo"
+                      className="w-10 h-10 mb-1 drop-shadow-md"
+                    />
 
                     {/* Основной текст */}
-                    <p className="text-[20px] font-semibold text-center text-gray-700 dark:text-[var(--text-primary)]">
+                    <p
+                      className="text-[20px] font-semibold text-center text-gray-700 dark:text-[var(--text-primary)]
+                      drop-shadow-[0_2px_4px_rgba(0,0,0,0.20)] dark:drop-shadow-none"
+                    >
                       Advanced AI Discernment
                     </p>
 
@@ -491,11 +665,24 @@ export default function WorkspacePage() {
                       Analysing...
                     </div>
                   )}
+
+                {fileStatus && (
+                  <div className="w-full text-left py-1 text-sm text-[var(--text-secondary)] animate-pulse">
+                    {fileStatus}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe keyboard-safe">
+            <div
+              id="ws-input-panel"
+              className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe keyboard-safe"
+            >
               <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl overflow-visible">
+                <div
+                  id="onb-ws-step2-anchor"
+                  className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 h-1 w-1 z-[31]"
+                />
                 {attachedFiles.length > 0 && (
                   <div className="flex gap-2 mb-2 flex-wrap">
                     {attachedFiles.map((file, idx) => (
@@ -504,7 +691,7 @@ export default function WorkspacePage() {
                         className="relative w-20 h-20 rounded-xl overflow-hidden max-w-full sm:max-w-[80px]"
                       >
                         <img
-                          src={URL.createObjectURL(file)}
+                          src={previewUrls[idx]}
                           alt={`attachment ${idx}`}
                           className="object-cover w-full h-full rounded-xl"
                         />
@@ -520,6 +707,31 @@ export default function WorkspacePage() {
                   </div>
                 )}
 
+                {isCdrMode && cdrSelected.length > 0 && (
+                  <div className="flex gap-2 mb-2 flex-wrap">
+                    {cdrSelected.map((it) => (
+                      <span
+                        key={it.id}
+                        className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
+                                   bg-[var(--surface)] text-[var(--text-primary)] border border-[var(--card-border)]"
+                        title={it.profile_name}
+                      >
+                        <span className="max-w-[220px] truncate">{it.profile_name}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCdrSelected((prev) => prev.filter((x) => x.id !== it.id))
+                          }
+                          className="opacity-70 hover:opacity-100"
+                          aria-label="Remove"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-0.5 overflow-visible">
                   <textarea
                     ref={textareaRef}
@@ -529,19 +741,37 @@ export default function WorkspacePage() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything"
                     disabled={isDragging}
-                    className="w-full px-4 py-2 text-sm placeholder:text-sm ios-no-zoom leading-5 min-h-[36px] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max-h-[120px]"
+                    className="w-full px-4 py-2 text-sm placeholder:text-sm ios-no-zoom leading-5 min-h-[36px] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max_h-[120px]"
                   />
 
                   <div className="flex flex-wrap justify-between items-center w-full px-1 gap-2 mt-0.5">
                     <div className="flex flex-wrap gap-2 items-center">
-                      <label className="cursor-pointer w-9 h-9 flex items-center justify-center bg-[var(--button-bg)] dark:bg-[var(--card-bg)] rounded-full shadow-sm hover:bg-[var(--button-hover-bg)] transition">
+                      <label
+                        className={`cursor-pointer w-9 h-9 flex items-center justify-center rounded-full shadow-sm transition
+                                  bg-[var(--button-bg)] dark:bg-[var(--card-bg)] hover:bg-[var(--button-hover-bg)]`}
+                        title={
+                          isCdrMode
+                            ? attachedFiles.length >= 1
+                              ? 'Only 1 photo allowed in CDRs'
+                              : 'Attach up to 1 photo in CDRs'
+                            : undefined
+                        }
+                      >
                         <Plus size={16} className="text-[var(--text-primary)]" />
                         <input
                           type="file"
                           className="hidden"
-                          multiple
+                          accept="image/*"
+                          multiple={!isCdrMode}
+                          disabled={isCdrMode && attachedFiles.length >= 1}
+                          title={
+                            isCdrMode && attachedFiles.length >= 1
+                              ? 'Only 1 photo allowed in CDRs'
+                              : undefined
+                          }
                           onChange={(e) => {
                             handleFileChange(e);
+                            triggerFirstImage();
                             if (e.target.files && e.target.files.length > 0) {
                               setIsImageActive(true);
                               setIsChatActive(false);
@@ -555,6 +785,13 @@ export default function WorkspacePage() {
                       <button
                         type="button"
                         onClick={() => {
+                          if (isCdrMode && cdrSelected.length === 0) {
+                            setIsCdrMode(false);
+                          }
+                          if (imageBlockedByCdrs) {
+                            alert('Disable CDRs attachments to use Image mode.');
+                            return;
+                          }
                           if (!isImageActive) {
                             setIsImageActive(true);
                             setChatMode('image');
@@ -570,16 +807,22 @@ export default function WorkspacePage() {
                           setIsChatActive(false);
                           setProfilingMode(false);
                         }}
+                        disabled={imageBlockedByCdrs}
+                        title={
+                          imageBlockedByCdrs
+                            ? 'Unavailable while CDRs attachments are selected'
+                            : 'Toggle Image Mode'
+                        }
                         className={`
-                      flex items-center gap-1 h-8 px-3
-                      rounded-full shadow-sm transition
-                      text-xs font-medium
-                      ${
-                        isImageActive
-                          ? 'bg-[#C084FC] text-white hover:bg-[#a05adb] dark:bg-[var(--button-hover-bg)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--button-hover-bg)] dark:ring-1 dark:ring-[var(--card-border)]'
-                          : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]'
-                      }
-                    `}
+                        flex items-center gap-1 h-8 px-3
+                        rounded-full shadow-sm transition text-xs font-medium
+                        ${
+                          isImageActive
+                            ? 'bg-[#C084FC] text-white hover:bg-[#a05adb] dark:bg-[var(--button-hover-bg)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--button-hover-bg)] dark:ring-1 dark:ring-[var(--card-border)]'
+                            : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]'
+                        }
+                          ${imageBlockedByCdrs ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
                         aria-label="Toggle Image Mode"
                       >
                         <ImageIcon size={14} />
@@ -587,15 +830,41 @@ export default function WorkspacePage() {
                       </button>
 
                       <button
+                        id="ws-cdrs-btn"
                         type="button"
-                        onClick={() => alert('Currently not available.')}
-                        className="
-                       flex items-center gap-1 h-8 px-3
-                       rounded-full shadow-sm transition
-                       bg-[var(--button-bg)] text-[var(--text-primary)]
-                       hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
-                       text-xs font-medium
-                      "
+                        data-ignore-sidebar-close="true"
+                        onClick={() => {
+                          if (isCdrMode && cdrSelected.length > 0) {
+                            alert('Remove all CDR attachments to turn CDRs off.');
+                            return;
+                          }
+
+                          const next = !isCdrMode;
+                          if (next && (attachedFiles.length > 0 || isImageActive))
+                            setIsImageActive(false);
+                          setIsCdrMode(next);
+                          if (next) triggerCdrsEnabled();
+
+                          if (next) {
+                            setIsHelperOpen(true);
+                            if (!openSidebar?.left) toggleSidebar('left');
+                            window.dispatchEvent(new Event('sidebarHelper:openSaved'));
+                          }
+                        }}
+                        aria-pressed={isCdrMode}
+                        className={`
+                          flex items-center gap-1 h-8 px-3 rounded-full shadow-sm transition text-xs font-medium
+                          ${
+                            isCdrMode
+                              ? 'bg-[#C084FC] text-white hover:bg-[#a05adb] dark:bg-[var(--button-hover-bg)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--button-hover-bg)] dark:ring-1 dark:ring-[var(--card-border)]'
+                              : 'bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]'
+                          }
+                          `}
+                        title={
+                          isCdrMode && cdrSelected.length > 0
+                            ? 'Remove all attachments to turn CDRs off'
+                            : 'CDRs mode'
+                        }
                         aria-label="CDRs Button"
                       >
                         <Layers className="w-4 h-4" />
@@ -637,10 +906,16 @@ export default function WorkspacePage() {
                             "
                           >
                             <button
-                              className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition ${
-                                isChatActive ? 'text-[#C084FC]' : ''
-                              }`}
+                              className={`w-full text-left px-4 py-2 text-xs hover:bg-[var(--surface-secondary)] transition ${isChatActive ? 'text-[#C084FC]' : ''}`}
                               onClick={() => {
+                                if (isCdrMode && cdrSelected.length > 0) {
+                                  alert('Remove all CDR attachments to switch modes.');
+                                  return;
+                                }
+                                if (isCdrMode && cdrSelected.length === 0) {
+                                  setIsCdrMode(false);
+                                }
+
                                 const next = !isChatActive;
                                 setIsChatActive(next);
                                 setChatMode(next ? 'chat' : 'none');
@@ -674,8 +949,19 @@ export default function WorkspacePage() {
                       onClick={submit}
                       disabled={
                         limitReached ||
-                        (!inputValue.trim() && attachedFiles.length === 0) ||
-                        isGenerating
+                        isGenerating ||
+                        (isCdrMode
+                          ? cdrSelected.length < 2 || attachedFiles.length > 1 // в CDRs достаточно >=2 выбранных, текст не обязателен
+                          : !inputValue.trim() && attachedFiles.length === 0) // в обычных режимах как было
+                      }
+                      title={
+                        isCdrMode
+                          ? cdrSelected.length < 2
+                            ? 'Select at least 2 saved reports'
+                            : attachedFiles.length > 1
+                              ? 'Only 1 photo allowed in CDRs'
+                              : undefined
+                          : undefined
                       }
                       className={`
                     w-9 h-9 flex items-center justify-center
@@ -687,8 +973,10 @@ export default function WorkspacePage() {
                     transition
                     ${
                       limitReached ||
-                      (!inputValue.trim() && attachedFiles.length === 0) ||
-                      isGenerating
+                      isGenerating ||
+                      (isCdrMode
+                        ? cdrSelected.length < 2 || attachedFiles.length > 1
+                        : !inputValue.trim() && attachedFiles.length === 0)
                         ? 'cursor-not-allowed opacity-50'
                         : ''
                     }
@@ -789,7 +1077,7 @@ export default function WorkspacePage() {
                       setProfilingMode(false);
                       setShowConfirm(false);
                       await new Promise((r) => requestAnimationFrame(() => r(null)));
-                      await new Promise((r) => setTimeout(r, 16)); // ~1 кадр
+                      await new Promise((r) => setTimeout(r, 16));
                       try {
                         const files = pendingFilesRef.current;
                         const attachments: Attachment[] = await Promise.all(
@@ -806,8 +1094,33 @@ export default function WorkspacePage() {
                           )
                         );
 
+                        // CDRs: зафиксировать выбор и очистить чипы ДО запроса
+                        const selectedIds = cdrSelected.map((x) => x.id);
+                        const selectedDisplay = cdrSelected.map(({ id, profile_name }) => ({
+                          id,
+                          profile_name,
+                        }));
+                        if (isCdrMode) setCdrSelected([]);
+
                         bypassHistoryCheckOnce();
-                        await handleGenerate((pendingInputRef.current || '').trim(), attachments);
+                        await handleGenerate(
+                          (pendingInputRef.current || '').trim(),
+                          attachments,
+                          isCdrMode
+                            ? {
+                                mode: 'cdrs',
+                                savedMessageIds: selectedIds,
+                                cdrDisplay: selectedDisplay,
+                              }
+                            : chatMode === 'image'
+                              ? { mode: 'image' }
+                              : { mode: 'chat' }
+                        );
+                        // после успешной генерации CDR уведомляем сайдбар
+                        if (isCdrMode) {
+                          window.dispatchEvent(new Event('savedMessages:refresh'));
+                        }
+
                         refetch().catch(console.error);
                         setAttachmentError('');
                       } catch (err: any) {
@@ -846,7 +1159,8 @@ export default function WorkspacePage() {
             onClose={() => setShowSaveModal(false)}
             aiResponse={aiResponseToSave}
             isNew={isNewProfile}
-            onSave={async (name, aiResponse, comments) => {
+            folders={folders}
+            onSave={async (name, aiResponse, comments, selectedFolder) => {
               const userId = session?.user?.id;
               if (!userId) {
                 alert('User not logged in');
@@ -861,6 +1175,7 @@ export default function WorkspacePage() {
                   user_comments: comments,
                 },
                 saved_at: Date.now(),
+                folder: selectedFolder ?? null,
               });
 
               setShowSaveModal(false);
@@ -868,6 +1183,78 @@ export default function WorkspacePage() {
             }}
             defaultProfileName={`Discernment Report #${Date.now()}`}
           />
+
+          {ready && showStep1 && (
+            <OnboardingSpotlight
+              targetSelector="#ws-onb-anchor"
+              title="Welcome to your workspace"
+              body="This is your working area. The left sidebar hosts extra tools; the right sidebar is your technical zone."
+              ctaLabel="Got it"
+              hideSecondary
+              onAccept={acceptStep1}
+              onDismiss={dismissStep1}
+            />
+          )}
+
+          {ready && showStep2 && (
+            <OnboardingSpotlight
+              targetSelector="#ws-input-panel"
+              title="Compose and attach"
+              body="Here you can attach an image or other materials, and send either a standard or your personalised command."
+              ctaLabel="Got it"
+              hideSecondary
+              onAccept={acceptStep2}
+              onDismiss={dismissStep2}
+            />
+          )}
+
+          {ready && showStep3 && (
+            <OnboardingSpotlight
+              targetSelector="#ws-save-btn"
+              title="Save your analysis"
+              body="You can save any analysis by pressing Save."
+              ctaLabel="Got it"
+              hideSecondary
+              onAccept={acceptStep3}
+              onDismiss={dismissStep3}
+            />
+          )}
+
+          {ready && showStep4 && (
+            <OnboardingSpotlight
+              targetSelector="#ws-save-modal-anchor"
+              title="Enrich and store"
+              body="Add comments, choose a name, download the report, and return to it anytime — it will live in Saved messages after you press Save."
+              ctaLabel="Got it"
+              hideSecondary
+              onAccept={acceptStep4}
+              onDismiss={dismissStep4}
+            />
+          )}
+
+          {ready && showStep6 && (
+            <OnboardingSpotlight
+              targetSelector="#ws-cdrs-btn"
+              title="Combine Discernment Reports"
+              body="Merge from 2 up to 5 existing reports to get a broader analysis. Pick them from Saved messages in the left sidebar."
+              ctaLabel="Got it"
+              hideSecondary
+              onAccept={acceptStep6}
+              onDismiss={() => {}}
+            />
+          )}
+
+          {ready && showFirstImageDrag && (
+            <OnboardingSpotlight
+              targetSelector="#ws-input-panel"
+              title="AI Discernment by image"
+              body="You’ve enabled image analysis. You can add a standard template, or ask your custom question for deeper insight."
+              ctaLabel="Got it"
+              hideSecondary
+              onAccept={acceptFirstImageDrag}
+              onDismiss={laterFirstImageDrag}
+            />
+          )}
 
           {overlay}
         </div>{' '}

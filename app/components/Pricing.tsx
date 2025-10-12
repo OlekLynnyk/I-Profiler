@@ -81,12 +81,12 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     {
       id: SELECT_ID,
       name: 'Select',
-      price: '€149',
+      price: '€299',
       description: 'For Individual Decision-Makers',
       features: [
-        'Everything in Freemium',
         `${PACKAGE_LIMITS.Select.requestsPerMonth} AI analyses`,
-        'Enhanced Discernment Tools',
+        'Advanced Discernment Tools',
+        'Deep profile insights',
         'Private workspace',
       ],
       highlight: false,
@@ -178,7 +178,6 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
   }) => {
     const isFree = plan.id === 'free';
     const isLoading = loadingPlan === plan.id;
-    const isDisabled = (!isLoggedIn && !isFree) || (isFree && isLoggedIn) || isLoading;
 
     // базовые стили карточек (крем на тёмном фоне)
     const baseCream = 'bg-[#F6F5ED] text-[#111827]';
@@ -326,7 +325,6 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               : plan.id === 'free'
                 ? 'Start Free'
                 : `Choose ${plan.name}`}
-
             {((!isLoggedIn && !isFree) || (isFree && isLoggedIn)) && loadingPlan !== plan.id && (
               <LockIcon className="opacity-80" />
             )}
@@ -336,13 +334,22 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
     );
   };
 
-  // ===== Desktop window: 4 плана, показываем 3. Лёгкий свайп по кнопкам. =====
-  // ⬇️ ИЗМЕНЕНО: по умолчанию показываем Freemium + Select + Smarter
-  const [offsetIndex, setOffsetIndex] = useState<0 | 1>(0); // 0 => Freemium, Select, Smarter | 1 => Select, Smarter, Business
+  // ===== Desktop window: показываем только 3 карточки (Select, Smarter, Business) =====
   const desktopVisiblePlans = useMemo(
-    () => plans.slice(offsetIndex, offsetIndex + 3),
-    [plans, offsetIndex]
+    () => plans.filter((p) => p.id !== 'free').slice(0, 3),
+    [plans]
   );
+
+  // === hotspot эффект как в Hero (для десктоп-кнопок) + tooltip для Activate Freemium
+  const hotspotMove = (e: React.MouseEvent<HTMLElement>) => {
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    (e.currentTarget as HTMLElement).style.setProperty('--mx', `${e.clientX - r.left}px`);
+    (e.currentTarget as HTMLElement).style.setProperty('--my', `${e.clientY - r.top}px`);
+  };
+  const [showFreeTip, setShowFreeTip] = useState(false);
+
+  // состояние доступности для верхней кнопки "Activate Freemium" (перенесена логика free-карточки)
+  const freeCtaDisabled = isLoggedIn;
 
   return (
     <section className="pt-6 md:pt-8 pb-16 md:pb-24 bg-transparent" aria-labelledby="pricing-title">
@@ -353,12 +360,10 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           aria-hidden
         />
 
-        {/* --- ТОЛЬКО ДОБАВЛЕНО: мобильный стиль + десктоп как было --- */}
         <h2
           id="pricing-title"
-          className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-[#CDB4FF] md:text-white mb-10 sm:mb-14 uppercase"
+          className="text-center text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-[#CDB4FF] md:text-white mb-3 sm:mb-8 md:mb-6 uppercase"
         >
-          {/* Мобильный вид как “EMPOWERING PEOPLE” */}
           <span
             className="md:hidden block font-extrabold tracking-tight text-[clamp(1.6rem,6.5vw,2rem)]"
             style={{
@@ -373,18 +378,116 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           >
             Find your perfect plan
           </span>
-
-          {/* Десктоп — оригинальный вид */}
           <span className="hidden md:inline">Find your perfect plan</span>
         </h2>
 
-        {/* --- ТОЛЬКО ДОБАВЛЕНО: линия под заголовком (мобайл) --- */}
+        {/* ===== DESKTOP CTA ===== */}
+        <div className="hidden md:flex items-center justify-center gap-3 mb-8 relative z-30">
+          {/* Левая: Activate Freemium со встроенной логикой free-карточки + tooltip */}
+          <div className="relative">
+            <motion.button
+              onMouseMove={hotspotMove}
+              onMouseEnter={() => setShowFreeTip(true)}
+              onMouseLeave={() => setShowFreeTip(false)}
+              onFocus={() => setShowFreeTip(true)}
+              onBlur={() => setShowFreeTip(false)}
+              onClick={!freeCtaDisabled ? onDemoClick : undefined}
+              disabled={freeCtaDisabled}
+              aria-describedby="freemium-tip"
+              className="relative inline-flex items-center justify-center rounded-full px-5 py-[0.72rem] font-normal text-[15px] leading-snug text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] hover:-translate-y-[1px] min-w-[200px] disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                backgroundImage: `
+                  radial-gradient(160px 160px at var(--mx, 50%) var(--my, 0%), rgba(168,85,247,0.26), rgba(168,85,247,0) 60%),
+                  linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))
+                `,
+                boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.10), inset 0 1px 0 rgba(0,0,0,0.35)',
+                borderColor: 'rgba(255,255,255,0.12)',
+              }}
+              initial={reduce ? undefined : { opacity: 0, y: 10 }}
+              whileInView={
+                reduce
+                  ? undefined
+                  : {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.6, ease: easing, delay: 0.12 },
+                    }
+              }
+              viewport={{ once: true, amount: 0.7 }}
+            >
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[6px]"
+                style={{
+                  background:
+                    'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
+                }}
+              />
+              <span className="relative z-[1] inline-flex items-center gap-2">
+                Activate Freemium
+                {freeCtaDisabled && <LockIcon className="opacity-85" />}
+              </span>
+            </motion.button>
+
+            {/* Tooltip (только десктоп, лёгкий blur) */}
+            {showFreeTip && (
+              <div
+                id="freemium-tip"
+                role="tooltip"
+                className="absolute left-1/2 -translate-x-1/2 mt-2 w-max max-w-[280px] rounded-2xl px-4 py-3 text-[13px] leading-snug text-white/90 bg-black/40 backdrop-blur-md ring-1 ring-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.35)] z-50 pointer-events-none"
+              >
+                <div className="font-medium">Intro to Advanced AI Discernment</div>
+                <div className="opacity-90">Get 4 Free AI Analysis</div>
+              </div>
+            )}
+          </div>
+
+          {/* Правая: Calendly (без изменений логики, активна всегда) */}
+          <motion.a
+            href="https://calendly.com/founder-h1nted/30min"
+            target="_blank"
+            rel="noopener noreferrer"
+            onMouseMove={hotspotMove}
+            className="relative inline-flex items-center justify-center rounded-full px-5 py-[0.72rem] font-normal text-[15px] leading-snug text-[#F5F3FF] transition-[transform,box-shadow,background,opacity] duration-200 ring-1 backdrop-blur focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1E23] hover:-translate-y-[1px] min-w-[200px]"
+            style={{
+              backgroundImage: `
+                radial-gradient(160px 160px at var(--mx, 50%) var(--my, 0%), rgba(168,85,247,0.26), rgba(168,85,247,0) 60%),
+                linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))
+              `,
+              boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.10), inset 0 1px 0 rgba(0,0,0,0.35)',
+              borderColor: 'rgba(255,255,255,0.12)',
+            }}
+            initial={reduce ? undefined : { opacity: 0, y: 10 }}
+            whileInView={
+              reduce
+                ? undefined
+                : {
+                    opacity: 1,
+                    y: 0,
+                    transition: { duration: 0.6, ease: easing, delay: 0.16 },
+                  }
+            }
+            viewport={{ once: true, amount: 0.7 }}
+          >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -inset-px rounded-full opacity-60 blur-[6px]"
+              style={{
+                background:
+                  'radial-gradient(80% 80% at 50% 50%, rgba(168,85,247,0.35) 0%, rgba(168,85,247,0) 70%)',
+              }}
+            />
+            <span className="relative z-[1]">Book a Video Call</span>
+          </motion.a>
+        </div>
+        {/* ===== /DESKTOP CTA ===== */}
+
+        {/* --- линия под заголовком только для мобайла (как было) --- */}
         <div className="md:hidden mx-auto mt-3 h-px w-[72%] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
 
-        {/* ===== MOBILE (< md) ===== */}
+        {/* ===== MOBILE (< md) — без изменений ===== */}
         <LayoutGroup>
           <div className="md:hidden space-y-4">
-            {/* КРУПНАЯ КАРТОЧКА — активный план */}
             <motion.div
               key={activePlan.id}
               layout
@@ -397,7 +500,6 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               <PlanCard plan={activePlan} size="large" />
             </motion.div>
 
-            {/* Остальные планы — стэком */}
             <motion.div
               layout
               variants={containerVar}
@@ -416,47 +518,8 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
           </div>
         </LayoutGroup>
 
-        {/* ===== DESKTOP (>= md) — визуал 1:1, окно на 3 карточки с кнопками ===== */}
+        {/* ===== DESKTOP (>= md) — показываем ровно 3 карточки, стрелок нет ===== */}
         <div className="relative hidden md:block">
-          {/* Кнопка влево — вне блока */}
-          <button
-            type="button"
-            onClick={() => setOffsetIndex(0)}
-            className={`
-              absolute left-0 -translate-x-full top-1/2 -translate-y-1/2
-              h-9 w-9 rounded-full
-              bg-[#A855F7]/10 text-white/80 ring-2 ring-[#A855F7]/40 backdrop-blur
-              transition-opacity duration-200
-              ${offsetIndex === 1 ? 'opacity-40 hover:opacity-80' : 'opacity-0 pointer-events-none'}
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
-            `}
-            aria-label="Show Freemium"
-          >
-            <svg viewBox="0 0 24 24" className="mx-auto h-5 w-5" fill="none" aria-hidden>
-              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" />
-            </svg>
-          </button>
-
-          {/* Кнопка вправо — вне блока */}
-          <button
-            type="button"
-            onClick={() => setOffsetIndex(1)}
-            className={`
-              absolute right-0 translate-x-full top-1/2 -translate-y-1/2
-              h-9 w-9 rounded-full
-              bg-[#A855F7]/10 text-white/80 ring-2 ring-[#A855F7]/40 backdrop-blur
-              transition-opacity duration-200
-              ${offsetIndex === 0 ? 'opacity-40 hover:opacity-80' : 'opacity-0 pointer-events-none'}
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60
-            `}
-            aria-label="Show Business"
-          >
-            <svg viewBox="0 0 24 24" className="mx-auto h-5 w-5" fill="none" aria-hidden>
-              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" />
-            </svg>
-          </button>
-
-          {/* Аниматор лёгкого сдвига при смене окна */}
           <motion.div
             initial={{ x: 0, opacity: 1 }}
             animate={{ x: 0, opacity: 1 }}
@@ -470,9 +533,8 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
               className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-left"
             >
               {desktopVisiblePlans.map((plan) => {
-                const isFree = plan.id === 'free';
+                const isFree = plan.id === 'free'; // всегда false здесь
                 const isLoading = loadingPlan === plan.id;
-                const isDisabled = (!isLoggedIn && !isFree) || isLoading || (isFree && isLoggedIn);
 
                 return (
                   <motion.div
@@ -535,17 +597,9 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                       ))}
                     </ul>
 
-                    {/* CTA — с замком при disabled */}
+                    {/* CTA карточки (как было) */}
                     <button
-                      onClick={
-                        isFree
-                          ? isLoggedIn
-                            ? undefined
-                            : plan.action
-                          : isLoggedIn
-                            ? () => handleCheckout(plan.id)
-                            : undefined
-                      }
+                      onClick={() => handleCheckout(plan.id)}
                       className="
                         mt-8 w-full rounded-full px-6 py-4
                         text-white
@@ -563,25 +617,13 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
                         `,
                         boxShadow: '0 12px 36px rgba(168,85,247,0.25)',
                       }}
-                      disabled={
-                        (!isLoggedIn && !isFree) ||
-                        loadingPlan === plan.id ||
-                        (isFree && isLoggedIn)
-                      }
-                      title={!isLoggedIn && !isFree ? 'Please sign in to continue' : ''}
+                      disabled={!isLoggedIn || loadingPlan === plan.id}
+                      title={!isLoggedIn ? 'Please sign in to continue' : ''}
                       aria-describedby={`title-desktop-${plan.id}`}
                     >
                       <span className="inline-flex items-center justify-center gap-2">
-                        {loadingPlan === plan.id
-                          ? 'Redirecting...'
-                          : plan.id === 'free'
-                            ? 'Start Free'
-                            : `Choose ${plan.name}`}
-
-                        {!isLoggedIn && !isFree && loadingPlan !== plan.id && (
-                          <LockIcon className="opacity-85" />
-                        )}
-                        {isFree && isLoggedIn && loadingPlan !== plan.id && (
+                        {loadingPlan === plan.id ? 'Redirecting...' : `Choose ${plan.name}`}
+                        {!isLoggedIn && loadingPlan !== plan.id && (
                           <LockIcon className="opacity-85" />
                         )}
                       </span>
@@ -594,8 +636,14 @@ export default function Pricing({ onDemoClick }: { onDemoClick: () => void }) {
         </div>
 
         <p className="text-[13px] leading-6 text-white/75 mt-6 sm:mt-8 max-w-3xl mx-auto text-center px-2 min-h-[48px]">
-          For individual professional advice, training, or API integration, please contact us
-          through email.
+          For individual professional advice, training or partnership, please contact us through{' '}
+          <a
+            href="mailto:hello@h1nted.com"
+            className="text-white underline decoration-white/40 underline-offset-4 hover:decoration-[#A855F7]/70"
+          >
+            hello@h1nted.com
+          </a>
+          .
         </p>
 
         <span className="sr-only" aria-live="polite">

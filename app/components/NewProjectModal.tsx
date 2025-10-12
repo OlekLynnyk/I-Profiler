@@ -59,7 +59,10 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
 
   return (
     <DemoAccessBlocker>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div
+        data-interactive="true"
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
         <div className="bg-gray-900 p-8 rounded-xl w-96 shadow-lg">
           <h2 className="text-2xl font-bold mb-4 text-white">Start New Project</h2>
 

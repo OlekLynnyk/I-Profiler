@@ -74,6 +74,19 @@ export async function middleware(req: NextRequest) {
   const protectedPaths = ['/workspace', '/settings'];
   const isProtected = protectedPaths.some((prefix) => path.startsWith(prefix));
 
+  // ✅ Если есть сессия, дополнительно проверяем подтверждение email
+  if (session) {
+    const { data: userData } = await supabase.auth
+      .getUser()
+      .catch(() => ({ data: { user: null } as any }));
+    const isVerified = !!userData?.user?.email_confirmed_at;
+    if (!isVerified) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('unverified', '1');
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   if (!session && isProtected) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('redirect', path);

@@ -49,7 +49,7 @@ export default function Footer() {
             transition={reduce ? undefined : { duration: 6.5, repeat: Infinity, ease: 'easeInOut' }}
           />
 
-          {/* тонкие scanlines внутри (едва заметно, чтобы не отвлекало) */}
+          {/* тонкие scanlines внутри */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -75,15 +75,11 @@ export default function Footer() {
               </a>
             </p>
 
-            <p className="mt-2 text-center text-[13px] leading-6" style={{ color: '#374151' }}>
-              Dublin, Ireland, The British Isles.
-            </p>
-
             <div className="mt-6 h-px w-full" style={{ backgroundColor: PANEL_RING }} />
 
             <nav
               aria-label="Footer navigation"
-              className="mt-4 w-full flex items-center justify-center gap-3"
+              className="mt-4 w-full flex items-center justify-center flex-wrap gap-3"
             >
               <a
                 href="/terms"
@@ -115,6 +111,53 @@ export default function Footer() {
               >
                 Privacy Policy
               </a>
+              <a
+                href="/cookies"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center h-10 px-4 rounded-full text-[13px] transition-colors focus:outline-none focus-visible:ring-2"
+                style={{
+                  color: TEXT_STRONG,
+                  border: `1px solid ${PANEL_RING}`,
+                  backgroundColor: 'rgba(255,255,255,0.7)',
+                  backdropFilter: 'blur(4px)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
+                }}
+              >
+                Cookies
+              </a>
+              {/* Cookie Settings → новая вкладка /cookies/settings */}
+              <a
+                href="/cookies/settings"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open Cookie Settings"
+                className="inline-flex items-center justify-center h-10 px-4 rounded-full text-[13px] transition-colors focus:outline-none focus-visible:ring-2"
+                style={{
+                  color: TEXT_STRONG,
+                  border: `1px solid ${PANEL_RING}`,
+                  backgroundColor: 'rgba(255,255,255,0.7)',
+                  backdropFilter: 'blur(4px)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
+                }}
+              >
+                Cookie Settings
+              </a>
+              <a
+                href="/sub-processors"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center h-10 px-4 rounded-full text-[13px] transition-colors focus:outline-none focus-visible:ring-2"
+                style={{
+                  color: TEXT_STRONG,
+                  border: `1px solid ${PANEL_RING}`,
+                  backgroundColor: 'rgba(255,255,255,0.7)',
+                  backdropFilter: 'blur(4px)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
+                }}
+              >
+                Sub-processors
+              </a>
 
               <a
                 href="https://www.linkedin.com/in/oleksandrlynnyk/"
@@ -140,9 +183,9 @@ export default function Footer() {
             {/* легал — сдержанные тона */}
             <div className="mt-4 space-y-2 text-center">
               <p className="text-[12px] leading-6" style={{ color: TEXT_DIM }}>
-                © 2025 H1NTED. Proprietary technology protected by IP and trade-secret laws.
+                © 2025 LLC “H1NTED”. Proprietary technology protected by IP and trade-secret laws.
               </p>
-              <p className="text-[12px] leading-6" style={{ color: '#6B7280' }}>
+              <p className="text-[12.5px] leading-relaxed text-[#6B7280]">
                 No reverse engineering, scraping, automated extraction, benchmarking, or training AI
                 models on our data or outputs.
               </p>
@@ -151,14 +194,12 @@ export default function Footer() {
         </motion.div>
       </section>
 
-      {/* ===== DESKTOP (>= md) — без изменений ===== */}
+      {/* ===== DESKTOP (>= md) ===== */}
       <div className="hidden md:block relative z-10">
-        {/* Внешний контейнер как у Header */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          {/* Внутренние отступы как у Header */}
           <div className="md:pl-[40px] lg:pl-[72px] md:pr-4 lg:pr-[72px]">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6 items-start">
-              {/* Левая колонка — ещё уже, больше строк */}
+              {/* Левая колонка */}
               <div className="flex flex-col gap-2 text-[13px] leading-6 text-white/75 max-w-[46ch] md:max-w-[calc(46ch*0.95)]">
                 <p>
                   Questions or feedback? Email us at{' '}
@@ -169,16 +210,16 @@ export default function Footer() {
                     {EMAIL}
                   </a>
                 </p>
-                <p>Dublin, Ireland, The British Isles.</p>
 
                 <p className="mt-2 text-white/70">
-                  © 2025 H1NTED. Proprietary technology protected by IP and trade-secret laws.
+                  © 2025 LLC “H1NTED”. Proprietary technology protected by IP and trade-secret
+                  laws.
                 </p>
                 <p className="text-[12.5px] leading-relaxed text-white/60">
                   No reverse engineering, scraping, automated extraction, benchmarking, or training
                   AI models on our data or outputs.
                 </p>
-                {/* Отдельная строка в самом низу */}
+
                 <p className="text-[12.5px] leading-relaxed text-white/60">
                   See{' '}
                   <a
@@ -189,7 +230,7 @@ export default function Footer() {
                   >
                     Terms
                   </a>{' '}
-                  &{' '}
+                  ·{' '}
                   <a
                     href="/privacy"
                     target="_blank"
@@ -197,12 +238,39 @@ export default function Footer() {
                     className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
                   >
                     Privacy
+                  </a>{' '}
+                  ·{' '}
+                  <a
+                    href="/cookies"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                  >
+                    Cookies
+                  </a>{' '}
+                  · {/* Cookie Settings → новая вкладка /cookies/settings */}
+                  <a
+                    href="/cookies/settings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open Cookie Settings"
+                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                  >
+                    Cookie Settings
+                  </a>{' '}
+                  ·{' '}
+                  <a
+                    href="/sub-processors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                  >
+                    Sub-processors
                   </a>
-                  .
                 </p>
               </div>
 
-              {/* Справа — только LinkedIn */}
+              {/* Справа — LinkedIn */}
               <nav className="flex items-center gap-6 text-[13px]" aria-label="Footer navigation">
                 <a
                   href="https://www.linkedin.com/in/oleksandrlynnyk/"
@@ -216,7 +284,7 @@ export default function Footer() {
               </nav>
             </div>
 
-            {/* Нижний разделитель внутри тех же внутренних отступов */}
+            {/* Нижний разделитель */}
             <div className="mt-4">
               <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
             </div>

@@ -72,7 +72,10 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
   const buttonClasses = 'text-xs px-5 py-2 rounded-xl min-w-[120px] text-center';
 
   return (
-    <div className="fixed bottom-[145px] w-full flex justify-center px-2 sm:px-4 z-50">
+    <div
+      className="fixed w-full flex justify-center px-2 sm:px-4 z-50"
+      style={{ bottom: 'calc(145px + env(safe-area-inset-bottom, 0px))' }}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={expanded ? 'expanded' : 'compact'}
@@ -123,7 +126,22 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
             </div>
           ) : (
             /* --- EXPANDED: МЕНЯЕМ ТОЛЬКО ЗДЕСЬ --- */
-            <div className="relative px-4 py-5 sm:px-6 sm:py-5 rounded-2xl overflow-y-auto max-h-[80vh]">
+            <div
+              className="relative px-4 pt-2 pb-4 sm:px-6 sm:pt-2 sm:pb-5 rounded-2xl overflow-y-auto"
+              style={{ maxHeight: 'min(65svh, calc(100vh - 200px))' }}
+            >
+              <div className="sticky top-0 z-10">
+                <div className="flex justify-end pl-4 pr-2 sm:pl-6 sm:pr-4 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(false)}
+                    className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-md bg-transparent hover:bg-white/10 text-gray-300 hover:text-white -mr-1 sm:-mr-2 focus:outline-none focus:ring-2 focus:ring-white/20"
+                    aria-label="Collapse"
+                  >
+                    <ArrowDownLeft size={16} />
+                  </button>
+                </div>
+              </div>
               {/* порядок: Select → Smarter → Business */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Select */}
@@ -131,12 +149,12 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                   <div>
                     <h3 className="text-white text-base md:text-lg font-semibold">Select</h3>
                     <div className="text-white text-sm md:text-base font-semibold mt-1 mb-2">
-                      €149 <span className="text-xs text-white/70 align-middle">/month</span>
+                      €299 <span className="text-xs text-white/70 align-middle">/month</span>
                     </div>
                     <ul className="space-y-2 text-gray-300 text-sm">
                       <li className="flex items-start gap-2">
                         <CheckIcon />
-                        <span>All in Freemium</span>
+                        <span>Advanced Tools</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckIcon />
@@ -144,7 +162,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckIcon />
-                        <span>Enhanced Tools</span>
+                        <span>Deep insights</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckIcon />
@@ -228,14 +246,6 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                   </button>
                 </div>
               </div>
-
-              <button
-                onClick={() => setExpanded(false)}
-                className="absolute top-3 right-3 text-gray-400 hover:text-white"
-                aria-label="Collapse"
-              >
-                <ArrowDownLeft size={16} />
-              </button>
             </div>
           )}
         </motion.div>

@@ -22,7 +22,7 @@ export default function HeaderBar({
   const { session, isLoading } = useAuth();
   const router = useRouter();
   const { plan: packageType, used: demoAttempts } = useUserPlan(0);
-  const { toggleSidebar, openSidebar, closeSidebar } = useSidebar(); // есть closeSidebar
+  const { toggleSidebar, openSidebar, closeSidebar } = useSidebar();
 
   const handleHomeClick = () => {
     closeSidebar('left');
@@ -34,16 +34,17 @@ export default function HeaderBar({
     if (e.key === 'Enter') handleHomeClick();
   };
 
-  // ← новый: корректный клик по ЛЕВОЙ панели
+  // ЛЕВАЯ панель
   const handleLeftPanelClick = () => {
     if (openSidebar.left) {
       closeSidebar('left');
     } else {
       toggleSidebar('left');
+      window.dispatchEvent(new Event('sidebarHelper:openSaved'));
     }
   };
 
-  // уже был: корректный клик по ПРАВОЙ панели
+  // ПРАВАЯ панель
   const handleAccountPanelClick = () => {
     if (openSidebar.right) {
       closeSidebar('right');
@@ -60,7 +61,7 @@ export default function HeaderBar({
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-30 h-14 sm:h-12 px-2 sm:px-4 flex items-center justify-between gap-2 bg-[var(--background)]/80 backdrop-blur overflow-x-auto whitespace-nowrap"
+      className="fixed top-0 left-0 right-0 z-30 h-14 sm:h-12 px-2 sm:px-4 flex items-center justify-between gap-2 bg-[var(--background)]/80 backdrop-blur overflow-x-auto whitespace-nowrap pointer-events-none"
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         backgroundImage:
@@ -71,17 +72,22 @@ export default function HeaderBar({
       }}
     >
       {/* Left buttons */}
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-2 items-center pointer-events-auto">
         <button
-          data-sidebar="left" // важно: считаем «внутри» левого сайдбара для pointerdown
-          onClick={handleLeftPanelClick} // вместо прямого toggle
+          data-sidebar="left"
+          onClick={handleLeftPanelClick}
           className="text-[var(--text-primary)] text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)]"
           type="button"
         >
           Resources Hub
         </button>
 
-        <button className="flex items-center gap-1 text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)] opacity-50 pointer-events-none">
+        <button
+          className="flex items-center gap-1 text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)] opacity-50 pointer-events-none"
+          type="button"
+          tabIndex={-1}
+          aria-hidden="true"
+        >
           <span className="text-[var(--text-primary)]">More</span>
         </button>
       </div>
@@ -92,15 +98,16 @@ export default function HeaderBar({
         tabIndex={0}
         aria-label="Go to home"
         onKeyDown={handleKeyDown}
-        className="text-sm sm:text-sm font-inter font-semibold text-[var(--text-primary)] cursor-pointer focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]"
+        className="text-sm sm:text-sm font-inter font-semibold text-[var(--text-primary)] cursor-pointer focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)] pointer-events-auto"
         onClick={handleHomeClick}
       >
         Home
       </div>
 
       {/* Right controls */}
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-2 items-center pointer-events-auto">
         <button
+          id="ws-save-btn"
           onClick={onSaveProfiling}
           disabled={disableSaveProfiling}
           className={`flex items-center gap-1 text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)] ${
@@ -113,7 +120,7 @@ export default function HeaderBar({
         </button>
 
         <button
-          data-sidebar="right" // уже добавляли для правого
+          data-sidebar="right"
           onClick={handleAccountPanelClick}
           className="text-[var(--text-primary)] text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)]"
           type="button"

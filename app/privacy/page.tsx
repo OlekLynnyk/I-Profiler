@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         />
 
         {/* Контент */}
-        <p className="text-sm text-white/70">Effective Date: 1 September 2025</p>
+        <p className="text-sm text-white/70">Effective Date: 7 October 2025</p>
 
         {/* Вступление */}
         <p className="text-white/80">
@@ -46,12 +46,33 @@ export default function PrivacyPage() {
           services (the “Platform”).
         </p>
         <p className="text-white/80">
-          Provider details. H1NTED (pre-incorporation), Ireland (correspondence: [Address]).
+          Provider details. ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ «Хінтед Штучний Інтелект»
+          (EDRPOU 46041011). English: Limited Liability Company "Hinted Artificial Intelligence".
+          Registered address: Flat 178, 1d Universytetska Street, Irpin, Bucha District, Kyiv
+          Oblast, 08200, Ukraine.
+        </p>
+        {/* EU Representative (Art. 27 GDPR) */}
+        <h2 className="text-xl font-semibold tracking-tight text-white mt-2">
+          EU Representative (Art. 27 GDPR)
+        </h2>
+        <p className="text-white/80">
+          For data subjects and supervisory authorities in the EEA: our EU Representative is
+          <span className="font-semibold"> Oleksandr Lynnyk</span>, 36 Chapel Close, Tankardstown,
+          Balbriggan, Co. Dublin, K32 WV88, Ireland. E-mail:{' '}
+          <a href="mailto:olek.lynnyk@gmail.com" className="underline">
+            olek.lynnyk@gmail.com
+          </a>
+          , tel:{' '}
+          <a href="tel:+353879356284" className="underline">
+            +353 87 935 62 84
+          </a>
+          . The EU Representative acts as the point of contact for GDPR enquiries and maintains a
+          copy of the Records of Processing under Article 30 GDPR on behalf of the Controller.
         </p>
         <p className="text-white/80">
           Contact:{' '}
-          <a href="mailto:olek.lynnyk@gmail.com" className="underline">
-            olek.lynnyk@gmail.com
+          <a href="mailto:hello@h1nted.com" className="underline">
+            hello@h1nted.com
           </a>
           . This Policy should be read together with our Terms of Use and Cookies Policy.
           Capitalised terms have the meanings given in the Terms.
@@ -73,10 +94,11 @@ export default function PrivacyPage() {
           where it conflicts with this Policy, the signed DPA prevails.
         </p>
         <p className="text-white/80">
-          Your obligations as controller: You are solely responsible for the lawfulness of User
-          Inputs, including providing data-subject notices, having a lawful basis, and, where
-          required, obtaining informed permission/consent from each person whose photograph or data
-          you upload.
+          <span className="font-semibold">Critical — your responsibilities:</span> you are solely
+          responsible for the lawfulness of User Inputs, including providing Articles 13/14 notices,
+          having a lawful basis and, where required, obtaining informed permission/consent from each
+          person depicted — <span className="italic">even if the source is public</span>. On
+          request, you will provide evidence of your legal basis/consents.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">2) Scope</h2>
@@ -225,91 +247,95 @@ export default function PrivacyPage() {
           5) AI processing transparency
         </h2>
         <p className="text-white/80">
-          We use proprietary AI models (e.g., Grok2Vision) to generate persona insights. Analysis
-          relies on objects, accessories and text cues; it does not rely on facial geometry, voice,
-          gait or other biometric templates. Any accuracy/score (e.g., “~80%”) is illustrative, not
-          a guarantee. Users are clearly informed they interact with AI-powered features. No
-          biometric data is captured, inferred or processed. You may request human review of support
-          cases and opt out of optional analytics. Outputs are informational only and must not be
-          used as the sole basis for high-impact decisions (employment, credit, insurance,
-          immigration, law-enforcement, healthcare).
+          We use proprietary pipelines and third-party AI inference providers (e.g.,{' '}
+          <span className="whitespace-nowrap">Grok-2 Vision</span> for visual analysis and{' '}
+          <span className="whitespace-nowrap">Grok-4 Reasoning</span> for textual reasoning) to
+          generate persona insights. Processing is limited to inference; we do not train or
+          fine-tune models on your data. Analysis relies on objects, accessories and text cues; it
+          does not rely on facial geometry, voice, gait or other biometric templates. Any
+          accuracy/score is illustrative, not a guarantee.
+        </p>
+        <p className="text-white/80">
+          We do not perform facial recognition, biometric identification/categorisation or emotion
+          recognition. Outputs are informational only and must not be used as the sole basis for
+          high-impact decisions (employment, credit, insurance, immigration, law-enforcement,
+          healthcare).
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
           6) Storage and retention (strict limits)
         </h2>
         <p className="text-white/80">
-          User Inputs &amp; Outputs are designed to be ephemeral. We do not retain them beyond 12
-          hours and 30 minutes from completion of processing, after which they are automatically
-          purged from active systems and transient caches.
+          User Inputs &amp; Outputs are designed to be ephemeral and are automatically deleted{' '}
+          <span className="font-semibold">within 12 hours</span> after completion of processing.
+          They are not backed up or aggregated.
         </p>
         <p className="text-white/80">
           Self-service deletion: You can delete User Inputs/Outputs at any time via the in-product
-          Delete control; this triggers immediate removal from active systems and purge from
-          transient caches no later than 12 hours 30 minutes.
+          Delete control; this removes them from active systems. Minimal residual logs may remain
+          only as necessary for integrity or legal obligations.
         </p>
         <p className="text-white/80">
-          We do not create routine backups of User Inputs/Outputs and do not use them to train
-          foundation models. Limited, de-identified telemetry may be used to improve
-          safety/reliability where lawful and non-identifying.
+          We do not use User Inputs/Outputs to train foundation models. Limited, de-identified
+          telemetry may be used solely to improve safety/reliability where lawful and
+          non-identifying.
         </p>
         <p className="text-white/80">
           Account &amp; Billing are retained for the life of your account and thereafter up to 6
           years to satisfy tax/audit obligations.
-        </p>
-        <p className="text-white/80">
-          Security logs are retained only as necessary for security/integrity, then minimised or
-          anonymised. Legal holds or regulatory requests may temporarily override the above to the
-          extent required by law.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
           7) Sharing and sub-processors
         </h2>
         <p className="text-white/80">
-          We do not sell personal data. We share data only with: Service providers/sub-processors
+          We do not sell personal data. We share data only with service providers/sub-processors
           under written data-protection terms (e.g., hosting, AI inference, email/support tooling,
-          Stripe for payments, AWS for hosting, Supabase for database). Professional advisers
-          (legal/accounting) under confidentiality. Authorities where required by law.
+          Stripe for payments, AWS for hosting, Supabase for database), professional advisers under
+          confidentiality, and competent authorities where required by law.
         </p>
         <p className="text-white/80">
-          A current list of sub-processors and locations is available on request or via our website.
-          We require sub-processors to implement appropriate security and to purge User
-          Inputs/Outputs within our retention window (or provide equivalent guarantees).
+          A current list of sub-processors and locations is available on our Website and will be
+          updated with prior notice; you may object on reasonable grounds. We require sub-processors
+          to implement appropriate security and to purge User Inputs/Outputs within our retention
+          window (or provide equivalent guarantees). Sub-processors are contractually prohibited
+          from using your data to train models.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
           8) International transfers
         </h2>
         <p className="text-white/80">
-          We primarily process data in the EU/EEA. If personal data is transferred outside the
-          EEA/UK, we use appropriate safeguards such as the EU Standard Contractual Clauses (SCCs)
-          (and the UK IDTA/Addendum where relevant), plus additional technical and organisational
-          measures.
+          When personal data is transferred from the EEA/UK to countries without an adequacy
+          decision (including transfers to Ukraine and to non-EEA sub-processors), we use the{' '}
+          <span className="font-semibold">EU Standard Contractual Clauses (2021/914)</span> and,
+          where relevant, the UK IDTA/Addendum, together with appropriate technical and
+          organisational measures. For transfers to certified US providers, we may rely on the EU–US
+          Data Privacy Framework.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
           9) Your responsibilities (critical)
         </h2>
         <p className="text-white/80">
-          Lawful basis &amp; permissions: Do not upload any photograph, profile or text about a
-          person unless you have a lawful basis under applicable data-protection laws and, where
-          required, that person’s informed permission/consent.
+          <span className="font-semibold">Lawful basis &amp; permissions:</span> Do not upload any
+          photograph, profile or text about a person unless you have a lawful basis under applicable
+          data-protection laws and, where required, that person’s informed permission/consent — even
+          if the source is public.
         </p>
         <p className="text-white/80">
-          Accuracy &amp; relevance: Ensure User Inputs are accurate, relevant and necessary for your
-          purpose.
+          <span className="font-semibold">Accuracy &amp; relevance:</span> Ensure User Inputs are
+          accurate, relevant and necessary for your purpose.
         </p>
         <p className="text-white/80">
-          Data-subject requests: As controller of User Inputs, you handle access/erasure/objection
-          requests from individuals whose data you uploaded; we will reasonably assist as your
-          processor.
+          <span className="font-semibold">Data-subject requests:</span> As controller of User
+          Inputs, you handle access/erasure/objection requests from individuals whose data you
+          uploaded; we will reasonably assist as your processor.
         </p>
         <p className="text-white/80">
-          Prohibited uses: No discrimination, unlawful surveillance, harassment, doxxing or
-          manipulative profiling; no use as the sole basis for sensitive decisions. If you breach
-          the above, you agree to indemnify and hold H1NTED harmless for resulting claims, penalties
-          or fines, as set out in the Terms of Use.
+          <span className="font-semibold">Prohibited uses:</span> No discrimination, unlawful
+          surveillance, harassment, doxxing or manipulative profiling; no use as the sole basis for
+          sensitive decisions.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">10) Your rights (EU/UK)</h2>
@@ -317,8 +343,8 @@ export default function PrivacyPage() {
           Where H1NTED is controller (account, billing, website, support), you may exercise rights
           of access, rectification, erasure, restriction, objection, portability, and withdrawal of
           consent (for marketing/cookies) by contacting{' '}
-          <a href="mailto:olek.lynnyk@gmail.com" className="underline">
-            olek.lynnyk@gmail.com
+          <a href="mailto:hello@h1nted.com" className="underline">
+            hello@h1nted.com
           </a>
           .
         </p>
@@ -327,9 +353,8 @@ export default function PrivacyPage() {
           will support as processor.
         </p>
         <p className="text-white/80">
-          You may lodge a complaint with a supervisory authority. Our lead authority is the Data
-          Protection Commission (Ireland). You may also complain to your local EU authority or, for
-          UK individuals, to the ICO.
+          You may lodge a complaint with any EEA supervisory authority or, for UK individuals, with
+          the ICO.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -351,8 +376,9 @@ export default function PrivacyPage() {
         </p>
         <p className="text-white/80">
           Where H1NTED is controller and a personal-data breach occurs, we will assess and, where
-          required, notify the DPC within 72 hours and affected users without undue delay. Where we
-          are processor, we will notify the controller without undue delay.
+          required, notify the competent supervisory authority within applicable deadlines and
+          affected users without undue delay. Where we are processor, we will notify the controller
+          without undue delay.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">13) Age</h2>
@@ -366,7 +392,7 @@ export default function PrivacyPage() {
           14) Global availability &amp; local compliance
         </h2>
         <p className="text-white/80">
-          The Platform is operated from Ireland and offered to business users across the EU and
+          The Platform is operated from the EU and offered to business users across the EU and
           worldwide. You are responsible for ensuring your use of the Platform complies with local
           laws (e.g., employment, sector rules, image rights) in your country.
         </p>
@@ -382,15 +408,20 @@ export default function PrivacyPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">16) Contact</h2>
         <div className="text-white/80 space-y-1">
-          <p>H1NTED (pre-incorporation), Ireland</p>
-          <p>Correspondence: [Address]</p>
+          <p>
+            LLC &quot;H1NTED&quot; — LIMITED LIABILITY COMPANY &quot;H1NTED Artificial Intelligence
+            Discernment&quot;
+          </p>
+          <p>
+            Registered address: Flat 178, 1d Universytetska Street, Irpin, Kyiv Oblast, 08200,
+            Ukraine
+          </p>
           <p>
             Email:{' '}
-            <a href="mailto:olek.lynnyk@gmail.com" className="underline">
-              olek.lynnyk@gmail.com
+            <a href="mailto:hello@h1nted.com" className="underline">
+              hello@h1nted.com
             </a>
           </p>
-          {/* CRN/VAT и “Ltd.” убраны до регистрации */}
         </div>
 
         {/* Низ карточки: едва заметная разделительная линия */}

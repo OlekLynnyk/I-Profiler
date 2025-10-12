@@ -3,17 +3,36 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 type Props = {
+  text?: string;
+  /** CSS-селектор якоря (н-р: "#ws-onb-anchor", "#ws-save-btn") */
   targetSelector: string;
-  text: string; // внешнее copy игнорируем — используем фиксированное
-  ctaLabel: string; // не используется (primary CTA убран)
-  onProceed: () => void;
-  onDismiss: () => void;
+
+  /** Заголовок и текст тела (если не заданы — используется fallback для первых двух шагов) */
+  title?: string;
+  body?: string;
+
+  /** Надпись на primary-кнопке (по умолчанию "Got it") */
+  ctaLabel?: string;
+
+  /** Клик по primary-кнопке (accept/continue) */
+  onAccept?: () => void | Promise<void>;
+
+  /** Закрытие по фону/ESC/кнопке "Later" */
+  onDismiss: () => void | Promise<void>;
+
+  /** скрыть вторичную кнопку ("Later") */
+  hideSecondary?: boolean;
 };
 
 export default function OnboardingSpotlight({
   targetSelector,
-  onProceed, // оставлено для совместимости
+  title,
+  body,
+  ctaLabel = 'Got it',
+  onAccept,
   onDismiss,
+  hideSecondary = false,
+  text,
 }: Props) {
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [tipRect, setTipRect] = useState<DOMRect | null>(null);
@@ -23,6 +42,7 @@ export default function OnboardingSpotlight({
   useLayoutEffect(() => {
     const el = document.querySelector(targetSelector) as HTMLElement | null;
     if (!el) return;
+
     const update = () => setRect(el.getBoundingClientRect());
     update();
 
@@ -34,6 +54,7 @@ export default function OnboardingSpotlight({
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
+
     return () => {
       ro.disconnect();
       window.removeEventListener('scroll', onScroll);
@@ -63,14 +84,14 @@ export default function OnboardingSpotlight({
     };
   }, [rect]);
 
-  // фокус
+  // фокус на тултип
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     tooltipRef.current?.focus();
     return () => prev?.focus();
   }, []);
 
-  // esc
+  // ESC закрывает
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onDismiss();
@@ -107,21 +128,34 @@ export default function OnboardingSpotlight({
     window.scrollX + window.innerWidth - SAFE - tipW
   );
 
-  // ===== геометрия цели
-  const targetCx = rect.left + window.scrollX + rect.width / 2;
-  const targetCy = rect.top + window.scrollY + rect.height / 2;
-
-  // ===== положение выпуклой стрелки (beak)
+  // ===== положение «капли» (beak)
   const beakSize = 22;
   const beakX = preferRight ? clampedLeft - (beakSize - 2) : clampedLeft + tipW / 2 - beakSize / 2;
   const beakY = preferRight ? clampedTop + tipH / 2 - beakSize / 2 : clampedTop - (beakSize - 2);
   const beakRotation = preferRight ? 180 : 270; // 180 — влево, 270 — вверх
+
+  // ===== контент (fallback тексты для шагов 1/2)
+  const fallbackTitle =
+    targetSelector === '#ws-onb-anchor'
+      ? 'Welcome to the Workspace'
+      : targetSelector === '#ws-input-panel'
+        ? 'Compose and attach'
+        : undefined;
+
+  const fallbackBody =
+    targetSelector === '#ws-onb-anchor'
+      ? 'This is your working area. The left sidebar hosts extra tools; the right sidebar is your technical zone.'
+      : targetSelector === '#ws-input-panel'
+        ? 'Here you can attach an image or other materials, and send either a standard or your personalised command.'
+        : undefined;
 
   return (
     <>
       {/* ===== Фон: виньетка + scanlines ===== */}
       <div
         aria-hidden
+        data-interactive="true"
+        data-overlay
         className="fixed inset-0 z-[70]"
         onClick={onDismiss}
         style={{
@@ -141,7 +175,7 @@ export default function OnboardingSpotlight({
         />
       </div>
 
-      {/* ===== Хайлайт цели: мягкое halo (без рамки) ===== */}
+      {/* ===== Хайлайт цели (halo) ===== */}
       <div
         aria-hidden
         className="fixed z-[71] pointer-events-none"
@@ -173,7 +207,7 @@ export default function OnboardingSpotlight({
         }}
       />
 
-      {/* ===== ВЫПУКЛАЯ СТРЕЛКА (SVG, гарантированная отрисовка) ===== */}
+      {/* ===== Выпуклая стрелка (beak) ===== */}
       <svg
         className="fixed z-[73] pointer-events-none"
         width={beakSize}
@@ -182,7 +216,6 @@ export default function OnboardingSpotlight({
         viewBox="0 0 24 24"
       >
         <defs>
-          {/* объём «капли» */}
           <radialGradient id="beakGlow" cx="35%" cy="35%" r="85%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.28)" />
             <stop offset="45%" stopColor="rgba(255,255,255,0.10)" />
@@ -195,27 +228,22 @@ export default function OnboardingSpotlight({
           </linearGradient>
         </defs>
 
-        {/* тело капли */}
         <g transform={`rotate(${beakRotation}, 12, 12)`}>
-          {/* тень под каплей для «выпуклости» */}
           <ellipse
             cx="12"
             cy="19"
             rx="6.5"
             ry="3"
             fill="rgba(0,0,0,0.35)"
-            filter="url(#blur)"
             opacity="0.45"
             transform="translate(0,-2)"
           />
-          {/* сама капля */}
           <path
             d="M12 1 C18 4, 23 9, 12 23 C1 9, 6 4, 12 1 Z"
             fill="url(#beakGlow)"
             stroke="rgba(255,255,255,0.12)"
             strokeWidth="0.5"
           />
-          {/* шовный блик */}
           <path
             d="M12 2.2 C16.8 4.8, 20.4 8.1, 12 21"
             stroke="url(#beakEdge)"
@@ -225,18 +253,21 @@ export default function OnboardingSpotlight({
         </g>
       </svg>
 
-      {/* ===== Тултип — компактная капсула ===== */}
+      {/* ===== Тултип ===== */}
       <div
         role="dialog"
         aria-modal="true"
         ref={tooltipRef}
         tabIndex={-1}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         className="
-          fixed z-[74]
+          fixed z-[80]
           w-[min(320px,calc(100vw-32px))]
           rounded-[18px] text-white focus:outline-none
           ring-1 ring-white/10 backdrop-blur
           shadow-[0_8px_24px_rgba(0,0,0,0.42)]
+          pointer-events-auto
         "
         style={{
           top: clampedTop,
@@ -250,27 +281,55 @@ export default function OnboardingSpotlight({
         }}
       >
         <p className="text-[13.5px] leading-[1.45] text-white/92">
-          Click here to access <span className="font-semibold text-white">Your Workspace</span>
+          {(title || fallbackTitle) && (
+            <span className="block font-semibold mb-1 text-white">{title ?? fallbackTitle}</span>
+          )}
+          {body ?? fallbackBody}
         </p>
 
         <div className="mt-3 flex items-center justify-between gap-2">
           <span className="text-[11px] tracking-[0.14em] uppercase text-white/65">
             DO BETTER. MOVE FURTHER.
           </span>
-          <button
-            onClick={onDismiss}
-            className="
-              inline-flex items-center justify-center
-              rounded-full px-3 h-[30px]
-              text-[12.5px] leading-none text-white/88
-              ring-1 ring-white/12
-              bg-white/10 hover:bg-white/15
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60
-              whitespace-nowrap
-            "
-          >
-            Later
-          </button>
+
+          <div className="flex items-center gap-2">
+            {!hideSecondary && (
+              <button
+                onClick={onDismiss}
+                className="
+                  inline-flex items-center justify-center
+                  rounded-full px-3 h-[30px]
+                  text-[12.5px] leading-none text-white/88
+                  ring-1 ring-white/12
+                  bg-white/10 hover:bg-white/15
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60
+                  whitespace-nowrap
+                "
+              >
+                Later
+              </button>
+            )}
+
+            <button
+              onClick={async () => {
+                try {
+                  await onAccept?.();
+                } finally {
+                  await onDismiss?.();
+                }
+              }}
+              className="
+                inline-flex items-center justify-center
+                rounded-full px-3 h-[30px]
+                text-[12.5px] leading-none text-black
+                bg-white hover:bg-white/90
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60
+                whitespace-nowrap
+              "
+            >
+              {ctaLabel}
+            </button>
+          </div>
         </div>
       </div>
     </>

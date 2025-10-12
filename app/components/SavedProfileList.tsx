@@ -1,48 +1,160 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/app/context/AuthProvider';
-import { useSavedProfiles, SavedProfile } from '@/app/hooks/useSavedProfiles';
+import { useSavedProfiles, SavedProfile, SavedBlockName } from '@/app/hooks/useSavedProfiles';
 import SaveProfileModal from '@/app/components/SaveProfileModal';
 
-export default function SavedProfileList() {
+type SavedProfileListProps = {
+  selectionMode?: boolean;
+  onSelectForCdr?: (profile: SavedProfile) => void;
+  showCreateBlockButton?: boolean;
+  preselectedIds?: string[];
+};
+
+const CDRS_ID = 'CDRs' as const;
+const UNGROUPED_ID = '__ungrouped__' as const;
+const MAX_CUSTOM_BLOCKS = 15;
+const MAX_BLOCK_NAME_LEN = 30;
+
+export default function SavedProfileList({
+  selectionMode = false,
+  onSelectForCdr,
+  showCreateBlockButton = false, // сохранено для совместимости пропсов
+  preselectedIds = [],
+}: SavedProfileListProps) {
+  console.debug('[SavedProfileList] selectionMode =', selectionMode);
   const { session } = useAuth();
-  const { getSavedProfiles, deleteProfile, updateProfile } = useSavedProfiles();
+  const userId = session?.user?.id;
+
+  const { getSavedProfiles, deleteProfile, updateProfile, getFolders, createFolder, deleteFolder } =
+    useSavedProfiles();
 
   const [profiles, setProfiles] = useState<SavedProfile[]>([]);
+  const [folders, setFolders] = useState<SavedBlockName[]>([CDRS_ID]);
   const [selectedProfile, setSelectedProfile] = useState<SavedProfile | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    [CDRS_ID]: false,
+    [UNGROUPED_ID]: false,
+  });
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (selectionMode) {
+      setSelectedIds(new Set(preselectedIds));
+    } else {
+      setSelectedIds(new Set());
+    }
+  }, [selectionMode, preselectedIds]);
 
-    let isActive = true;
-    setLoading(true);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [newBlockName, setNewBlockName] = useState('');
+  const [createErr, setCreateErr] = useState<string | null>(null);
 
-    getSavedProfiles(session.user.id)
-      .then((data) => {
-        if (isActive) {
-          setProfiles(data);
+  const cdrsItems = useMemo(() => profiles.filter((p) => p.folder === CDRS_ID), [profiles]);
+
+  const groupedByFolder = useMemo(() => {
+    const map = new Map<string, SavedProfile[]>();
+    for (const p of profiles) {
+      const f = (p.folder ?? '') as string;
+      if (!f || f === CDRS_ID) continue;
+      if (!map.has(f)) map.set(f, []);
+      map.get(f)!.push(p);
+    }
+    return map;
+  }, [profiles]);
+
+  const ungrouped = useMemo(() => profiles.filter((p) => !p.folder), [profiles]);
+
+  // Фоновое обновление без переключения экрана на loader (избегаем «мигания»)
+  const refresh = async () => {
+    if (!userId) return;
+    try {
+      const [items, folderList] = await Promise.all([getSavedProfiles(userId), getFolders(userId)]);
+      setProfiles(items);
+      const ordered = Array.from(new Set([CDRS_ID, ...folderList.filter((n) => n !== CDRS_ID)]));
+      setFolders(ordered);
+      setExpanded((prev) => {
+        const next: Record<string, boolean> = { ...prev };
+        for (const f of ordered) {
+          if (typeof next[f] === 'undefined') next[f] = false;
         }
-      })
-      .catch((error) => {
-        console.error('Failed to fetch saved profiles', error);
-      })
-      .finally(() => {
-        if (isActive) setLoading(false);
+        if (typeof next[UNGROUPED_ID] === 'undefined') next[UNGROUPED_ID] = false;
+        return next;
       });
+    } catch (e) {
+      console.error('Failed to fetch saved profiles/folders', e);
+    } finally {
+      // loading здесь не трогаем — чтобы не мигал UI при фоновых обновлениях
+    }
+  };
 
+  // Первичная загрузка: показываем loader только на старте
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const [items, folderList] = await Promise.all([
+          getSavedProfiles(userId),
+          getFolders(userId),
+        ]);
+        if (!active) return;
+        setProfiles(items);
+        const ordered = Array.from(new Set([CDRS_ID, ...folderList.filter((n) => n !== CDRS_ID)]));
+        setFolders(ordered);
+        setExpanded((prev) => {
+          const next: Record<string, boolean> = { ...prev };
+          for (const f of ordered) {
+            if (typeof next[f] === 'undefined') next[f] = false;
+          }
+          if (typeof next[UNGROUPED_ID] === 'undefined') next[UNGROUPED_ID] = false;
+          return next;
+        });
+      } catch (e) {
+        console.error('Failed to fetch saved profiles/folders', e);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
     return () => {
-      isActive = false;
+      active = false;
     };
-  }, [session?.user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // Глобальное событие: открыть модал создания блока
+  useEffect(() => {
+    const handler = () => setCreateModalOpen(true);
+    window.addEventListener('savedMessages:createBlock', handler as EventListener);
+    return () => {
+      window.removeEventListener('savedMessages:createBlock', handler as EventListener);
+    };
+  }, []);
+
+  // Глобальное событие: рефреш данных (без лоадера)
+  useEffect(() => {
+    const onRefresh = () => {
+      refresh();
+    };
+    window.addEventListener('savedMessages:refresh', onRefresh as EventListener);
+    return () => {
+      window.removeEventListener('savedMessages:refresh', onRefresh as EventListener);
+    };
+  }, [userId]);
 
   const handleDelete = async (id: string) => {
+    if (selectionMode) return;
     const confirmed = window.confirm('Are you sure you want to delete this profile?');
     if (!confirmed) return;
 
     try {
       await deleteProfile(id);
+      // оптимистично обновляем список без полного рефетча
       setProfiles((prev) => prev.filter((p) => p.id !== id));
     } catch (error) {
       console.error('Failed to delete profile', error);
@@ -59,65 +171,319 @@ export default function SavedProfileList() {
           user_comments: comments,
         },
       });
-
       setSelectedProfile(null);
-
-      if (session?.user?.id) {
-        const updated = await getSavedProfiles(session.user.id);
-        setProfiles(updated);
-      }
+      // После обновления — полный рефетч (как в старом коде), но без мигания
+      await refresh();
     } catch (error) {
       console.error('Failed to update profile', error);
       alert('Failed to update the profile. Please try again.');
     }
   };
 
-  return (
-    <div className="flex flex-col gap-1">
-      {loading ? (
-        <p className="text-sm text-[var(--text-secondary)]">Loading saved reports…</p>
-      ) : profiles.length === 0 ? (
-        <p className="text-sm text-[var(--text-secondary)] italic">No saved reports yet.</p>
-      ) : (
-        profiles.map((profile) => (
-          <div
-            key={profile.id}
-            className="flex justify-between items-center px-3 py-1 hover:bg-[var(--surface)] transition cursor-pointer"
+  const handleCreateBlock = async () => {
+    if (!userId) return;
+
+    const name = newBlockName.trim();
+    setCreateErr(null);
+
+    const customCount = folders.filter((f) => f !== CDRS_ID).length;
+    if (customCount >= MAX_CUSTOM_BLOCKS) {
+      setCreateErr(`You can create up to ${MAX_CUSTOM_BLOCKS} blocks.`);
+      return;
+    }
+    if (!name) {
+      setCreateErr('Block name cannot be empty.');
+      return;
+    }
+    if (name.length > MAX_BLOCK_NAME_LEN) {
+      setCreateErr(`Please use a shorter name (≤ ${MAX_BLOCK_NAME_LEN} characters).`);
+      return;
+    }
+    if (name === CDRS_ID || name === UNGROUPED_ID) {
+      setCreateErr('This block name is reserved.');
+      return;
+    }
+    if (folders.includes(name)) {
+      setCreateErr('This block name already exists.');
+      return;
+    }
+
+    try {
+      await createFolder(userId, name);
+      const fs = await getFolders(userId);
+      setFolders([CDRS_ID, ...fs.filter((n) => n !== CDRS_ID)]);
+      setNewBlockName('');
+      setCreateModalOpen(false);
+    } catch (err: any) {
+      setCreateErr(err?.message || 'Failed to create the block.');
+    }
+  };
+
+  const handleDeleteFolder = async (folderName: string) => {
+    if (selectionMode) return;
+    if (!userId) return;
+
+    const confirmed = window.confirm(`Delete the empty block "${folderName}"?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteFolder(userId, folderName);
+      setFolders((prev) => prev.filter((f) => f !== folderName));
+      setExpanded((prev) => {
+        const next = { ...prev };
+        delete next[folderName];
+        return next;
+      });
+    } catch (e) {
+      console.error('Failed to delete folder', e);
+      alert('Failed to delete the block. It may not be empty.');
+    }
+  };
+
+  const toggleExpanded = (id: string) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const SectionHeader = ({ title, id }: { title: string; id: string }) => (
+    <div
+      className="flex justify-between items-center px-3 py-1 cursor-pointer"
+      role="button"
+      tabIndex={0}
+      onClick={() => toggleExpanded(id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') toggleExpanded(id);
+      }}
+      onPointerDown={(e) => e.stopPropagation()} // не отменяем default
+      title={id === CDRS_ID ? "You can't move items into CDRs." : undefined}
+    >
+      <span className="text-sm text-[var(--text-primary)]">{title}</span>
+      <span className="text-[var(--text-secondary)] text-xs">
+        {expanded[id] === true ? '▲' : '▼'}
+      </span>
+    </div>
+  );
+
+  const Row = ({ profile }: { profile: SavedProfile }) => {
+    const checked = selectedIds.has(profile.id);
+
+    return (
+      <div
+        data-row
+        key={profile.id}
+        className="flex justify-between items-center px-3 py-1 cursor-pointer no-select"
+        onPointerDown={(e) => e.stopPropagation()} // только stopPropagation
+        draggable={false}
+      >
+        <span
+          onPointerDown={(e) => e.stopPropagation()} // не отменяем default → click формируется
+          onClick={(e) => {
+            e.stopPropagation();
+            if (selectionMode) return;
+            // Открываем модалку на следующий тик, чтобы текущий click не закрыл её оверлеем
+            setTimeout(() => setSelectedProfile(profile), 0);
+          }}
+          className="file-title no-select text-sm text-[var(--text-primary)] hover:text-[var(--accent)]"
+          aria-label={profile.profile_name}
+        >
+          {profile.profile_name}
+        </span>
+
+        {selectionMode && (
+          <input
+            type="checkbox"
+            checked={checked}
+            readOnly
+            onClick={(e) => {
+              e.stopPropagation();
+              const next = new Set(selectedIds);
+              if (!checked) next.add(profile.id);
+              else next.delete(profile.id);
+              setSelectedIds(next);
+              onSelectForCdr?.(profile);
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation(); /* default не трогаем */
+            }}
+            className="accent-[var(--accent)]"
+            aria-label="Select for CDRs"
+            aria-checked={checked}
+          />
+        )}
+
+        {!selectionMode && (
+          <button
+            onPointerDown={(e) => {
+              e.stopPropagation(); /* default не трогаем */
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(profile.id);
+            }}
+            className="text-[var(--text-secondary)] hover:text-[var(--danger)] text-sm scale-75"
+            aria-label="Delete saved profile"
+            title="Delete"
+            type="button"
           >
-            <span
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedProfile(profile);
-              }}
-              className="text-sm text-[var(--text-primary)] hover:text-[var(--accent)]"
-            >
-              {profile.profile_name}
-            </span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation(); // ← не даём клику дойти до SidebarBox (не схлопываем блок)
-                e.preventDefault();
-                handleDelete(profile.id); // ← удаляем
-              }}
-              className="text-[var(--text-secondary)] hover:text-[var(--danger)] text-sm"
-            >
-              ✕
-            </button>
-          </div>
-        ))
+            ✕
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    // loader только на первичной загрузке
+    return <p className="text-sm text-[var(--text-secondary)]">Loading saved reports…</p>;
+  }
+
+  if (profiles.length === 0) {
+    return <p className="text-sm text-[var(--text-secondary)] italic">No saved reports yet.</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-1" data-cdr-selection={selectionMode ? 'on' : 'off'}>
+      <SectionHeader title="Combined Discernment Reports" id={CDRS_ID} />
+      {expanded[CDRS_ID] === true && (
+        <div>
+          {cdrsItems.length === 0 ? (
+            <div className="px-3 py-1 text-xs text-[var(--text-secondary)] italic">
+              No CDRs yet. Try the CDRs feature.
+            </div>
+          ) : (
+            cdrsItems.map((p) => <Row key={p.id} profile={p} />)
+          )}
+        </div>
       )}
 
-      {selectedProfile && (
+      {folders
+        .filter((f) => f !== CDRS_ID)
+        .map((folderName) => {
+          const items = groupedByFolder.get(folderName) || [];
+          return (
+            <div key={`folder-${folderName}`}>
+              <SectionHeader title={folderName} id={folderName} />
+              {expanded[folderName] === true && (
+                <div>
+                  {items.length === 0 ? (
+                    <div className="px-3 py-1 flex justify-between items-center">
+                      <span className="text-xs text-[var(--text-secondary)] italic">
+                        This block is empty.
+                      </span>
+                      {!selectionMode && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteFolder(folderName);
+                          }}
+                          className="text-[var(--text-secondary)] hover:text-[var(--danger)] text-sm scale-75"
+                          aria-label={`Delete block ${folderName}`}
+                          title="Delete block"
+                          type="button"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    items.map((p) => <Row key={p.id} profile={p} />)
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+      <div className="mt-1 pt-1 border-t border-[var(--card-border)]">
+        {ungrouped.length === 0 ? (
+          <div className="px-3 py-1 text-xs text-[var(--text-secondary)] italic">
+            No saved reports yet.
+          </div>
+        ) : (
+          ungrouped.map((p) => <Row key={p.id} profile={p} />)
+        )}
+      </div>
+
+      {selectedProfile && !selectionMode && (
         <SaveProfileModal
           open={true}
           onClose={() => setSelectedProfile(null)}
           aiResponse={selectedProfile.chat_json.ai_response}
-          onSave={async (name, aiResponse, comments) => {
+          onSave={async (name, aiResponse, comments, _selectedFolder) => {
             await handleUpdate(selectedProfile.id, name, aiResponse, comments);
           }}
           defaultProfileName={selectedProfile.profile_name}
           readonly={false}
+          folders={folders.filter((f) => f !== CDRS_ID)}
         />
+      )}
+
+      {createModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="absolute inset-0 z-50 flex items-center justify-center"
+          data-modal="open"
+        >
+          <div
+            className="absolute inset-0 bg-black/40"
+            // Клика закрываем на mousedown, чтобы не схлопывать модалку тем же «click», что её открыл
+            onMouseDown={() => {
+              setCreateModalOpen(false);
+              setNewBlockName('');
+              setCreateErr(null);
+            }}
+          />
+          <div
+            className="
+              relative z-10 w-full max-w-sm
+              bg-[var(--card-bg)] text-[var(--text-primary)]
+              border border-[var(--card-border)]
+              rounded-2xl p-4 shadow-xl
+            "
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-medium mb-2">Create a new block</h3>
+            <input
+              autoFocus
+              type="text"
+              maxLength={MAX_BLOCK_NAME_LEN}
+              value={newBlockName}
+              onChange={(e) => setNewBlockName(e.target.value)}
+              placeholder="Block name (up to 30 chars)"
+              className="
+                w-full rounded-lg px-3 py-2 text-sm
+                bg-[var(--surface)] text-[var(--text-primary)]
+                focus:outline-none focus:ring-1 focus:ring-[var(--accent)]
+              "
+            />
+            {createErr && <p className="mt-2 text-xs text-[var(--danger)]">{createErr}</p>}
+            <div className="mt-3 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setCreateModalOpen(false);
+                  setNewBlockName('');
+                  setCreateErr(null);
+                }}
+                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateBlock}
+                className="
+                  h-8 px-3 rounded-full text-xs font-medium
+                  bg-[var(--button-bg)] text-[var(--text-primary)]
+                  hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
+                  shadow-sm
+                "
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

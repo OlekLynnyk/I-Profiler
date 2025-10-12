@@ -49,11 +49,27 @@ export async function POST(req: NextRequest) {
   // ⬇️ БЕЗОПАСНО: не бросаем 400, если тело пустое/невалидное — просто считаем его отсутствующим.
   const body = await safeJson(req);
   const action = body?.action as string | undefined;
+  const correlationId = body?.correlation_id as string | undefined;
 
   // Прерываем — не увеличиваем лимит, если это не генерация
   if (action && action !== 'profile_generation_incremented') {
     void tryLogUserAction({ userId, action, metadata: body?.metadata ?? null });
     return NextResponse.json({ success: true, skippedIncrement: true });
+  }
+
+  // Idempotency: если уже логировали эту попытку — не инкрементим повторно
+  if (correlationId) {
+    const { data: dup } = await supabase
+      .from('user_log')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('action', 'profile_generation_incremented')
+      .contains('metadata', { correlation_id: correlationId })
+      .limit(1)
+      .maybeSingle();
+    if (dup) {
+      return NextResponse.json({ success: true, deduped: true });
+    }
   }
 
   const { data: limits, error: limitsError } = await supabase
@@ -153,6 +169,7 @@ export async function POST(req: NextRequest) {
     metadata: {
       endpoint: '/app/api/user/log-generation',
       timestamp: new Date().toISOString(),
+      correlation_id: correlationId ?? null,
     },
   });
 

@@ -13,7 +13,6 @@ import { Readable } from 'stream';
 function redactHeaders(h: any) {
   if (!h) return {};
   const safe: Record<string, string> = {};
-  // ReadonlyHeaders/Headers имеют .entries()
   const entries: Iterable<[string, string]> = typeof h.entries === 'function' ? h.entries() : [];
   for (const [k, v] of entries) {
     if (/authorization|cookie|set-cookie|api[-]?key|secret|password/i.test(k)) {
@@ -29,7 +28,6 @@ function withTraceJson(traceId: string, data: any, init?: number | ResponseInit)
   res.headers.set('x-trace-id', traceId);
   return res;
 }
-// ─────────────────────────────────────────────────────────────
 
 // Функция очистки текста от # и *
 function sanitizeText(text: string): string {
@@ -77,17 +75,53 @@ async function ensureExcelFileExists() {
   console.log('Excel file downloaded to /tmp/file.xlsx');
 }
 
-// ── PATCH: helpers for safe image normalization (точечный фикс) ───────────────
+// ── CDRs: optional formula loader (env → fallback; xlsx/text) ───────────────
+async function tryLoadCdrsFormula(traceId: string): Promise<string | null> {
+  // 1) сначала как было — читаем из env
+  const envBucket = (env as any).CDRS_S3_BUCKET;
+  const envKey = (env as any).CDRS_S3_KEY;
+
+  // 2) если env нет — жёсткий fallback (как в Image)
+  const bucket = envBucket || 'profiling-formulas';
+  const key = envKey || 'cdrs:cdrs-formula.en.v1.md.xlsx';
+
+  try {
+    const resp = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    const body = resp.Body as Readable;
+
+    const chunks: Buffer[] = [];
+    for await (const ch of body) chunks.push(ch as Buffer);
+    const buf = Buffer.concat(chunks);
+
+    // Если формула в xlsx — парсим, как в Image
+    if (key.toLowerCase().endsWith('.xlsx')) {
+      const tmp = '/tmp/cdrs-formula.xlsx';
+      writeFileSync(tmp, buf);
+      const { parsedLines } = await parseExcel(tmp);
+      const text = (parsedLines ?? [])
+        .map((l) => `Sheet: ${l.sheetName}\nRow: ${l.rowNumber}\n${l.text}`)
+        .join('\n\n')
+        .trim();
+      return text || null;
+    }
+
+    // Иначе считаем текстом
+    const text = buf.toString('utf8').trim();
+    return text || null;
+  } catch (e) {
+    console.warn(
+      `[GROK][${traceId}] Failed to load CDRs formula from S3 (bucket=${bucket}, key=${key}).`,
+      String(e)
+    );
+    return null;
+  }
+}
+
+// ── PATCH: helpers for safe image normalization ──────────────────────────────
 const URL_RE = /^https?:\/\/\S+$/i;
 const DATA_URL_IMG_RE = /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/i;
 
-/**
- * Нормализует вход из Excel:
- * - http(s) → оставить как есть
- * - data:image/*;base64,... → оставить как есть
- * - «голый» base64 → обернуть в data:image/png;base64,...
- * - иначе → null (пропустить)
- */
+/** Нормализует вход из Excel */
 function normalizeExcelImage(input: string): string | null {
   if (!input) return null;
   const s = String(input).trim();
@@ -96,57 +130,96 @@ function normalizeExcelImage(input: string): string | null {
 
   const b64 = s.replace(/\s+/g, '');
   if (/^[A-Za-z0-9+/=]+$/.test(b64)) {
-    // Выбрали PNG — совпадает с текущей логикой user-вложений
     return `data:image/png;base64,${b64}`;
   }
   return null;
 }
 
-// добавить рядом (выше) вспомогательную функцию определения MIME по сигнатуре base64
 function sniffMimeFromBase64(b64: string): string | null {
   const head = b64.slice(0, 24);
-  // JPEG обычно начинается с /9j/
   if (head.startsWith('/9j/')) return 'image/jpeg';
-  // PNG обычно начинается с iVBORw0KG
   if (head.startsWith('iVBORw0KG')) return 'image/png';
-  // WEBP (часто из Telegram) начинается с UklGR (RIFF...WEBP...)
   if (head.startsWith('UklGR')) return 'image/webp';
   return null;
 }
 
-// заменить существующую buildUserImageDataUrl на эту версию
 function buildUserImageDataUrl(raw: string): string {
   const s = String(raw || '')
     .trim()
     .replace(/\s+/g, '');
   if (!s) return s;
-
-  // Если уже пришёл корректный data URL — не трогаем
   if (s.startsWith('data:image/')) return s;
-
-  // Если вдруг это http(s) — пропускаем (на случай будущих сценариев)
   if (URL_RE.test(s)) return s;
-
-  // Пришёл "голый" base64: пытаемся определить тип; по умолчанию jpeg
   const mime = sniffMimeFromBase64(s) || 'image/jpeg';
   return `data:${mime};base64,${s}`;
 }
 
-// ── RETRY HELPERS (без изменения внешнего поведения) ────────
+// ── RETRY HELPERS ────────────────────────────────────────────────────────────
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
-const jitter = (base: number) => Math.max(0, Math.floor(base * (0.5 + Math.random()))); // 0.5x..1.5x
+const jitter = (base: number) => Math.max(0, Math.floor(base * (0.5 + Math.random())));
 const isRetriableStatus = (s: number) => s === 408 || s === 429 || (s >= 500 && s <= 599);
 
-// Диагностические флаги для исключения кэширования/edge-побочек
+// Диагностические флаги
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// ── Constants (no-regression) ────────────────────────────────────────────────
+const MODEL_CHAT = 'grok-4-fast-reasoning' as const;
+const MODEL_IMAGE = 'grok-2-vision-1212' as const;
+const MODEL_CDRS = 'grok-4-fast-reasoning' as const;
+const MAX_TOKENS_IMAGE = 3500;
+const MAX_TOKENS_CDRS = 50000;
+const CDRS_MIN_SAVED = 2;
+const CDRS_MAX_SAVED = 5;
+
+// ── Image intake guards (NEW) ────────────────────────────────────────────────
+const IMG_MAX_COUNT = Number(process.env.IMG_MAX_COUNT ?? '3');
+const IMG_MAX_INLINE_MB = Number(process.env.IMG_MAX_INLINE_MB ?? '4');
+
+const HTTP_URL_RE = /^https?:\/\/\S+$/i;
+const DATA_URL_RE = /^data:image\/([a-z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/i;
+const SUPPORTED_MIME = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+
+function approxBytesFromBase64Len(len: number) {
+  // base64 payload is ~ 4/3 of bytes ⇒ bytes ≈ len * 0.75
+  return Math.floor(len * 0.75);
+}
+
+function parseDataUrlMeta(u: string) {
+  const m = DATA_URL_RE.exec(String(u || '').trim());
+  if (!m) return null;
+  const [, subtype, payload] = m;
+  const mime = `image/${subtype.toLowerCase()}`;
+  return { mime, payload, bytes: approxBytesFromBase64Len(payload.length) };
+}
+
+function isSupportedMime(mime: string) {
+  return SUPPORTED_MIME.has(String(mime || '').toLowerCase());
+}
+
+function mb(n: number) {
+  return Math.round((n / (1024 * 1024)) * 10) / 10; // one decimal place
+}
+
 export async function POST(req: NextRequest) {
-  noStore(); // диагностика: исключаем кэш-слои
+  noStore();
 
   const traceId = randomUUID();
-  const reqHeaders = await headers(); // ← FIX: headers() в твоей версии async
+  const reqHeaders = await headers();
   const startedAt = Date.now();
+
+  const authzHeader = (
+    req.headers.get('authorization') ||
+    reqHeaders.get('authorization') ||
+    ''
+  ).trim();
+  const correlationId =
+    req.headers.get('x-correlation-id') || reqHeaders.get('x-correlation-id') || randomUUID();
+
+  console.log(`[GROK][${traceId}] META`, {
+    hasAuthz: authzHeader ? 'yes' : 'no',
+    correlationId,
+  });
 
   console.log(`[GROK][${traceId}] START`, {
     xai_api_key: env.XAI_API_KEY ? '✅ PRESENT' : '❌ MISSING',
@@ -155,25 +228,76 @@ export async function POST(req: NextRequest) {
   });
 
   try {
+    const body = await req.json();
     const {
       profileId,
       prompt,
       imageBase64,
       profiling,
       userLanguage: userLangFromRequest,
-    } = await req.json();
+
+      // ── New for CDRs ──
+      mode, // 'cdrs' | 'image' | 'chat' (optional, backwards-compatible)
+      savedMessageIds, // string[] for CDRs
+    } = body || {};
 
     if (!profileId) {
       console.warn(`[GROK][${traceId}] MISSING profileId`);
-      return withTraceJson(traceId, { error: 'Missing profileId' }, { status: 400 });
+      return withTraceJson(
+        traceId,
+        { error: 'Missing profileId', code: 'PAYLOAD_INVALID' },
+        { status: 400 }
+      );
     }
 
+    // ── Validate CDRs mode (no regression for other modes) ──────────────────
+    const isCdrs = mode === 'cdrs';
+    const isImage = mode === 'image';
+
+    if (isImage && Array.isArray(savedMessageIds) && savedMessageIds.length > 0) {
+      return withTraceJson(
+        traceId,
+        { error: 'Saved reports cannot be attached in Image mode.', code: 'MODE_CONFLICT' },
+        { status: 400 }
+      );
+    }
+
+    if (isCdrs) {
+      const ids: string[] = Array.isArray(savedMessageIds) ? savedMessageIds : [];
+      if (ids.length < CDRS_MIN_SAVED) {
+        return withTraceJson(
+          traceId,
+          {
+            error: `Select at least ${CDRS_MIN_SAVED} saved reports to run CDRs.`,
+            code: 'CDRS_MIN_ITEMS_NOT_MET',
+          },
+          { status: 400 }
+        );
+      }
+      if (ids.length > CDRS_MAX_SAVED) {
+        return withTraceJson(
+          traceId,
+          {
+            error: `You can attach up to ${CDRS_MAX_SAVED} saved reports in CDRs.`,
+            code: 'PAYLOAD_INVALID',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // ── Single supabase client (avoid redeclare) ────────────────────────────
     const supabase = await createServerClientForApi();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     let messages: any[] = [];
 
+    // ────────────────────────────────────────────────────────────────────────
+    // Profiling flow (existing behaviour)
+    // ────────────────────────────────────────────────────────────────────────
     if (profiling) {
-      // ✅ НЕ загружаем историю чата в профайлинге
       const excelFilePath = '/tmp/file.xlsx';
 
       console.log(`[GROK][${traceId}] PROFILING: ensureExcelFileExists`);
@@ -187,7 +311,6 @@ export async function POST(req: NextRequest) {
         formulaLanguage,
       });
 
-      // ✅ Выбор языка: приоритет userLangFromRequest → formulaLanguage → en
       const userLanguage = userLangFromRequest || formulaLanguage || 'en';
 
       const allFormulaText = parsedLines
@@ -220,7 +343,6 @@ export async function POST(req: NextRequest) {
         content: fullSystemPrompt,
       });
 
-      // ── PATCH: безопасная нормализация картинок из Excel/S3 ───────────────
       for (const img of imagesBase64) {
         const url = normalizeExcelImage(img);
         if (!url) {
@@ -232,15 +354,11 @@ export async function POST(req: NextRequest) {
           content: [
             {
               type: 'image_url',
-              image_url: {
-                url,
-                detail: 'high',
-              },
+              image_url: { url, detail: 'high' },
             },
           ],
         });
       }
-      // ───────────────────────────────────────────────────────────────────────
 
       const { error: insertSystemError } = await supabase.from('chat_messages').insert([
         {
@@ -257,115 +375,265 @@ export async function POST(req: NextRequest) {
           timestamp: Date.now(),
         },
       ]);
-
       if (insertSystemError) {
         console.error(`[GROK][${traceId}] Failed to save system_marker:`, insertSystemError);
       }
     } else {
-      // ✅ Обычный режим — грузим историю чата
-      const since = Date.now() - 12 * 60 * 60 * 1000;
+      // ──────────────────────────────────────────────────────────────────────
+      // Non-profiling: Chat / Image / CDRs
+      // ──────────────────────────────────────────────────────────────────────
 
-      const { data: historyRows, error: historyError } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('profile_id', profileId)
-        .gt('timestamp', since)
-        .order('timestamp', { ascending: true });
+      // (A) If CDRs: inject CDRs formula (text) & selected saved reports
+      if (isCdrs) {
+        const userLanguage =
+          userLangFromRequest || (prompt?.trim() ? detectUserLanguage(prompt, 'en') : 'en');
 
-      if (historyError) {
-        console.error(`[GROK][${traceId}] Error loading history:`, historyError);
-        return withTraceJson(traceId, { error: 'Failed to load chat history' }, { status: 500 });
-      }
-
-      for (const row of historyRows || []) {
-        let parsedContent = row.content;
-        try {
-          const parsed = JSON.parse(row.content);
-          if (typeof parsed === 'object' && (parsed as any)?.text) {
-            parsedContent = (parsed as any).text;
-          }
-        } catch {
-          // оставляем как есть
+        // Optional CDRs formula from S3 (English); graceful if absent
+        const cdrsFormula = await tryLoadCdrsFormula(traceId);
+        if (cdrsFormula) {
+          messages.push({
+            role: 'system',
+            content: [
+              `INSTRUCTION:`,
+              `- Always answer strictly in ${userLanguage}.`,
+              `- Use the attached CDRs formula as the primary reasoning framework.`,
+              ``,
+              `--- START OF CDRs FORMULA (EN) ---`,
+              cdrsFormula,
+              `--- END OF CDRs FORMULA ---`,
+            ].join('\n\n'),
+          });
+        } else {
+          messages.push({
+            role: 'system',
+            content: [
+              `INSTRUCTION:`,
+              `- Always answer strictly in ${userLanguage}.`,
+              `- If an internal formula is unavailable, produce the best possible analysis using the provided saved reports.`,
+            ].join('\n\n'),
+          });
         }
 
-        messages.push({
-          role: row.role,
-          content: parsedContent,
-        });
+        // Load saved reports (attachments) from Supabase.saved_chats
+        const ids: string[] = Array.isArray(savedMessageIds) ? savedMessageIds : [];
+        if (ids.length > 0) {
+          const { data: savedRows, error: savedErr } = await supabase
+            .from('saved_chats')
+            .select('id, profile_name, chat_json')
+            .in('id', ids);
+
+          if (savedErr) {
+            console.error(`[GROK][${traceId}] failed to fetch saved_chats`, savedErr);
+            return withTraceJson(
+              traceId,
+              { error: 'Failed to fetch saved reports.', code: 'INTERNAL_ERROR' },
+              { status: 500 }
+            );
+          }
+
+          const savedMap = new Map<string, any>();
+          for (const r of savedRows || []) savedMap.set(String(r.id), r);
+
+          ids.forEach((id: string, idx: number) => {
+            const row = savedMap.get(id);
+            if (!row) {
+              console.warn(`[GROK][${traceId}] saved report not found: ${id}`);
+              return;
+            }
+            const title = row.profile_name || `Saved Report #${idx + 1}`;
+            const cj = row.chat_json || {};
+            const text =
+              typeof cj?.ai_response === 'string'
+                ? cj.ai_response
+                : JSON.stringify(cj ?? {}, null, 2);
+
+            messages.push({
+              role: 'system',
+              content: [
+                `--- START OF ATTACHMENT #${idx + 1}: ${title} ---`,
+                String(text),
+                `--- END OF ATTACHMENT #${idx + 1} ---`,
+              ].join('\n'),
+            });
+          });
+        }
       }
 
-      // ✅ Детектим язык
-      const userLanguage =
-        userLangFromRequest || (prompt?.trim() ? detectUserLanguage(prompt, 'en') : 'en');
+      // (B) Existing history (kept for Chat/Image). For CDRs we do NOT inject chat history.
+      if (!isCdrs) {
+        const since = Date.now() - 12 * 60 * 60 * 1000;
+        const { data: historyRows, error: historyError } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('profile_id', profileId)
+          .gt('timestamp', since)
+          .order('timestamp', { ascending: true });
 
-      messages.unshift({
-        role: 'system',
-        content: `
+        if (historyError) {
+          console.error(`[GROK][${traceId}] Error loading history:`, historyError);
+          return withTraceJson(traceId, { error: 'Failed to load chat history' }, { status: 500 });
+        }
+
+        for (const row of historyRows || []) {
+          let parsedContent = row.content;
+          try {
+            const parsed = JSON.parse(row.content);
+            if (typeof parsed === 'object' && (parsed as any)?.text) {
+              parsedContent = (parsed as any).text;
+            }
+          } catch {
+            // keep as is
+          }
+          messages.push({ role: row.role, content: parsedContent });
+        }
+
+        const userLanguage =
+          userLangFromRequest || (prompt?.trim() ? detectUserLanguage(prompt, 'en') : 'en');
+
+        messages.unshift({
+          role: 'system',
+          content: `
 INSTRUCTION:
 - Always answer strictly in ${userLanguage}.
 - Do not answer in any other language.
 - Even if previous context is in Russian, ignore that and answer only in ${userLanguage}.
-        `.trim(),
-      });
+          `.trim(),
+        });
+      }
     }
+
+    // ── Build user content (prompt/images) ───────────────────────────────────
+    const imagesInput: string[] = Array.isArray((body as any)?.images)
+      ? (body as any).images
+      : imageBase64
+        ? [String(imageBase64)]
+        : [];
+
+    if (imagesInput.length > IMG_MAX_COUNT) {
+      return withTraceJson(
+        traceId,
+        {
+          error: `Too many images: ${imagesInput.length}. Maximum allowed is ${IMG_MAX_COUNT}.`,
+          code: 'IMG_COUNT_EXCEEDED',
+          hint: 'Reduce the number of images or send them in several smaller requests.',
+        },
+        { status: 413 }
+      );
+    }
+
+    type NormalizedImage = {
+      kind: 'data' | 'url';
+      url: string;
+      mime?: string;
+      approxBytes?: number;
+    };
+    const normalized: NormalizedImage[] = [];
+
+    for (const raw of imagesInput) {
+      const s = String(raw || '').trim();
+      if (!s) continue;
+
+      if (HTTP_URL_RE.test(s)) {
+        normalized.push({ kind: 'url', url: s });
+        continue;
+      }
+
+      const meta = parseDataUrlMeta(s);
+      if (!meta) {
+        return withTraceJson(
+          traceId,
+          {
+            error:
+              'Invalid image payload. Use a data URL (data:image/*;base64,...) or an HTTPS link.',
+            code: 'PAYLOAD_INVALID',
+            hint: 'Ensure the image is properly encoded as base64 or provide a valid HTTPS URL.',
+          },
+          { status: 400 }
+        );
+      }
+
+      if (!isSupportedMime(meta.mime)) {
+        return withTraceJson(
+          traceId,
+          {
+            error: `Unsupported image format: ${meta.mime}. Supported formats are JPG, PNG and WebP.`,
+            code: 'UNSUPPORTED_MEDIA_TYPE',
+            hint: 'Please save the image as JPG/PNG/WebP and try again.',
+          },
+          { status: 415 }
+        );
+      }
+
+      const maxBytes = IMG_MAX_INLINE_MB * 1024 * 1024;
+      if (meta.bytes > maxBytes) {
+        return withTraceJson(
+          traceId,
+          {
+            error: `The image is too large (~${mb(meta.bytes)} MB). The maximum inline size is ${IMG_MAX_INLINE_MB} MB.`,
+            code: 'PAYLOAD_TOO_LARGE',
+            hint: 'Compress the image, reduce its dimensions, or upload it via cloud storage and send an HTTPS link.',
+          },
+          { status: 413 }
+        );
+      }
+
+      normalized.push({ kind: 'data', url: s, mime: meta.mime, approxBytes: meta.bytes });
+    }
+
+    console.log(`[GROK][${traceId}] IMG_INTAKE`, {
+      count: normalized.length,
+      items: normalized.map((n) =>
+        n.kind === 'url'
+          ? { kind: n.kind, url: n.url.slice(0, 64) + (n.url.length > 64 ? '…' : '') }
+          : { kind: n.kind, mime: n.mime, approxMB: mb(n.approxBytes!) }
+      ),
+    });
 
     const userContent: any[] = [];
-
-    // ── PATCH: безопасная очистка base64 из чата + поддержка готового data: ──
-    if (imageBase64) {
-      const url = buildUserImageDataUrl(imageBase64);
+    for (const n of normalized) {
       userContent.push({
         type: 'image_url',
-        image_url: {
-          url,
-          detail: 'high',
-        },
+        image_url: { url: n.url, detail: 'high' },
       });
     }
-    // ────────────────────────────────────────────────────────────────────────
 
     if (prompt?.trim()) {
-      userContent.push({
-        type: 'text',
-        text: prompt.trim(),
-      });
+      userContent.push({ type: 'text', text: prompt.trim() });
     }
 
     if (userContent.length > 0) {
-      messages.push({
-        role: 'user',
-        content: userContent,
-      });
+      messages.push({ role: 'user', content: userContent });
     }
 
-    console.log(`[GROK][${traceId}] XAI: sending messages`, {
-      count: messages.length,
-    });
+    console.log(`[GROK][${traceId}] XAI: sending messages`, { count: messages.length });
 
-    // ── RETRY BLOCK: один и тот же payload на все попытки ───────────────────
-    const XAI_RETRIES = Number(process.env.XAI_RETRIES ?? '1'); // доп. попыток (итого до 2)
-    const RETRY_BACKOFF_MS = Number(process.env.RETRY_BACKOFF_MS ?? '600');
-    const XAI_TIMEOUT_MS = Number(process.env.XAI_TIMEOUT_MS ?? '55000');
-    const XAI_BUDGET_MS = Number(process.env.XAI_BUDGET_MS ?? '57000');
+    // ── RETRY BLOCK ──────────────────────────────────────────────────────────
+    const XAI_RETRIES = Number(process.env.XAI_RETRIES ?? '1');
+    const RETRY_BACKOFF_MS = Number(process.env.RETRY_BACKOFF_MS ?? '2000');
+    const XAI_TIMEOUT_MS = Number(process.env.XAI_TIMEOUT_MS ?? '240000');
+    const XAI_BUDGET_MS = Number(process.env.XAI_BUDGET_MS ?? '300000');
+
+    // Model selection per mode (no regression for others)
+    const model = isCdrs ? MODEL_CDRS : isImage ? MODEL_IMAGE : MODEL_CHAT;
+    const max_tokens = isCdrs ? MAX_TOKENS_CDRS : MAX_TOKENS_IMAGE;
 
     const payload = {
-      model: 'grok-2-vision-1212',
-      messages, // ← тот же объект, без мутаций после этого места
+      model,
+      messages,
       temperature: 0.3,
-      max_tokens: 3500,
+      max_tokens,
       stream: false,
     };
-    const bodyString = JSON.stringify(payload); // ← один и тот же JSON на все попытки
+    const bodyString = JSON.stringify(payload);
     const payloadBytes = Buffer.byteLength(bodyString, 'utf8');
 
     let grokResponse: Response | null = null;
     let lastError: any = null;
     let budgetExhausted = false;
 
-    const safetyMs = 150; // запас, чтобы не упереться в лимит платформы
+    const safetyMs = 150;
 
     for (let attempt = 0; attempt <= XAI_RETRIES; attempt++) {
-      // Проверяем оставшийся бюджет времени всего хендлера
       const elapsed = Date.now() - startedAt;
       let remaining = XAI_BUDGET_MS - elapsed;
       if (remaining <= 0) {
@@ -375,7 +643,6 @@ INSTRUCTION:
       }
 
       if (attempt > 0) {
-        // небольшой backoff с джиттером, но не выходим за бюджет
         const backoff = Math.min(jitter(RETRY_BACKOFF_MS), Math.max(0, remaining - safetyMs));
         if (backoff > 0) {
           await sleep(backoff);
@@ -398,6 +665,8 @@ INSTRUCTION:
         attempt,
         payload_bytes: payloadBytes,
         attemptTimeout,
+        model,
+        max_tokens,
       });
 
       try {
@@ -407,7 +676,7 @@ INSTRUCTION:
             'Content-Type': 'application/json',
             Authorization: `Bearer ${env.XAI_API_KEY}`,
           },
-          body: bodyString, // ← фиксированный payload
+          body: bodyString,
           signal: controller.signal,
         });
 
@@ -424,7 +693,6 @@ INSTRUCTION:
           break;
         }
 
-        // Не-OK: решаем, ретраить ли
         const retriable = isRetriableStatus(resp.status);
         console[retriable ? 'warn' : 'error'](
           `[GROK][${traceId}] attempt_${retriable ? 'retriable_status' : 'non_retriable_status'}`,
@@ -432,10 +700,9 @@ INSTRUCTION:
         );
 
         if (retriable && attempt < XAI_RETRIES) {
-          // следующий цикл
           continue;
         } else {
-          grokResponse = resp; // финальный ответ (не ок)
+          grokResponse = resp;
           break;
         }
       } catch (err: any) {
@@ -446,14 +713,12 @@ INSTRUCTION:
         if (err?.name === 'AbortError') {
           console.warn(`[GROK][${traceId}] attempt_abort_timeout`, { attempt, ms: dt });
           if (attempt < XAI_RETRIES) {
-            continue; // ретраим таймаут
+            continue;
           } else {
-            // больше попыток нет — выходим, grokResponse останется null
             break;
           }
         }
 
-        // Любая другая ошибка — не ретраим (строго по ТЗ)
         console.error(`[GROK][${traceId}] attempt_failed_exception`, {
           attempt,
           err: String(err?.message || err),
@@ -463,16 +728,18 @@ INSTRUCTION:
       }
     } // end for
 
-    // Если совсем не получили ответа (null) — решаем по причине
     if (!grokResponse) {
       if (lastError?.name === 'AbortError' || budgetExhausted) {
         console.error(
           `[GROK][${traceId}] Upstream timeout (final)`,
           budgetExhausted ? { reason: 'budget_exhausted' } : {}
         );
-        return withTraceJson(traceId, { error: 'Upstream timeout' }, { status: 504 });
+        return withTraceJson(
+          traceId,
+          { error: 'Upstream timeout', code: 'UPSTREAM_TIMEOUT' },
+          { status: 504 }
+        );
       }
-      // Поведение как раньше: сваливаемся в общий catch → 500
       throw lastError || new Error('No response from upstream');
     }
 
@@ -496,7 +763,10 @@ INSTRUCTION:
         });
         return withTraceJson(
           traceId,
-          { error: (data && (data.error || data.message)) || 'Grok API error' },
+          {
+            error: (data && (data.error || data.message)) || 'Grok API error',
+            code: 'UPSTREAM_ERROR',
+          },
           { status: 500 }
         );
       }
@@ -508,7 +778,10 @@ INSTRUCTION:
       });
       return withTraceJson(
         traceId,
-        { error: `Grok returned unexpected response: ${text.slice(0, 300)}` },
+        {
+          error: `Grok returned unexpected response: ${text.slice(0, 300)}`,
+          code: 'UPSTREAM_BAD_RESPONSE',
+        },
         { status: 500 }
       );
     }
@@ -516,9 +789,11 @@ INSTRUCTION:
     const aiText = data?.choices?.[0]?.message?.content || 'No response from Grok.';
     const cleanText = sanitizeText(aiText);
 
+    // Save assistant message to chat (existing behaviour) — reuse same supabase and user
     const { error: insertError } = await supabase.from('chat_messages').insert([
       {
         id: randomUUID(),
+        user_id: user?.id ?? null,
         profile_id: profileId,
         role: 'assistant',
         type: 'text',
@@ -531,22 +806,75 @@ INSTRUCTION:
       console.error(`[GROK][${traceId}] Error saving AI message`, insertError);
       return withTraceJson(
         traceId,
-        { error: 'Failed to save AI message to Supabase.' },
+        { error: 'Failed to save AI message to Supabase.', code: 'INTERNAL_ERROR' },
         { status: 500 }
       );
+    }
+
+    // ── NEW: Auto-save CDRs result into saved_chats (folder="CDRs") ─────────
+    if (isCdrs && user?.id) {
+      const now = Date.now();
+      const title = `CDR ${new Date(now).toISOString()}`;
+      const { error: savedErr } = await supabase.from('saved_chats').insert([
+        {
+          id: randomUUID(),
+          user_id: user.id,
+          profile_name: title,
+          saved_at: now,
+          folder: 'CDRs',
+          chat_json: {
+            ai_response: cleanText,
+            source: 'CDRs',
+            savedMessageIds: Array.isArray(savedMessageIds) ? savedMessageIds : [],
+            hasPhoto: Array.isArray((body as any)?.images)
+              ? (body as any).images.length > 0
+              : Boolean(imageBase64),
+            model,
+          },
+        } as any,
+      ]);
+      if (savedErr) {
+        console.warn(`[GROK][${traceId}] Failed to auto-save CDR result`, savedErr);
+        // Non-fatal
+      }
+    }
+
+    try {
+      const usageResp = await fetch(new URL('/api/user/log-generation', req.nextUrl).toString(), {
+        method: 'POST',
+        headers: {
+          ...(authzHeader ? { Authorization: authzHeader } : {}),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'profile_generation_incremented',
+          correlation_id: correlationId,
+        }),
+      });
+      if (!usageResp.ok) {
+        const b = await usageResp.text().catch(() => '');
+        console.warn(`[GROK][${traceId}] server-side usage increment failed`, {
+          status: usageResp.status,
+          body: b.slice(0, 200),
+        });
+      }
+    } catch (e) {
+      console.warn(`[GROK][${traceId}] server-side usage increment threw`, String(e));
     }
 
     const totalMs = Date.now() - startedAt;
     console.log(`[GROK][${traceId}] OK in ${totalMs}ms`, {
       bytes: Buffer.byteLength(cleanText, 'utf8'),
+      model,
+      max_tokens,
     });
 
-    return withTraceJson(traceId, { result: cleanText });
+    return withTraceJson(traceId, { result: cleanText, model });
   } catch (err: any) {
     console.error(`[GROK][${traceId}] UNEXPECTED`, { error: String(err?.message || err) });
     return withTraceJson(
       traceId,
-      { error: err?.message || 'Unexpected server error' },
+      { error: err?.message || 'Unexpected server error', code: 'INTERNAL_ERROR' },
       { status: 500 }
     );
   }

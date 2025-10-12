@@ -246,49 +246,64 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         p-4
         transition-transform duration-500 ease-in-out
         ${openSidebar.right ? 'translate-x-0' : 'translate-x-full'}
-        max-h-[calc(100vh-85px)]
-        overflow-y-auto
-        scrollbar-thin scrollbar-track-transparent scrollbar-thumb-transparent
+        h-[calc(100vh-190px)]
+        overflow-hidden
       `}
-      style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none' }}
+      style={{
+        backgroundColor: 'var(--background)',
+        boxShadow: 'none',
+        border: 'none',
+        isolation: 'isolate',
+        contain: 'paint',
+        willChange: 'transform',
+      }}
     >
-      {boxes.map((box) => {
-        const isActive = activeBox === box.id;
+      <div
+        className="h-full overflow-y-auto no-scrollbar relative pb-8"
+        style={{
+          WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+        }}
+      >
+        {boxes.map((box) => {
+          const isActive = activeBox === box.id;
 
-        return (
-          <div
-            key={box.id}
-            onClick={() => setActiveBox((prev) => (prev === box.id ? null : box.id))}
-            onKeyDown={(e) => handleKeyToggle(e, box.id)}
-            role="button"
-            tabIndex={0}
-            aria-expanded={isActive}
-            aria-controls={`${box.id}-content`}
-            className={cn(
-              'transition-all duration-300 cursor-pointer mb-4 rounded-xl border',
-              !isActive && 'border-[var(--card-border)] bg-[var(--card-bg)] dark:backdrop-blur-md',
-              isActive && 'border-[var(--accent)] dark:bg-[var(--card-bg)] dark:backdrop-blur-md',
-              'hover:shadow-sm'
-            )}
-            style={{ WebkitBackdropFilter: 'blur(12px)' }}
-          >
-            <div className="px-3 sm:px-4 py-3 flex justify-between items-center">
-              {box.id === 'plan-box' ? (
-                // УБРАНО оборачивание в <PlanUsageProvider>
-                <PlanProgressFetcher refreshToken={refreshToken} usageBump={usageBump} />
-              ) : (
-                <span className="text-sm font-medium text-[var(--text-primary)]">{box.title}</span>
+          return (
+            <div
+              key={box.id}
+              onClick={() => setActiveBox((prev) => (prev === box.id ? null : box.id))}
+              onKeyDown={(e) => handleKeyToggle(e, box.id)}
+              role="button"
+              tabIndex={0}
+              aria-expanded={isActive}
+              aria-controls={`${box.id}-content`}
+              className={cn(
+                'transition-all duration-300 cursor-pointer mb-4 rounded-xl border hover:shadow-sm',
+                !isActive
+                  ? 'border-[var(--card-border)] bg-[var(--card-bg)]'
+                  : 'border-[var(--accent)] bg-[var(--card-bg)]'
               )}
-              <span className="text-[var(--text-secondary)] text-xs">{isActive ? '▲' : '▼'}</span>
-            </div>
-            {isActive && (
-              <div id={`${box.id}-content`} className="px-3 sm:px-4 pb-4">
-                {box.content}
+            >
+              <div className="px-3 sm:px-4 py-3 flex justify-between items-center">
+                {box.id === 'plan-box' ? (
+                  // УБРАНО оборачивание в <PlanUsageProvider>
+                  <PlanProgressFetcher refreshToken={refreshToken} usageBump={usageBump} />
+                ) : (
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
+                    {box.title}
+                  </span>
+                )}
+                <span className="text-[var(--text-secondary)] text-xs">{isActive ? '▲' : '▼'}</span>
               </div>
-            )}
-          </div>
-        );
-      })}
+              {isActive && (
+                <div id={`${box.id}-content`} className="px-3 sm:px-4 pb-4">
+                  {box.content}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </aside>
   );
 }

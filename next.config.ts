@@ -1,4 +1,3 @@
-import 'dotenv-safe/config';
 import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 

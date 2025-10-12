@@ -1,9 +1,19 @@
 // app/cookies/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useMemo } from 'react';
+import { COOKIES_AND_SDKS, type CookieRow } from './cookies.registry';
 
 export default function CookiePolicyPage() {
+  // ВСТАВКА №1: сортированный реестр (A→Z) — чисто для отображения
+  const rows = useMemo<CookieRow[]>(
+    () =>
+      [...COOKIES_AND_SDKS].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      ),
+    []
+  );
+
   return (
     <main
       aria-labelledby="cookies-title"
@@ -36,7 +46,7 @@ export default function CookiePolicyPage() {
           className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent"
         />
 
-        <p className="text-sm text-white/70">Effective Date: 26 August 2025</p>
+        <p className="text-sm text-white/70">Effective Date: 7 October 2025</p>
 
         <p className="text-white/80">
           This Cookies Policy explains how H1NTED (“H1NTED”, “we”, “us”, “our”) uses cookies and
@@ -61,8 +71,17 @@ export default function CookiePolicyPage() {
           </a>
           .
         </p>
+
+        {/* Provider details — UA legal entity */}
         <p className="text-white/80">
-          Provider details. H1NTED (pre-incorporation), Ireland (correspondence: [Address]).
+          Provider details. ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ «Хінтед Штучний Інтелект»
+          (EDRPOU 46041011). English: Limited Liability Company "Hinted Artificial Intelligence".
+          Registered address: Flat 178, 1d Universytetska Street, Irpin, Bucha District, Kyiv
+          Oblast, 08200, Ukraine. Contact:{' '}
+          <a href="mailto:hello@h1nted.com" className="underline">
+            hello@h1nted.com
+          </a>
+          .
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -110,10 +129,10 @@ export default function CookiePolicyPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">3) Legal basis</h2>
         <p className="text-white/80">
-          Essential cookies are set under the Irish ePrivacy Regulations (implementing the ePrivacy
-          Directive) for cookies that are strictly necessary to provide a service you request.
-          Analytics and marketing cookies are set only with your consent under the ePrivacy rules
-          and GDPR. You can withdraw consent at any time (see Section 4).
+          Essential cookies are set under EU ePrivacy rules for cookies that are strictly necessary
+          to provide a service you request. Analytics and marketing cookies are set only with your
+          consent under the ePrivacy rules and GDPR. You can withdraw consent at any time (see
+          Section 4).
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -123,8 +142,8 @@ export default function CookiePolicyPage() {
           <li>
             You will see a cookie banner on first visit with options to{' '}
             <span className="text-white">Accept All</span>,{' '}
-            <span className="text-white">Reject All</span> (non-essential), or Manage Preferences by
-            category.
+            <span className="text-white">Reject All</span> (non-essential), or{' '}
+            <span className="text-white">Manage Preferences</span> by category.
           </li>
           <li>You can change your choices at any time via “Cookie Settings” on the site.</li>
           <li>
@@ -145,13 +164,77 @@ export default function CookiePolicyPage() {
           </li>
         </ul>
 
-        {/* ===== 5) TABLES (no borders/lines) ===== */}
+        {/* ===== 5) TABLES ===== */}
         <h2 className="text-xl font-semibold tracking-tight text-white">
           5) Cookies and similar technologies we use
         </h2>
         <p className="text-white/80">
-          The exact set may vary by feature and will be shown in real time in Cookie Settings.
+          The exact set may vary by feature and is shown in real time in{' '}
+          <span className="font-semibold">Cookie Settings</span>.
         </p>
+
+        {/* ВСТАВКА №2: динамический реестр (ничего не удаляем) */}
+        <div className="overflow-x-auto mt-3">
+          <table
+            role="table"
+            className="w-full text-left text-sm sm:text-base border-separate"
+            style={{ borderSpacing: '0 10px' }}
+          >
+            <caption className="sr-only">Cookies and SDKs used by the Platform</caption>
+            <thead>
+              <tr>
+                <th
+                  scope="col"
+                  className="text-white/70 font-semibold uppercase tracking-wide text-xs sm:text-sm pb-1 pr-4"
+                >
+                  Name
+                </th>
+                <th
+                  scope="col"
+                  className="text-white/70 font-semibold uppercase tracking-wide text-xs sm:text-sm pb-1 pr-4"
+                >
+                  Purpose
+                </th>
+                <th
+                  scope="col"
+                  className="text-white/70 font-semibold uppercase tracking-wide text-xs sm:text-sm pb-1 pr-4"
+                >
+                  Provider
+                </th>
+                <th
+                  scope="col"
+                  className="text-white/70 font-semibold uppercase tracking-wide text-xs sm:text-sm pb-1 pr-4"
+                >
+                  Type
+                </th>
+                <th
+                  scope="col"
+                  className="text-white/70 font-semibold uppercase tracking-wide text-xs sm:text-sm pb-1 pr-4"
+                >
+                  Category
+                </th>
+                <th
+                  scope="col"
+                  className="text-white/70 font-semibold uppercase tracking-wide text-xs sm:text-sm pb-1"
+                >
+                  Retention
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={`${r.name}-${i}`}>
+                  <td className="align-top text-white/80 py-3 pr-4">{r.name}</td>
+                  <td className="align-top text-white/80 py-3 pr-4">{r.purpose}</td>
+                  <td className="align-top text-white/80 py-3 pr-4">{r.provider ?? '—'}</td>
+                  <td className="align-top text-white/80 py-3 pr-4">{r.type}</td>
+                  <td className="align-top text-white/80 py-3 pr-4">{r.category}</td>
+                  <td className="align-top text-white/80 py-3">{r.retention}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <p className="text-white font-semibold mt-2">Essential (examples)</p>
         <div className="overflow-x-auto">
@@ -216,6 +299,13 @@ export default function CookiePolicyPage() {
                 <td className="align-top text-white/80 py-3 pr-4">Cookie / localStorage</td>
                 <td className="align-top text-white/80 py-3">Up to 12 months</td>
               </tr>
+              <tr>
+                <td className="align-top text-white/80 py-3 pr-4">zoho_* (mail embed if any)</td>
+                <td className="align-top text-white/80 py-3 pr-4">Zoho</td>
+                <td className="align-top text-white/80 py-3 pr-4">Support/contact delivery</td>
+                <td className="align-top text-white/80 py-3 pr-4">Cookie (third-party)</td>
+                <td className="align-top text-white/80 py-3">Varies (session/short-term)</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -250,7 +340,9 @@ export default function CookiePolicyPage() {
             <tbody>
               <tr>
                 <td className="align-top text-white/80 py-3 pr-4">analytics_*</td>
-                <td className="align-top text-white/80 py-3 pr-4">[Analytics provider]</td>
+                <td className="align-top text-white/80 py-3 pr-4">
+                  [None currently / provider TBD]
+                </td>
                 <td className="align-top text-white/80 py-3 pr-4">
                   Aggregated usage &amp; performance
                 </td>
@@ -306,7 +398,6 @@ export default function CookiePolicyPage() {
           your cookie preferences. You can clear these via your browser settings and via Cookie
           Settings.
         </p>
-        {/* ===== /5 ===== */}
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
           6) Third-party providers
@@ -319,12 +410,13 @@ export default function CookiePolicyPage() {
           <li>Stripe (payments &amp; fraud prevention)</li>
           <li>AWS (hosting / load balancing)</li>
           <li>Supabase (database / auth layers)</li>
+          <li>Zoho (email/support tooling)</li>
         </ul>
         <p className="text-white/80">
-          Each provider processes data under its own terms and privacy notices. We require
-          contractual safeguards and appropriate security. If any provider processes limited data
-          outside the EEA/UK, we use EU Standard Contractual Clauses (and UK equivalents) plus
-          additional measures.
+          Each provider processes data under its own terms and privacy notices. Where a provider
+          processes data outside the EEA/UK, we rely on the EU Standard Contractual Clauses (and UK
+          equivalents) and additional safeguards; for certified US providers we may rely on the
+          EU–US Data Privacy Framework.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -337,10 +429,9 @@ export default function CookiePolicyPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">8) International users</h2>
         <p className="text-white/80">
-          The Platform is operated from Ireland and used by business users across the EU and
-          worldwide. We apply EU/Irish ePrivacy consent standards. If your local rules are stricter,
-          you are responsible for ensuring compliance in your use (see also our Privacy Policy,
-          “Global availability &amp; local compliance”).
+          We apply EU ePrivacy consent standards. If your local rules are stricter, you are
+          responsible for ensuring compliance in your use (see also our Privacy Policy, “Global
+          availability &amp; local compliance”).
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -354,15 +445,20 @@ export default function CookiePolicyPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">10) Contact</h2>
         <div className="text-white/80 space-y-1">
-          <p>H1NTED (pre-incorporation), Ireland</p>
-          <p>Correspondence: [Address]</p>
+          <p>
+            LLC &quot;H1NTED&quot; — Limited Liability Company &quot;Hinted Artificial
+            Intelligence&quot;
+          </p>
+          <p>
+            Registered address: Flat 178, 1d Universytetska Street, Irpin, Bucha District, Kyiv
+            Oblast, 08200, Ukraine
+          </p>
           <p>
             Email:{' '}
-            <a href="mailto:olek.lynnyk@gmail.com" className="underline">
-              olek.lynnyk@gmail.com
+            <a href="mailto:hello@h1nted.com" className="underline">
+              hello@h1nted.com
             </a>
           </p>
-          {/* CRN/VAT и “Ltd.” убраны до регистрации */}
         </div>
 
         <div className="pt-4 mt-2 border-t border-white/10" />

@@ -7,7 +7,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/app/context/AuthProvider';
 import { detectUserLanguage } from '@/scripts/detectUserLanguage';
 import { logUserAction } from '@/lib/logger';
-import { usageBump } from '@/app/workspace/context/PlanUsageContext';
 
 export type ChatMessage = {
   id: string;
@@ -25,7 +24,12 @@ export interface UseChatLogicResult {
   errorMessage: string;
   handleGenerate: (
     inputValue: string,
-    attachments?: { name: string; base64: string }[]
+    attachments?: { name: string; base64: string }[],
+    options?: {
+      mode?: 'cdrs' | 'image' | 'chat';
+      savedMessageIds?: string[];
+      cdrDisplay?: { id: string; profile_name: string }[]; // только для UI
+    }
   ) => Promise<void>;
   handleRate: (messageId: string, rating: Rating) => Promise<void>;
   clearMessages: () => void;
@@ -148,9 +152,19 @@ export function useChatLogic(): UseChatLogicResult {
 
   const handleGenerate = async (
     inputValue: string,
-    attachments?: { name: string; base64: string }[]
+    attachments?: { name: string; base64: string }[],
+    options?: {
+      mode?: 'cdrs' | 'image' | 'chat';
+      savedMessageIds?: string[];
+      cdrDisplay?: { id: string; profile_name: string }[]; // только для UI
+    }
   ) => {
-    if (!inputValue.trim() && !(attachments && attachments.length > 0)) return;
+    const hasText = inputValue.trim() !== '';
+    const hasAttachments = !!attachments?.length;
+    const isCdr = options?.mode === 'cdrs';
+    const hasEnoughCdrs = isCdr && (options?.savedMessageIds?.length ?? 0) >= 2;
+
+    if (!hasText && !hasAttachments && !hasEnoughCdrs) return;
 
     if (hasReachedLimit) {
       setRefreshToken((prev) => prev + 1);
@@ -184,10 +198,15 @@ export function useChatLogic(): UseChatLogicResult {
     setLastInput(inputValue);
     setGenerationError(null);
 
+    const payload: any = { text: inputValue.trim(), attachments };
+    if (options?.mode === 'cdrs' && options?.cdrDisplay?.length) {
+      payload.cdrs = options.cdrDisplay; // [{ id, profile_name }]
+    }
+
     const userMessage: ChatMessage = {
       id: uuidv4(),
       role: 'user',
-      content: JSON.stringify({ text: inputValue.trim(), attachments }),
+      content: JSON.stringify(payload),
       timestamp: Date.now(),
     };
 
@@ -238,26 +257,9 @@ export function useChatLogic(): UseChatLogicResult {
         return;
       }
 
-      const resLog = await fetch('/api/user/log-generation', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      window.dispatchEvent(new CustomEvent('usage:inc', { detail: { delta: 1 } }));
-      usageBump(1);
-
-      const logResult = await resLog.json();
-
-      if (!resLog.ok) {
-        setErrorMessage(`${logResult.error || 'Error logging generation'} (Trace ID: ${traceId})`);
-        setGenerationError({ index: newMessages.length - 1 });
-        setMessageStatuses((prev) => ({
-          ...prev,
-          [userMessage.id]: 'error',
-        }));
-        setIsGenerating(false);
-        return;
-      }
+      // ────────────── B.1: correlationId (один на попытку) ──────────────
+      const correlationId = uuidv4();
+      // ──────────────────────────────────────────────────────────────────
 
       // ✅ Детектим язык прямо на фронте
       const detectedLang = detectUserLanguage(inputValue || '');
@@ -274,12 +276,21 @@ export function useChatLogic(): UseChatLogicResult {
       }
 
       if (attachments && attachments.length > 0) {
-        body.imageBase64 = attachments[0].base64;
+        body.images = attachments.map((a) => a.base64);
       }
+
+      if (options?.mode) body.mode = options.mode;
+      if (options?.savedMessageIds?.length) body.savedMessageIds = options.savedMessageIds;
 
       const aiResponse = await fetch('/api/ai/grok-3', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // ────────────── B.1: передаём токен и корреляцию ──────────────
+          Authorization: `Bearer ${token}`,
+          'x-correlation-id': correlationId,
+          // ─────────────────────────────────────────────────────────────
+        },
         body: JSON.stringify(body),
       });
 
@@ -309,6 +320,39 @@ export function useChatLogic(): UseChatLogicResult {
           timestamp: aiMessage.timestamp,
         },
       ]);
+
+      // ── AUTOSAVE: только для CDRs ───────────────────────────────────────────────
+      if (options?.mode === 'cdrs' && userId) {
+        try {
+          await supabase.from('saved_chats').insert([
+            {
+              user_id: userId,
+              profile_name: `CDR #${Date.now()}`,
+              saved_at: Date.now(),
+              chat_json: {
+                ai_response: aiText,
+                user_comments: '',
+              },
+              folder: 'CDRs',
+            },
+          ]);
+
+          await logUserAction({
+            userId,
+            action: 'profile:auto_saved_cdr',
+            metadata: {
+              source: 'cdrs',
+              profileId: activeProfileId,
+            },
+          });
+        } catch (e) {
+          console.error('CDRs autosave failed:', e);
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('usage:inc', { detail: { delta: 1 } }));
+      }
 
       if (userId) {
         await logUserAction({

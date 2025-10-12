@@ -36,7 +36,7 @@ export default function TermsPage() {
           className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent"
         />
 
-        <p className="text-sm text-white/70">Effective Date: 1 September 2025</p>
+        <p className="text-sm text-white/70">Effective Date: 7 October 2025</p>
 
         <p className="text-white/80">
           These Terms of Use (&quot;Terms&quot;) govern your access to and use of H1NTED’s AI-driven
@@ -45,20 +45,42 @@ export default function TermsPage() {
           accessing or using the Platform, you agree to be bound by these Terms.
         </p>
 
-        {/* Provider details — pre-incorporation (EU/Ireland) */}
+        {/* Provider details — UA legal entity */}
         <p className="text-white/80">
-          Provider details. H1NTED (pre-incorporation), Ireland (correspondence: [Address]).
+          Provider details. ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ «Хінтед Штучний Інтелект»
+          (EDRPOU 46041011). English: Limited Liability Company "Hinted Artificial Intelligence".
+          Registered address: Flat 178, 1d Universytetska Street, Irpin, Bucha District, Kyiv
+          Oblast, 08200, Ukraine. Privacy contact:{' '}
+          <a className="underline" href="mailto:hello@h1nted.com">
+            hello@h1nted.com
+          </a>
+          .
         </p>
 
-        {/* 0A) Pre-incorporation & Novation */}
+        <p className="text-white/80">
+          Data protection information (including our EU Representative) is set out in our{' '}
+          <a className="underline" href="/privacy">
+            Privacy Policy
+          </a>
+          .
+        </p>
+
+        {/* 0A) Critical responsibilities (replaces pre-incorporation) */}
         <h2 className="text-xl font-semibold tracking-tight text-white">
-          0A) Pre-incorporation &amp; Novation
+          0A) Critical — Your Legal Basis &amp; Permissions
         </h2>
         <p className="text-white/80">
-          These Terms are entered into by the promoters of H1NTED (pre-incorporation) acting on
-          behalf of the future Irish entity. Upon incorporation of H1NTED Ltd. (Ireland), all rights
-          and obligations under these Terms shall automatically novate to H1NTED Ltd., and you
-          consent to such novation.
+          You must not upload any photo, profile or text about a person unless you (i) have a valid
+          legal basis under applicable data-protection laws and (ii) where required, that person’s
+          informed permission/consent — even if the source is public. You are solely responsible for
+          providing Articles 13/14 GDPR notices, documenting your legal basis and honouring
+          data-subject requests. On our request you will provide evidence of compliance. We may
+          suspend processing where evidence is not provided.
+        </p>
+        <p className="text-white/80">
+          Do not upload children’s data or special-category data (e.g., health, biometrics) unless
+          you meet all legal requirements and safeguards. You are the Controller for User Inputs; we
+          act as your Processor.
         </p>
 
         <p className="text-white/80">
@@ -183,9 +205,9 @@ export default function TermsPage() {
           </li>
         </ul>
         <p className="text-white/80">
-          You grant H1NTED a limited licence to process User Inputs solely to provide, secure and
-          improve the Platform (including model quality), as described in our Privacy Policy. We do
-          not sell personal data.
+          You grant H1NTED a limited licence to process User Inputs solely to provide and secure the
+          Platform (e.g., abuse prevention, rate-limiting). We do not sell personal data and we do
+          not use User Inputs or Outputs to train, fine-tune, evaluate or improve AI/ML models.
         </p>
         <p className="text-white/80">
           You agree to defend, indemnify and hold harmless H1NTED from any claims, damages,
@@ -198,10 +220,11 @@ export default function TermsPage() {
           7) Prohibited and High-Risk Uses
         </h2>
         <p className="text-white/80">
-          You must not use the Platform to perform or assist emotion recognition, biometric
-          categorisation, or profiling in contexts regulated as high-risk (including workplace or
-          education) without a separate written agreement, appropriate human oversight and lawful
-          basis. No use for surveillance or any purpose prohibited by AI or privacy regulation.
+          No facial recognition, biometric identification/categorisation, or emotion recognition.
+          You must not use Outputs as the sole basis for employment, education, credit, insurance,
+          law-enforcement or healthcare decisions. Any such use requires a separate written
+          agreement, appropriate human oversight and a valid legal basis; otherwise it is
+          prohibited. No use for surveillance or any purpose prohibited by AI or privacy regulation.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -233,10 +256,13 @@ export default function TermsPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">9) Support</h2>
         <p className="text-white/80">
-          We offer email-based support via olek.lynnyk@gmail.com. Target response time is up to 48
-          business hours. Occasional video sessions may be offered at our discretion and are not
-          guaranteed. Unless expressly agreed, no SLA or uptime commitment applies and support
-          priority is not tier-based.
+          We offer email-based support via{' '}
+          <a className="underline" href="mailto:hello@h1nted.com">
+            hello@h1nted.com
+          </a>
+          . Target response time is up to 48 business hours. Occasional video sessions may be
+          offered at our discretion and are not guaranteed. Unless expressly agreed, no SLA or
+          uptime commitment applies and support priority is not tier-based.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -269,7 +295,7 @@ export default function TermsPage() {
           reverse engineer, decompile or create derivative works of the Platform.
         </p>
 
-        {/* === INSERTED per assignment: 11A–11G and 11H === */}
+        {/* === IP and AI training safeguards === */}
         <h3 className="text-lg font-semibold tracking-tight text-white mt-4">
           11A) Proprietary Technology Notice
         </h3>
@@ -296,8 +322,9 @@ export default function TermsPage() {
 
         <h3 className="text-lg font-semibold tracking-tight text-white">11C) No Model Training</h3>
         <p className="text-white/80">
-          You may not use the Platform, its data or outputs to train, fine-tune, evaluate or improve
-          machine-learning or AI models.
+          We and our sub-processors must not use the Platform, User Inputs, Outputs or related
+          metadata to train, fine-tune, evaluate or improve any AI/ML models. Processing is limited
+          to inference and security/operational needs required to provide the Service.
         </p>
 
         <h3 className="text-lg font-semibold tracking-tight text-white">
@@ -344,14 +371,15 @@ export default function TermsPage() {
         </h2>
         <p className="text-white/80">
           We process personal data in accordance with our Privacy Policy. For most use cases, you
-          are the controller of personal data in User Inputs and H1NTED acts as processor. For
+          are the Controller of personal data in User Inputs and H1NTED acts as Processor. For
           Business/enterprise customers, a DPA may be provided; in case of conflict, the signed DPA
           prevails over these Terms.
         </p>
         <p className="text-white/80">
-          International transfers may occur; we use appropriate safeguards as required by EU/UK
-          GDPR. Our lead supervisory authority is the Data Protection Commission (Ireland). You may
-          lodge a complaint with the DPC or with your local EU supervisory authority.
+          International transfers may occur; we use appropriate safeguards as required by EU/UK GDPR
+          (including the EU Standard Contractual Clauses 2021/914 and, where relevant, the UK
+          IDTA/Addendum) together with appropriate technical and organisational measures. You may
+          lodge a complaint with any EEA supervisory authority.
         </p>
         <p className="text-white/80">
           You must not upload personal data where you lack a lawful basis or permissions, and you
@@ -364,7 +392,9 @@ export default function TermsPage() {
         <p className="text-white/80">
           The Platform integrates third-party services (including hosting, analytics, AI providers
           and payment processors). We are not responsible for their acts or omissions. Your use of
-          Stripe and other third-party services may be subject to their own terms.
+          Stripe and other third-party services may be subject to their own terms. A current list of
+          sub-processors with locations and transfer mechanisms is available on our Website and will
+          be updated with prior notice; you may object on reasonable grounds.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">14) Indemnity</h2>
@@ -407,7 +437,7 @@ export default function TermsPage() {
           16) Territorial Scope and Your Compliance
         </h2>
         <p className="text-white/80">
-          The Platform is operated from Ireland and is available to business users across the EU and
+          The Platform is operated from the EU and is available to business users across the EU and
           worldwide. You are responsible for ensuring that your access and use comply with the laws
           of the country in which you are located, including data, employment and sector-specific
           rules.
@@ -419,7 +449,9 @@ export default function TermsPage() {
         <p className="text-white/80">
           These Terms and any non-contractual obligations arising out of or in connection with them
           are governed by the laws of Ireland. The courts of Ireland, sitting in Dublin, shall have
-          exclusive jurisdiction.
+          exclusive jurisdiction. Nothing in these Terms limits mandatory rights under applicable
+          law. We may seek equitable and injunctive relief for actual or threatened misuse of our
+          intellectual property or Confidential Information.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -437,9 +469,11 @@ export default function TermsPage() {
         </h2>
         <p className="text-white/80">
           Notices may be given by email to your registered address and to H1NTED at{' '}
-          olek.lynnyk@gmail.com. Electronic notices are deemed received on the day sent, if sent on
-          a business day. We sell exclusively to businesses. The EU Online Dispute Resolution
-          platform does not apply.
+          <a className="underline" href="mailto:hello@h1nted.com">
+            hello@h1nted.com
+          </a>
+          . Electronic notices are deemed received on the day sent, if sent on a business day. We
+          sell exclusively to businesses. The EU Online Dispute Resolution platform does not apply.
         </p>
 
         <h2 className="text-xl font-semibold tracking-tight text-white">
@@ -499,10 +533,20 @@ export default function TermsPage() {
 
         <h2 className="text-xl font-semibold tracking-tight text-white">Contact</h2>
         <div className="text-white/80 space-y-1">
-          <p>H1NTED (pre-incorporation), Ireland</p>
-          <p>Correspondence: [Address]</p>
-          <p>Email: olek.lynnyk@gmail.com</p>
-          {/* Убраны CRN/VAT и “Ltd.” до регистрации — по заданию */}
+          <p>
+            LLC &quot;H1NTED&quot; — Limited Liability Company &quot;Hinted Artificial
+            Intelligence&quot;
+          </p>
+          <p>
+            Registered address: Flat 178, 1d Universytetska Street, Irpin, Bucha District, Kyiv
+            Oblast, 08200, Ukraine
+          </p>
+          <p>
+            Email:{' '}
+            <a className="underline" href="mailto:hello@h1nted.com">
+              hello@h1nted.com
+            </a>
+          </p>
         </div>
 
         {/* Низ карточки */}

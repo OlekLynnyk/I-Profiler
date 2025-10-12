@@ -1,13 +1,18 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ClipboardCopy, ThumbsUp, ThumbsDown, FileText } from 'lucide-react';
+import { Copy, ThumbsUp, ThumbsDown, FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 
 interface Attachment {
   name: string;
   base64: string;
+}
+
+interface CdrRef {
+  id: string;
+  profile_name: string;
 }
 
 interface ChatBubbleProps {
@@ -34,6 +39,7 @@ export default function ChatBubble({
   const [copied, setCopied] = useState(false);
 
   let attachments: Attachment[] | null = null;
+  let cdrs: CdrRef[] | null = null;
   let text = '';
 
   try {
@@ -42,6 +48,9 @@ export default function ChatBubble({
       text = parsed.text || '';
       if (Array.isArray(parsed.attachments)) {
         attachments = parsed.attachments;
+      }
+      if (Array.isArray(parsed.cdrs)) {
+        cdrs = parsed.cdrs as CdrRef[];
       }
     } else {
       text = content;
@@ -67,7 +76,7 @@ export default function ChatBubble({
     } else if (!isUser) {
       setDisplayedText(text);
     }
-  }, [text, isUser]);
+  }, [text, isUser, attachments?.length]);
 
   const handleCopy = async () => {
     try {
@@ -92,6 +101,22 @@ export default function ChatBubble({
       className={`w-full py-1 flex ${isUser ? 'justify-end' : 'justify-start'}`}
     >
       <div className="flex flex-col max-w-full sm:max-w-[80%] text-left">
+        {/* ✅ CDRs — бейджи выбранных отчётов пользователя */}
+        {isUser && cdrs && cdrs.length > 0 && (
+          <div className="flex gap-2 mb-2 flex-wrap">
+            {cdrs.map((it) => (
+              <span
+                key={it.id}
+                className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-full
+                           bg-[var(--surface)] text-[var(--text-primary)] border border-[var(--card-border)]"
+                title={it.profile_name}
+              >
+                <span className="max-w-[220px] truncate">{it.profile_name}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* ✅ ATTACHMENTS — квадратные превью над bubble */}
         {attachments && attachments.length > 0 && (
           <div className="flex flex-col gap-2 mb-2">
@@ -172,7 +197,7 @@ export default function ChatBubble({
                     tabIndex={0}
                     onClick={handleCopy}
                   >
-                    <ClipboardCopy size={16} />
+                    <Copy size={16} />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent

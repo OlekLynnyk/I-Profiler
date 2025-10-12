@@ -6,10 +6,13 @@ import { useRouter } from 'next/navigation';
 import { FcGoogle } from 'react-icons/fc';
 import { getRedirectTo } from '@/utils/getRedirectTo';
 import GlobalLoading from '@/app/loading';
+import type { AuthApiError } from '@supabase/supabase-js';
+import { useSearchParams } from 'next/navigation';
 
 export default function AuthModal({ onClose }: { onClose: () => void }) {
   const supabase = createClientComponentClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const shellRef = useRef<HTMLDivElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -22,6 +25,12 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [redirecting, setRedirecting] = useState(false);
+
+  // --- Email verification support ---
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // NEW: mobile gating state
   const [isMobile, setIsMobile] = useState(false);
@@ -72,6 +81,31 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     return () => unsub?.unsubscribe();
   }, [supabase, onClose, router]);
 
+  // Кулдаун на повторную отправку письма (тик раз в секунду)
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = window.setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [resendCooldown]);
+
+  // Автовключение блока Resend при заходе с /login?unverified=1
+  useEffect(() => {
+    if (searchParams?.get('unverified') === '1') {
+      setNeedsVerification(true);
+      setInfo('Your email is not verified yet. You can resend the verification email below.');
+    }
+  }, []);
+
+  // Автосообщение при /login?verified=1
+  useEffect(() => {
+    if (searchParams?.get('verified') === '1') {
+      setInfo('Email verified. You can log in now.');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // клик по фону
   const onBackdrop = (e: React.MouseEvent) => {
     if (e.target === shellRef.current) onClose();
@@ -99,6 +133,41 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     }); // закрывает requestAnimationFrame
   };
 
+  function isEmailNotConfirmed(err: unknown) {
+    const status = (err as AuthApiError | undefined)?.status;
+    const msg = (err as any)?.message?.toString()?.toLowerCase?.() ?? '';
+    // Supabase обычно даёт 400 и текст с "confirm"
+    return status === 400 && msg.includes('confirm');
+  }
+
+  async function resendSignupEmail() {
+    setError('');
+    setInfo('');
+    if (!email) {
+      setError('Enter your email to resend verification.');
+      return;
+    }
+    if (resendCooldown > 0 || resendLoading) return;
+
+    try {
+      setResendLoading(true);
+      const { error: rErr } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (rErr) {
+        setError(rErr.message);
+        return;
+      }
+      setResendSent(true);
+      setInfo('Verification email sent. Check your inbox.');
+      setResendCooldown(60);
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
   const handleAuth = async () => {
     setError('');
     setInfo('');
@@ -123,9 +192,16 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     }
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setError(error.message);
-      else {
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInErr) {
+        if (isEmailNotConfirmed(signInErr)) {
+          setNeedsVerification(true);
+          setError('');
+          setInfo('Your email is not verified yet. You can resend the verification email below.');
+        } else {
+          setError(signInErr.message);
+        }
+      } else {
         onClose();
         router.refresh();
       }
@@ -139,13 +215,14 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       else {
         localStorage.setItem('agreed_to_terms', 'true');
         setInfo('Check your email to confirm your registration.');
+        setNeedsVerification(true);
       }
     }
   };
 
   if (redirecting) {
     return (
-      <div className="fixed inset-0 z-[9999]">
+      <div data-interactive="true" className="fixed inset-0 z-[9999]">
         <GlobalLoading />
       </div>
     );
@@ -155,8 +232,8 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     <div
       ref={shellRef}
       onMouseDown={onBackdrop}
-      className="fixed inset-0 z-50 flex items-center justify-center px-4
-                 bg-black/60 backdrop-blur-sm"
+      data-interactive="true"
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-title"
@@ -261,6 +338,30 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           {error && <div className="text-red-300 text-xs">{error}</div>}
           {info && <div className="text-green-300 text-xs">{info}</div>}
 
+          {/* RESEND BLOCK */}
+          {(needsVerification || (isLogin && email)) && (
+            <div className="mt-3 rounded-lg bg-white/[0.05] ring-1 ring-white/10 p-3">
+              <div className="text-xs text-white/80">
+                Didn’t get the email? You can resend the verification link.
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={resendSignupEmail}
+                  disabled={resendLoading || resendCooldown > 0}
+                  className="rounded-md px-3 py-1.5 text-xs bg-white/10 hover:bg-white/15 ring-1 ring-white/15 disabled:opacity-60"
+                >
+                  {resendLoading
+                    ? 'Sending…'
+                    : resendCooldown > 0
+                      ? `Resend in ${resendCooldown}s`
+                      : 'Resend verification email'}
+                </button>
+                {resendSent && <span className="text-[11px] text-green-300">Sent</span>}
+              </div>
+            </div>
+          )}
+
           <div className="relative">
             <button
               type="submit"
@@ -270,9 +371,9 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
               className={
                 `mt-4 w-full rounded-full px-5 py-3 text-white backdrop-blur ring-1 focus:outline-none
                  focus-visible:ring-2 focus-visible:ring-purple-300/60 ` +
-                // ТОЛЬКО на мобильных и ТОЛЬКО в режиме Create делаем кнопку тёмной
+                // 🔧 ТОЛЬКО мобильный + Create: делаем кнопку тёмной, «заблокированной» визуально
                 (!isLogin && isMobile
-                  ? 'bg-white/5 ring-white/10 text-white/60 hover:bg-white/5 hover:ring-white/10'
+                  ? 'bg-white/5 ring-white/10 text-white/60 opacity-50 hover:bg-white/5 hover:ring-white/10'
                   : 'bg-purple-500/25 hover:bg-purple-500/30 ring-purple-300/30 hover:ring-purple-300/40 ' +
                     'md:bg-purple-500/20 md:hover:bg-purple-500/30 md:ring-purple-300/30 md:hover:ring-purple-300/50 disabled:opacity-60')
               }

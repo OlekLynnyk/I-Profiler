@@ -1,58 +1,117 @@
 'use client';
 
 import { BoxData } from './types';
+import { FolderPlus, FilePlus } from 'lucide-react';
+import React from 'react';
 
 interface SidebarBoxProps {
   box: BoxData;
   isActive: boolean;
   onToggle: () => void;
+  /** Если переданы children — они имеют приоритет над box.renderContent */
+  children?: React.ReactNode;
 }
 
-export default function SidebarBox({ box, isActive, onToggle }: SidebarBoxProps) {
+export default function SidebarBox({ box, isActive, onToggle, children }: SidebarBoxProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((e.key === 'Enter' || e.key === 'Escape') && !box.locked) {
-      onToggle();
-    }
+    if ((e.key === 'Enter' || e.key === 'Escape') && !box.locked) onToggle();
   };
 
   const disabled = box.locked;
+  const hasContent = typeof children !== 'undefined' ? !!children : !!box.renderContent;
 
   return (
     <div
-      role="button"
-      tabIndex={0}
       aria-expanded={isActive}
       aria-label={`Toggle ${box.title}`}
-      onClick={() => !disabled && onToggle()}
-      onKeyDown={handleKeyDown}
       title={disabled ? 'Upgrade required to access this feature' : ''}
       className={`
-        transition-all duration-300 mb-4 rounded-xl border
-        ${
-          isActive
-            ? 'border-[var(--accent)] dark:bg-[var(--card-bg)] dark:backdrop-blur-md'
-            : 'border-[var(--card-border)] bg-[var(--card-bg)] dark:backdrop-blur-md'
-        }
+        transition-[opacity,transform] duration-300 mb-4 rounded-xl border
+        ${isActive ? 'border-[var(--accent)] bg-[var(--card-bg)]' : 'border-[var(--card-border)] bg-[var(--card-bg)]'}
         focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]
         ${disabled ? 'opacity-50' : 'cursor-default'}
-        ${!disabled ? 'cursor-pointer' : ''}
       `}
-      style={{ WebkitBackdropFilter: 'blur(12px)' }}
+      style={{
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+      }}
     >
-      {/* header */}
-      <div className="px-4 py-3 flex justify-between items-center">
+      {/* header — тумблер */}
+      <div
+        className="px-4 py-3 flex justify-between items-center cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onClick={() => !disabled && onToggle()}
+        onKeyDown={handleKeyDown}
+      >
         <span className="text-sm font-medium text-[var(--text-primary)]">{box.title}</span>
-        <span className="text-[var(--text-secondary)] text-xs">{isActive ? '▲' : '▼'}</span>
+
+        {/* правый блок хедера */}
+        <div className="flex items-center gap-px">
+          {/* Saved messages: Create block */}
+          {box.id === 'saved-messages' && isActive && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new Event('savedMessages:createBlock'));
+              }}
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] appearance-none border-0 hover:ring-1 hover:ring-[var(--card-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] dark:bg-[var(--card-bg)] transition"
+              aria-label="Create block"
+              title="Create block"
+            >
+              <FolderPlus className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Templates: порядок кнопок — файл, затем папка */}
+          {box.id === 'templates' && isActive && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.dispatchEvent(new Event('templates:createTemplate'));
+                }}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] appearance-none border-0 hover:ring-1 hover:ring-[var(--card-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] dark:bg-[var(--card-bg)] transition"
+                aria-label="Create template"
+                title="Create template"
+              >
+                <FilePlus className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.dispatchEvent(new Event('templates:createFolder'));
+                }}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--button-bg)] text-[var(--text-primary)] hover:bg-[var(--button-hover-bg)] appearance-none border-0 hover:ring-1 hover:ring-[var(--card-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] dark:bg-[var(--card-bg)] transition"
+                aria-label="Create block"
+                title="Create block"
+              >
+                <FolderPlus className="w-4 h-4" />
+              </button>
+            </>
+          )}
+
+          <span className="text-[var(--text-secondary)] text-xs">{isActive ? '▲' : '▼'}</span>
+        </div>
       </div>
 
       {/* content */}
-      {isActive && (
+      {isActive && hasContent && (
         <div
           className="px-4 pb-4 text-sm text-[var(--text-primary)]"
+          /* гасим ВСЮ цепочку клика, чтобы он не долетал до тумблера/глобального capture */
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
-          {box.renderContent && <div className="mt-2">{box.renderContent}</div>}
+          <div className="mt-2">
+            {typeof children !== 'undefined' ? children : box.renderContent}
+          </div>
         </div>
       )}
     </div>

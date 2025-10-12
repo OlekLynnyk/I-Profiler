@@ -16,9 +16,17 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
       if (!session) {
         router.replace('/login');
-      } else {
-        setAllowed(true);
+        return;
       }
+
+      const { data: userData } = await supabase.auth.getUser();
+      const isVerified = !!userData.user?.email_confirmed_at;
+      if (!isVerified) {
+        router.replace('/login?unverified=1');
+        return;
+      }
+
+      setAllowed(true);
     };
 
     checkSession();

@@ -33,7 +33,7 @@ export default function DayLimitModal({
   return (
     <div
       className="fixed w-full flex justify-center px-2 sm:px-4 z-40"
-      style={{ bottom: `${offsetFromBottomPx}px` }} // чуть выше месячного (который bottom-[100px])
+      style={{ bottom: `calc(${offsetFromBottomPx}px + env(safe-area-inset-bottom, 0px))` }}
       role="status"
       aria-live="polite"
     >
@@ -51,15 +51,17 @@ export default function DayLimitModal({
             text-[var(--text-primary)]
           "
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 py-3 text-sm text-white">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3 px-4 py-2 md:py-[6px] text-sm text-white">
             <span className="whitespace-normal md:whitespace-nowrap text-center md:text-left">
               Daily limit reached: {used}/{limit}
               {dailyResetsAtLabel ? ` • Resets at ${dailyResetsAtLabel}` : ''}
             </span>
             <div className="flex gap-2 md:items-center w-full md:w-auto justify-center md:justify-end">
               <button
+                type="button"
                 onClick={onClose}
-                className="text-[11px] bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded-md w-full md:w-auto min-w-[95px]"
+                className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md w-full md:w-auto min-w-[95px] min-h-[44px] md:min-h-[36px] md:px-3 md:py-1.5 md:text-[11px]"
+                aria-label="Dismiss daily limit banner"
               >
                 Got it
               </button>
