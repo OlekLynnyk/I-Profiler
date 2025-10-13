@@ -2,7 +2,7 @@
 
 import { BoxData } from './types';
 import { FolderPlus, FilePlus } from 'lucide-react';
-import React from 'react';
+import React, { useId } from 'react';
 
 interface SidebarBoxProps {
   box: BoxData;
@@ -13,12 +13,17 @@ interface SidebarBoxProps {
 }
 
 export default function SidebarBox({ box, isActive, onToggle, children }: SidebarBoxProps) {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((e.key === 'Enter' || e.key === 'Escape') && !box.locked) onToggle();
-  };
-
+  const panelId = useId(); // для aria-controls
   const disabled = box.locked;
   const hasContent = typeof children !== 'undefined' ? !!children : !!box.renderContent;
+
+  const handleKeyDownHeader = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
+      e.preventDefault();
+      onToggle();
+    }
+    if (e.key === 'Escape' && !disabled) onToggle();
+  };
 
   return (
     <div
@@ -31,19 +36,16 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
         focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]
         ${disabled ? 'opacity-50' : 'cursor-default'}
       `}
-      style={{
-        willChange: 'transform',
-        backfaceVisibility: 'hidden',
-        WebkitBackfaceVisibility: 'hidden',
-      }}
     >
       {/* header — тумблер */}
       <div
-        className="px-4 py-3 flex justify-between items-center cursor-pointer"
+        className="px-4 py-3 flex justify-between items-center cursor-pointer select-none"
         role="button"
         tabIndex={0}
+        aria-controls={panelId}
+        aria-disabled={disabled || undefined}
         onClick={() => !disabled && onToggle()}
-        onKeyDown={handleKeyDown}
+        onKeyDown={handleKeyDownHeader}
       >
         <span className="text-sm font-medium text-[var(--text-primary)]">{box.title}</span>
 
@@ -65,7 +67,7 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
             </button>
           )}
 
-          {/* Templates: порядок кнопок — файл, затем папка */}
+          {/* Templates: файл → папка */}
           {box.id === 'templates' && isActive && (
             <>
               <button
@@ -102,12 +104,17 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
       {/* content */}
       {isActive && hasContent && (
         <div
+          id={panelId}
+          role="region"
+          aria-label={`${box.title} content`}
+          data-ignore-sidebar-close="true"
           className="px-4 pb-4 text-sm text-[var(--text-primary)]"
-          /* гасим ВСЮ цепочку клика, чтобы он не долетал до тумблера/глобального capture */
+          // гасим всю цепочку для pointer/touch, чтобы не улетало в глобальный capture
           onPointerDown={(e) => e.stopPropagation()}
           onPointerUp={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
         >
           <div className="mt-2">
             {typeof children !== 'undefined' ? children : box.renderContent}

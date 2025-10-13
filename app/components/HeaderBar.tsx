@@ -40,7 +40,6 @@ export default function HeaderBar({
       closeSidebar('left');
     } else {
       toggleSidebar('left');
-      window.dispatchEvent(new Event('sidebarHelper:openSaved'));
     }
   };
 

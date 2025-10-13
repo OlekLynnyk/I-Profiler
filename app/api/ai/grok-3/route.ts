@@ -787,7 +787,8 @@ INSTRUCTION:
     }
 
     const aiText = data?.choices?.[0]?.message?.content || 'No response from Grok.';
-    const cleanText = sanitizeText(aiText);
+    // CDRs: не ломаем markdown; остальные режимы — как было
+    const cleanText = isCdrs ? String(aiText || '').trim() : sanitizeText(aiText);
 
     // Save assistant message to chat (existing behaviour) — reuse same supabase and user
     const { error: insertError } = await supabase.from('chat_messages').insert([
@@ -815,32 +816,47 @@ INSTRUCTION:
     if (isCdrs && user?.id) {
       const now = Date.now();
       const title = `CDR ${new Date(now).toISOString()}`;
-      const { error: savedErr } = await supabase.from('saved_chats').insert([
-        {
-          id: randomUUID(),
-          user_id: user.id,
-          profile_name: title,
-          saved_at: now,
-          folder: 'CDRs',
-          chat_json: {
-            ai_response: cleanText,
-            source: 'CDRs',
-            savedMessageIds: Array.isArray(savedMessageIds) ? savedMessageIds : [],
-            hasPhoto: Array.isArray((body as any)?.images)
-              ? (body as any).images.length > 0
-              : Boolean(imageBase64),
-            model,
-          },
-        } as any,
-      ]);
-      if (savedErr) {
-        console.warn(`[GROK][${traceId}] Failed to auto-save CDR result`, savedErr);
-        // Non-fatal
-      }
+      // fire-and-forget через async IIFE (без .catch на PromiseLike)
+      void (async () => {
+        const { error } = await supabase.from('saved_chats').insert([
+          {
+            id: randomUUID(),
+            user_id: user.id,
+            profile_name: title,
+            saved_at: now,
+            folder: 'CDRs',
+            chat_json: {
+              ai_response: cleanText,
+              source: 'CDRs',
+              savedMessageIds: Array.isArray(savedMessageIds) ? savedMessageIds : [],
+              hasPhoto: Array.isArray((body as any)?.images)
+                ? (body as any).images.length > 0
+                : Boolean(imageBase64),
+              model,
+            },
+          } as any,
+        ]);
+        if (error) {
+          console.warn(`[GROK][${traceId}] CDR autosave failed`, error);
+        }
+      })();
     }
 
+    // fire-and-forget лог инкремента, корректный base URL (без new URL('/..', req.nextUrl))
     try {
-      const usageResp = await fetch(new URL('/api/user/log-generation', req.nextUrl).toString(), {
+      const proto =
+        req.headers.get('x-forwarded-proto') || reqHeaders.get('x-forwarded-proto') || 'https';
+      const host =
+        req.headers.get('x-forwarded-host') ||
+        reqHeaders.get('x-forwarded-host') ||
+        req.headers.get('host') ||
+        reqHeaders.get('host') ||
+        (req as any)?.nextUrl?.host ||
+        '';
+      const base = host ? `${proto}://${host}` : (req as any)?.nextUrl?.origin || '';
+      const usageUrl = `${base}/api/user/log-generation`;
+
+      void fetch(usageUrl, {
         method: 'POST',
         headers: {
           ...(authzHeader ? { Authorization: authzHeader } : {}),
@@ -850,16 +866,22 @@ INSTRUCTION:
           action: 'profile_generation_incremented',
           correlation_id: correlationId,
         }),
-      });
-      if (!usageResp.ok) {
-        const b = await usageResp.text().catch(() => '');
-        console.warn(`[GROK][${traceId}] server-side usage increment failed`, {
-          status: usageResp.status,
-          body: b.slice(0, 200),
+        keepalive: true,
+      })
+        .then(async (r) => {
+          if (!r.ok) {
+            const b = await r.text().catch(() => '');
+            console.warn(`[GROK][${traceId}] log-generation failed`, {
+              status: r.status,
+              body: b.slice(0, 200),
+            });
+          }
+        })
+        .catch((e: unknown) => {
+          console.warn(`[GROK][${traceId}] log-generation threw`, String(e));
         });
-      }
-    } catch (e) {
-      console.warn(`[GROK][${traceId}] server-side usage increment threw`, String(e));
+    } catch (e: unknown) {
+      console.warn(`[GROK][${traceId}] log-generation scheduling failed`, String(e));
     }
 
     const totalMs = Date.now() - startedAt;

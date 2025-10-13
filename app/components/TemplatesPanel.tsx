@@ -52,8 +52,6 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
   const [editTplTitle, setEditTplTitle] = useState('');
   const [editTplContent, setEditTplContent] = useState('');
 
-  const [gatedHoverId, setGatedHoverId] = useState<string | null>(null);
-
   useEffect(() => {
     const onCreateFolder = () => setNewFolderOpen(true);
     const onCreateTemplate = () => setNewTplOpen(true);
@@ -228,19 +226,25 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     return (
       <div>
         <div
-          className="flex justify-between items-center px-3 py-1 cursor-pointer"
+          className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok"
           role="button"
           tabIndex={0}
+          draggable={false}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onPointerUp={(e) => e.stopPropagation()}
           onClick={() => toggle(id)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') toggle(id);
           }}
-          onPointerDown={(e) => e.stopPropagation()}
         >
           <span className="text-sm text-[var(--text-primary)]">{title}</span>
-          <span className="text-[var(--text-secondary)] text-xs">{expanded[id] ? '▲' : '▼'}</span>
+          <span className="text-[var(--text-secondary)] text-xs pointer-events-none select-none">
+            {expanded[id] ? '▲' : '▼'}
+          </span>
         </div>
-
         {expanded[id] && (
           <div>
             {isEmpty ? (
@@ -281,22 +285,32 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     );
   };
 
+  // ==== Обновлённый Row: без state на hover, стабильный клик, клавиатура, CSS-tooltip ====
   const Row = ({ tpl }: { tpl: TemplateItem }) => {
     const gated = (tpl.folder || '') === CDRS && !isCdrMode;
 
     return (
       <div
-        className="relative flex justify-between items-center px-3 py-1 cursor-pointer no-select"
-        onMouseEnter={() => gated && setGatedHoverId(tpl.id)}
-        onMouseLeave={() => gated && setGatedHoverId((id) => (id === tpl.id ? null : id))}
-        onPointerDown={(e) => e.stopPropagation()} // ⟵ важно: без preventDefault()
-        onClick={() => (gated ? undefined : handleInsert(tpl))}
+        className="group relative flex justify-between items-center px-3 py-1 cursor-pointer no-select"
+        onPointerDown={(e) => e.stopPropagation()} // не предотвращаем default; только гасим всплытие
+        onPointerUp={(e) => {
+          e.stopPropagation();
+          if (!gated) handleInsert(tpl);
+        }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!gated) handleInsert(tpl);
+          }
+        }}
         draggable={false}
         data-row
       >
         <span
-          onPointerDown={(e) => e.stopPropagation()} // ⟵ не блокируем click
-          className={`file-title no-select text-sm ${
+          onPointerDown={(e) => e.stopPropagation()}
+          className={`file-title no-select text-sm transition-colors duration-150 ${
             gated
               ? 'text-[var(--text-secondary)]'
               : 'text-[var(--text-primary)] hover:text-[var(--accent)]'
@@ -343,14 +357,17 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
           )}
         </div>
 
-        {gated && gatedHoverId === tpl.id && (
+        {gated && (
           <div
             className="
-              absolute right-8 top-1/2 -translate-y-1/2
+              pointer-events-none
+              absolute left-3 -top-1 translate-y-[-100%]
+              opacity-0 group-hover:opacity-100
+              transition-opacity duration-150
               px-2 py-1 rounded-md text-[11px]
               bg-[var(--card-bg)] text-[var(--text-secondary)]
               border border-[var(--card-border)] shadow-sm
-              pointer-events-none
+              max-w-[calc(100%-24px)] whitespace-normal break-words
             "
           >
             Available in CDRs mode. Toggle “CDRs” to use.

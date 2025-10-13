@@ -246,14 +246,21 @@ export default function SavedProfileList({
 
   const SectionHeader = ({ title, id }: { title: string; id: string }) => (
     <div
-      className="flex justify-between items-center px-3 py-1 cursor-pointer"
+      className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok"
       role="button"
       tabIndex={0}
+      draggable={false}
+      // Гасим старт выделения текста/drag на mousedown, но оставляем сам click
+      onPointerDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      // Страхуемся, чтобы глобальный capture-слушатель не перехватил событие
+      onPointerUp={(e) => e.stopPropagation()}
       onClick={() => toggleExpanded(id)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') toggleExpanded(id);
       }}
-      onPointerDown={(e) => e.stopPropagation()} // не отменяем default
       title={id === CDRS_ID ? "You can't move items into CDRs." : undefined}
     >
       <span className="text-sm text-[var(--text-primary)]">{title}</span>
@@ -263,28 +270,33 @@ export default function SavedProfileList({
     </div>
   );
 
+  // ==== Обновлённый Row: кликабельна вся строка, pointerup, клавиатура, плавный цвет ====
   const Row = ({ profile }: { profile: SavedProfile }) => {
     const checked = selectedIds.has(profile.id);
 
     return (
       <div
         data-row
-        key={profile.id}
-        className="flex justify-between items-center px-3 py-1 cursor-pointer no-select"
-        onPointerDown={(e) => e.stopPropagation()} // только stopPropagation
+        role="button"
+        tabIndex={0}
+        aria-label={profile.profile_name}
+        className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok"
+        onPointerDown={(e) => e.stopPropagation()} // не блокируем default; гасим всплытие
+        onPointerUp={(e) => {
+          e.stopPropagation();
+          if (selectionMode) return; // в режиме выбора открытие модалки не требуется
+          // Открываем модалку на следующий тик, чтобы текущий pointerup/click не закрыл её оверлеем
+          setTimeout(() => setSelectedProfile(profile), 0);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!selectionMode) setTimeout(() => setSelectedProfile(profile), 0);
+          }
+        }}
         draggable={false}
       >
-        <span
-          onPointerDown={(e) => e.stopPropagation()} // не отменяем default → click формируется
-          onClick={(e) => {
-            e.stopPropagation();
-            if (selectionMode) return;
-            // Открываем модалку на следующий тик, чтобы текущий click не закрыл её оверлеем
-            setTimeout(() => setSelectedProfile(profile), 0);
-          }}
-          className="file-title no-select text-sm text-[var(--text-primary)] hover:text-[var(--accent)]"
-          aria-label={profile.profile_name}
-        >
+        <span className="file-title no-select text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors duration-150">
           {profile.profile_name}
         </span>
 

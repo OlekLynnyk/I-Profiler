@@ -1067,8 +1067,14 @@ export default function WorkspacePage() {
                   <button
                     onClick={async () => {
                       if (confirmMode === 'manual') {
-                        await clearMessages();
-                        setShowConfirm(false);
+                        setShowConfirm(false); // закрываем окно сразу
+                        try {
+                          await clearMessages();
+                        } catch (e) {
+                          console.error(e);
+                        } finally {
+                          setShowConfirm(false);
+                        }
                         return;
                       }
                       // pregenerate: очистить историю и запустить генерацию с буферами

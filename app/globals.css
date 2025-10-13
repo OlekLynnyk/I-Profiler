@@ -16,6 +16,10 @@
   --card-bg: #fdfdfd;
   --card-border: #d4d4d4;
 
+  /* для кнопок в сайдбаре (есть использования) */
+  --button-bg: #f1f1f1;
+  --button-hover-bg: #e9e9e9;
+
   --font-sans: var(--font-orbitron);
 }
 
@@ -70,7 +74,7 @@ html::-webkit-scrollbar {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-  overflow-y: scroll;
+  overflow-y: auto; /* ⬅️ было scroll */
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -85,8 +89,6 @@ input, textarea, select, button, label {
   user-select: text;
 }
 
-/* ⛔️ УДАЛЕНО: самодельные translate-x-утилиты, чтобы не ломать transform-стек Tailwind */
-
 /* Лёгкое свечение за текстом */
 .hero-glow {
   text-shadow:
@@ -95,14 +97,10 @@ input, textarea, select, button, label {
     0 0 18px rgba(168, 85, 247, 0.18);
 }
 
-/* iOS only: anti-zoom c визуальными ~15px и без сужения ширины */
+/* iOS zoom fix: держим ≥16px на интерактивах; без transform-хака */
 @supports (-webkit-touch-callout: none) {
   .ios-no-zoom {
     font-size: 16px;
-    --s: 0.9375;
-    transform: scale(var(--s));
-    transform-origin: left center;
-    width: calc(100% / var(--s));
   }
 }
 
@@ -129,7 +127,7 @@ input, textarea, select, button, label {
   }
 }
 
-/* ✅ Безопасно отключаем неинтерактивные оверлеи (по маркеру) */
+/* ✅ безопасно отключаем неинтерактивные оверлеи (по маркеру) */
 [data-overlay]:not([data-interactive="true"]) {
   pointer-events: none !important;
 }
@@ -156,16 +154,18 @@ input, textarea, select, button, label {
 .file-title::before {
   content: "• ";
   color: var(--text-secondary);
+  user-select: none;           /* ⬅️ */
+  -webkit-user-select: none;   /* ⬅️ */
+  pointer-events: none;        /* ⬅️ исключаем “промах” по псевдоэлементу */
 }
 .file-title {
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
-/* У строк — без переходов цвета текста, чтобы убрать «мигание» на hover */
 [data-templates] [data-row] .file-title,
 [data-cdr-selection] [data-row] .file-title {
-  transition: none;
+  transition: color .15s ease;
 }
 
 /* Разрешаем клики внутри панелей */
@@ -178,4 +178,9 @@ input, textarea, select, button, label {
 .no-select {
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Утилита: улучшение поведения тач-тапов на iOS/Safari */
+.tap-ok {
+  touch-action: manipulation;
 }

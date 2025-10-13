@@ -26,6 +26,14 @@ function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
+/** простая проверка мобайла — ИДЕНТИЧНО левой панели (без регрессий) */
+function isMobileViewport() {
+  if (typeof window === 'undefined') return false;
+  const coarse = window.matchMedia?.('(pointer: coarse)')?.matches;
+  const narrow = window.matchMedia?.('(max-width: 767px)')?.matches;
+  return !!(coarse || narrow);
+}
+
 export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   const { profile } = useProfile();
   const [activeBox, setActiveBox] = useState<string | null>(null);
@@ -111,6 +119,47 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
     window.addEventListener('pointerdown', onPointerDown, true);
     return () => window.removeEventListener('pointerdown', onPointerDown, true);
   }, [openSidebar.right, closeSidebar]);
+
+  // ── NEW: высота сайдбара на мобиле, чтобы не перекрывать композер (как слева)
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileHeights, setMobileHeights] = useState({
+    header: 56, // fallback top-14
+    composer: 140, // безопасный запас
+  });
+
+  useEffect(() => {
+    setIsMobile(isMobileViewport());
+
+    if (!isMobileViewport()) return;
+
+    const headerEl = document.querySelector<HTMLElement>('[data-header-root]') || null;
+    const composerEl = document.querySelector<HTMLElement>('[data-composer-root]') || null;
+
+    const measure = () => {
+      const hh = headerEl?.getBoundingClientRect().height ?? 56;
+      const ch = composerEl?.getBoundingClientRect().height ?? 140;
+      setMobileHeights({ header: Math.round(hh), composer: Math.round(ch) });
+    };
+
+    measure();
+
+    const roHeader = headerEl ? new ResizeObserver(measure) : null;
+    const roComposer = composerEl ? new ResizeObserver(measure) : null;
+    roHeader?.observe(headerEl as Element);
+    roComposer?.observe(composerEl as Element);
+
+    window.addEventListener('resize', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      roHeader?.disconnect();
+      roComposer?.disconnect();
+    };
+  }, []);
+
+  // высота для мобилы (иначе не задаём — десктоп не трогаем)
+  const mobileHeight = isMobile
+    ? `calc(100vh - ${mobileHeights.header + mobileHeights.composer}px - env(safe-area-inset-bottom, 0px))`
+    : undefined;
 
   const boxes: SectionBox[] = [
     {
@@ -256,6 +305,8 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         isolation: 'isolate',
         contain: 'paint',
         willChange: 'transform',
+        // NEW: на мобиле высота под хедер+композер, чтобы ничего не перекрывалось
+        height: mobileHeight,
       }}
     >
       <div
