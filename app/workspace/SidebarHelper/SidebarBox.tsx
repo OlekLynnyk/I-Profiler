@@ -31,15 +31,16 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
       aria-label={`Toggle ${box.title}`}
       title={disabled ? 'Upgrade required to access this feature' : ''}
       className={`
-        transition-[opacity,transform] duration-300 mb-4 rounded-xl border
+        transition-opacity duration-300 mb-4 rounded-xl border
         ${isActive ? 'border-[var(--accent)] bg-[var(--card-bg)]' : 'border-[var(--card-border)] bg-[var(--card-bg)]'}
         focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]
         ${disabled ? 'opacity-50' : 'cursor-default'}
       `}
+      style={{ willChange: 'opacity' }}
     >
       {/* header — тумблер */}
       <div
-        className="px-4 py-3 flex justify-between items-center cursor-pointer select-none"
+        className="px-4 py-3 flex justify-between items-center cursor-pointer select-none tap-ok leading-5 min-h-[24px]"
         role="button"
         tabIndex={0}
         aria-controls={panelId}

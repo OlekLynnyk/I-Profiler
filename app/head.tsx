@@ -1,6 +1,8 @@
 export default function Head() {
   return (
     <>
+      <meta name="theme-color" content="#0B0E11" media="(prefers-color-scheme: dark)" />
+      <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
       {/* ускоряем моб.видео в блоке HowItWorksVideoMobile */}
       <link
         rel="preload"

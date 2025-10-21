@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/app/context/AuthProvider';
 import { useSavedProfiles, SavedProfile, SavedBlockName } from '@/app/hooks/useSavedProfiles';
 import SaveProfileModal from '@/app/components/SaveProfileModal';
@@ -20,7 +20,7 @@ const MAX_BLOCK_NAME_LEN = 30;
 export default function SavedProfileList({
   selectionMode = false,
   onSelectForCdr,
-  showCreateBlockButton = false, // сохранено для совместимости пропсов
+  showCreateBlockButton = false,
   preselectedIds = [],
 }: SavedProfileListProps) {
   console.debug('[SavedProfileList] selectionMode =', selectionMode);
@@ -69,7 +69,7 @@ export default function SavedProfileList({
 
   const ungrouped = useMemo(() => profiles.filter((p) => !p.folder), [profiles]);
 
-  // Фоновое обновление без переключения экрана на loader (избегаем «мигания»)
+  // Фоновый refresh (без мигания)
   const refresh = async () => {
     if (!userId) return;
     try {
@@ -87,12 +87,10 @@ export default function SavedProfileList({
       });
     } catch (e) {
       console.error('Failed to fetch saved profiles/folders', e);
-    } finally {
-      // loading здесь не трогаем — чтобы не мигал UI при фоновых обновлениях
     }
   };
 
-  // Первичная загрузка: показываем loader только на старте
+  // Первичная загрузка
   useEffect(() => {
     if (!userId) return;
     let active = true;
@@ -127,34 +125,26 @@ export default function SavedProfileList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  // Глобальное событие: открыть модал создания блока
+  // Глобальные события
   useEffect(() => {
     const handler = () => setCreateModalOpen(true);
     window.addEventListener('savedMessages:createBlock', handler as EventListener);
-    return () => {
-      window.removeEventListener('savedMessages:createBlock', handler as EventListener);
-    };
+    return () => window.removeEventListener('savedMessages:createBlock', handler as EventListener);
   }, []);
 
-  // Глобальное событие: рефреш данных (без лоадера)
   useEffect(() => {
-    const onRefresh = () => {
-      refresh();
-    };
+    const onRefresh = () => refresh();
     window.addEventListener('savedMessages:refresh', onRefresh as EventListener);
-    return () => {
-      window.removeEventListener('savedMessages:refresh', onRefresh as EventListener);
-    };
+    return () => window.removeEventListener('savedMessages:refresh', onRefresh as EventListener);
   }, [userId]);
 
   const handleDelete = async (id: string) => {
     if (selectionMode) return;
     const confirmed = window.confirm('Are you sure you want to delete this profile?');
     if (!confirmed) return;
-
     try {
+      setSelectedProfile(null);
       await deleteProfile(id);
-      // оптимистично обновляем список без полного рефетча
       setProfiles((prev) => prev.filter((p) => p.id !== id));
     } catch (error) {
       console.error('Failed to delete profile', error);
@@ -172,7 +162,6 @@ export default function SavedProfileList({
         },
       });
       setSelectedProfile(null);
-      // После обновления — полный рефетч (как в старом коде), но без мигания
       await refresh();
     } catch (error) {
       console.error('Failed to update profile', error);
@@ -182,7 +171,6 @@ export default function SavedProfileList({
 
   const handleCreateBlock = async () => {
     if (!userId) return;
-
     const name = newBlockName.trim();
     setCreateErr(null);
 
@@ -240,39 +228,69 @@ export default function SavedProfileList({
     }
   };
 
-  const toggleExpanded = (id: string) => {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleExpanded = (id: string) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  /**
+   * Заголовок секции (уровень 2): стабильный pointerup-триггер + порог движения
+   */
+  const SectionHeader = ({ title, id }: { title: string; id: string }) => {
+    const startRef = useRef<{ x: number; y: number } | null>(null);
+    const movedRef = useRef(false);
+    const panelId = `saved-sec-${id}`;
+
+    return (
+      <div
+        className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok leading-5 min-h-[24px]"
+        role="button"
+        tabIndex={0}
+        aria-expanded={!!expanded[id]}
+        aria-controls={panelId}
+        draggable={false}
+        onPointerDown={(e) => {
+          e.stopPropagation(); // НЕ делаем preventDefault — иначе click может не родиться
+          startRef.current = { x: e.clientX, y: e.clientY };
+          movedRef.current = false;
+        }}
+        onPointerMove={(e) => {
+          if (!startRef.current) return;
+          const dx = Math.abs(e.clientX - startRef.current.x);
+          const dy = Math.abs(e.clientY - startRef.current.y);
+          if (dx > 3 || dy > 3) movedRef.current = true;
+        }}
+        onPointerUp={(e) => {
+          e.stopPropagation();
+          startRef.current = null;
+          if (movedRef.current) return; // скролл/drag — не переключаем
+          toggleExpanded(id);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleExpanded(id);
+          }
+          if (e.key === 'Escape' && expanded[id]) {
+            e.preventDefault();
+            toggleExpanded(id);
+          }
+        }}
+        title={id === CDRS_ID ? "You can't move items into CDRs." : undefined}
+      >
+        <span className="text-sm text-[var(--text-primary)]">{title}</span>
+        <span className="text-[var(--text-secondary)] text-xs pointer-events-none select-none">
+          {expanded[id] ? '▲' : '▼'}
+        </span>
+      </div>
+    );
   };
 
-  const SectionHeader = ({ title, id }: { title: string; id: string }) => (
-    <div
-      className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok"
-      role="button"
-      tabIndex={0}
-      draggable={false}
-      // Гасим старт выделения текста/drag на mousedown, но оставляем сам click
-      onPointerDown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      // Страхуемся, чтобы глобальный capture-слушатель не перехватил событие
-      onPointerUp={(e) => e.stopPropagation()}
-      onClick={() => toggleExpanded(id)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') toggleExpanded(id);
-      }}
-      title={id === CDRS_ID ? "You can't move items into CDRs." : undefined}
-    >
-      <span className="text-sm text-[var(--text-primary)]">{title}</span>
-      <span className="text-[var(--text-secondary)] text-xs">
-        {expanded[id] === true ? '▲' : '▼'}
-      </span>
-    </div>
-  );
-
-  // ==== Обновлённый Row: кликабельна вся строка, pointerup, клавиатура, плавный цвет ====
+  /**
+   * Строка (уровень 3): pointerup-триггер с порогом + stopPropagation.
+   * В selectionMode открытие модалки не выполняем.
+   */
   const Row = ({ profile }: { profile: SavedProfile }) => {
     const checked = selectedIds.has(profile.id);
+    const startRef = useRef<{ x: number; y: number } | null>(null);
+    const movedRef = useRef(false);
 
     return (
       <div
@@ -280,12 +298,25 @@ export default function SavedProfileList({
         role="button"
         tabIndex={0}
         aria-label={profile.profile_name}
-        className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok"
-        onPointerDown={(e) => e.stopPropagation()} // не блокируем default; гасим всплытие
+        className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok leading-5 min-h-[24px]"
+        style={{ willChange: 'transform' }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          startRef.current = { x: e.clientX, y: e.clientY };
+          movedRef.current = false;
+        }}
+        onPointerMove={(e) => {
+          if (!startRef.current) return;
+          const dx = Math.abs(e.clientX - startRef.current.x);
+          const dy = Math.abs(e.clientY - startRef.current.y);
+          if (dx > 3 || dy > 3) movedRef.current = true;
+        }}
         onPointerUp={(e) => {
           e.stopPropagation();
-          if (selectionMode) return; // в режиме выбора открытие модалки не требуется
-          // Открываем модалку на следующий тик, чтобы текущий pointerup/click не закрыл её оверлеем
+          startRef.current = null;
+          if (movedRef.current) return;
+          if (selectionMode) return; // выбор через чекбокс
+          // Открываем модалку на следующий тик, чтобы overlay не закрывал её тем же событием
           setTimeout(() => setSelectedProfile(profile), 0);
         }}
         onKeyDown={(e) => {
@@ -296,7 +327,11 @@ export default function SavedProfileList({
         }}
         draggable={false}
       >
-        <span className="file-title no-select text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors duration-150">
+        <span
+          className="file-title no-select select-none text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors duration-150"
+          draggable={false}
+          style={{ willChange: 'color' }}
+        >
           {profile.profile_name}
         </span>
 
@@ -313,9 +348,8 @@ export default function SavedProfileList({
               setSelectedIds(next);
               onSelectForCdr?.(profile);
             }}
-            onPointerDown={(e) => {
-              e.stopPropagation(); /* default не трогаем */
-            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
             className="accent-[var(--accent)]"
             aria-label="Select for CDRs"
             aria-checked={checked}
@@ -324,8 +358,10 @@ export default function SavedProfileList({
 
         {!selectionMode && (
           <button
-            onPointerDown={(e) => {
-              e.stopPropagation(); /* default не трогаем */
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
             }}
             onClick={(e) => {
               e.stopPropagation();
@@ -344,7 +380,6 @@ export default function SavedProfileList({
   };
 
   if (loading) {
-    // loader только на первичной загрузке
     return <p className="text-sm text-[var(--text-secondary)]">Loading saved reports…</p>;
   }
 
@@ -355,8 +390,8 @@ export default function SavedProfileList({
   return (
     <div className="flex flex-col gap-1" data-cdr-selection={selectionMode ? 'on' : 'off'}>
       <SectionHeader title="Combined Discernment Reports" id={CDRS_ID} />
-      {expanded[CDRS_ID] === true && (
-        <div>
+      {expanded[CDRS_ID] && (
+        <div id={`saved-sec-${CDRS_ID}`}>
           {cdrsItems.length === 0 ? (
             <div className="px-3 py-1 text-xs text-[var(--text-secondary)] italic">
               No CDRs yet. Try the CDRs feature.
@@ -374,8 +409,8 @@ export default function SavedProfileList({
           return (
             <div key={`folder-${folderName}`}>
               <SectionHeader title={folderName} id={folderName} />
-              {expanded[folderName] === true && (
-                <div>
+              {expanded[folderName] && (
+                <div id={`saved-sec-${folderName}`}>
                   {items.length === 0 ? (
                     <div className="px-3 py-1 flex justify-between items-center">
                       <span className="text-xs text-[var(--text-secondary)] italic">
@@ -438,7 +473,6 @@ export default function SavedProfileList({
         >
           <div
             className="absolute inset-0 bg-black/40"
-            // Клика закрываем на mousedown, чтобы не схлопывать модалку тем же «click», что её открыл
             onMouseDown={() => {
               setCreateModalOpen(false);
               setNewBlockName('');

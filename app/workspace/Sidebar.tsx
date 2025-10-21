@@ -97,27 +97,31 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   };
 
   useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
+    const onAnyDown = (e: Event) => {
       if (!openSidebar.right) return;
-
       const root = sidebarRef.current;
       if (!root) return;
 
-      // 1) Надёжная проверка по пути события (работает до ре-рендера)
       const path = (e as any).composedPath?.() as EventTarget[] | undefined;
-      if (path && path.includes(root)) return; // клик ВНУТРИ — не закрываем
+      if (path && path.includes(root)) return;
 
-      // 2) Подстраховка для любых вложенных элементов / порталов
       const el = e.target as Element | null;
-      if (el && el.closest?.('[data-sidebar="right"]')) return; // тоже считаем «внутри»
+      if (el && el.closest?.('[data-sidebar="right"]')) return;
 
-      // 3) Всё остальное — ВНЕ сайдбара
       closeSidebar('right');
     };
 
-    // capture=true и pointerdown — сработаем раньше любых stopPropagation и до коммитов React
-    window.addEventListener('pointerdown', onPointerDown, true);
-    return () => window.removeEventListener('pointerdown', onPointerDown, true);
+    const opts = { capture: true } as AddEventListenerOptions;
+
+    window.addEventListener('pointerdown', onAnyDown, opts);
+    window.addEventListener('touchstart', onAnyDown, opts);
+    window.addEventListener('mousedown', onAnyDown, opts);
+
+    return () => {
+      window.removeEventListener('pointerdown', onAnyDown, opts);
+      window.removeEventListener('touchstart', onAnyDown, opts);
+      window.removeEventListener('mousedown', onAnyDown, opts);
+    };
   }, [openSidebar.right, closeSidebar]);
 
   // ── NEW: высота сайдбара на мобиле, чтобы не перекрывать композер (как слева)
@@ -291,30 +295,30 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         fixed right-0 top-12
         w-full max-w-sm md:w-80
         text-[var(--text-primary)]
-        z-50
+        z-[60]
         p-4
         transition-transform duration-500 ease-in-out
         ${openSidebar.right ? 'translate-x-0' : 'translate-x-full'}
-        h-[calc(100vh-190px)]
         overflow-hidden
       `}
       style={{
         backgroundColor: 'var(--background)',
         boxShadow: 'none',
         border: 'none',
-        isolation: 'isolate',
-        contain: 'paint',
         willChange: 'transform',
-        // NEW: на мобиле высота под хедер+композер, чтобы ничего не перекрывалось
-        height: mobileHeight,
+        height: mobileHeight, // ← единственный источник высоты на мобиле
       }}
     >
       <div
         className="h-full overflow-y-auto no-scrollbar relative pb-8"
-        style={{
-          WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
-          maskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
-        }}
+        style={
+          isMobile
+            ? {}
+            : {
+                WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+              }
+        }
       >
         {boxes.map((box) => {
           const isActive = activeBox === box.id;

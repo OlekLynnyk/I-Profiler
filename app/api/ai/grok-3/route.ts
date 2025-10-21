@@ -171,6 +171,8 @@ const MAX_TOKENS_IMAGE = 3500;
 const MAX_TOKENS_CDRS = 50000;
 const CDRS_MIN_SAVED = 2;
 const CDRS_MAX_SAVED = 5;
+// 🔸 Новый флаг — включает стрим для CDRs. По умолчанию выключен (регрессий нет).
+const CDRS_STREAMING_ENABLED = process.env.CDRS_STREAMING_ENABLED === '1';
 
 // ── Image intake guards (NEW) ────────────────────────────────────────────────
 const IMG_MAX_COUNT = Number(process.env.IMG_MAX_COUNT ?? '3');
@@ -253,6 +255,7 @@ export async function POST(req: NextRequest) {
     // ── Validate CDRs mode (no regression for other modes) ──────────────────
     const isCdrs = mode === 'cdrs';
     const isImage = mode === 'image';
+    const shouldStream = isCdrs && CDRS_STREAMING_ENABLED;
 
     if (isImage && Array.isArray(savedMessageIds) && savedMessageIds.length > 0) {
       return withTraceJson(
@@ -622,7 +625,7 @@ INSTRUCTION:
       messages,
       temperature: 0.3,
       max_tokens,
-      stream: false,
+      stream: !!shouldStream, // ← только для CDRs под флагом
     };
     const bodyString = JSON.stringify(payload);
     const payloadBytes = Buffer.byteLength(bodyString, 'utf8');
@@ -750,6 +753,144 @@ INSTRUCTION:
     const contentType = grokResponse.headers.get('content-type') || '';
     let data;
 
+    // 🔸 Ветка SSE — только если CDRs и включён флаг стриминга
+    if (shouldStream && contentType.includes('text/event-stream')) {
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+      let fullRawSse = '';
+
+      // heartbeat, чтобы соединение не засыпало на прокси
+      let hbTimer: NodeJS.Timeout | null = null;
+      const startHeartbeat = (controller: ReadableStreamDefaultController) => {
+        hbTimer = setInterval(() => controller.enqueue(encoder.encode(':\n\n')), 15000);
+      };
+      const stopHeartbeat = () => {
+        if (hbTimer) clearInterval(hbTimer);
+        hbTimer = null;
+      };
+
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          // первые байты — немедленно
+          controller.enqueue(encoder.encode(`event: start\ndata: {"model":"${model}"}\n\n`));
+          startHeartbeat(controller);
+
+          (async () => {
+            try {
+              const reader = grokResponse!.body!.getReader();
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunkStr = decoder.decode(value);
+                fullRawSse += chunkStr;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunkStr)}\n\n`));
+              }
+              controller.enqueue(encoder.encode(`event: end\ndata: {"ok":true}\n\n`));
+              stopHeartbeat();
+              controller.close();
+
+              // пост-сохранение результата (как раньше), markdown не трогаем
+              try {
+                const final = extractFinalFromXaiSse(fullRawSse);
+                const cleanText = String(final || '').trim();
+
+                const { error: insertError } = await supabase.from('chat_messages').insert([
+                  {
+                    id: randomUUID(),
+                    user_id: user?.id ?? null,
+                    profile_id: profileId,
+                    role: 'assistant',
+                    type: 'text',
+                    content: JSON.stringify({ text: cleanText }),
+                    timestamp: Date.now(),
+                  },
+                ]);
+                if (insertError) {
+                  console.error(`[GROK][${traceId}] Error saving AI message (SSE)`, insertError);
+                }
+
+                if (isCdrs && user?.id) {
+                  const now = Date.now();
+                  const title = `CDRs ${new Date(now).toLocaleDateString('en-GB')}`;
+                  const { error } = await supabase.from('saved_chats').insert([
+                    {
+                      id: randomUUID(),
+                      user_id: user.id,
+                      profile_name: title,
+                      saved_at: now,
+                      folder: 'CDRs',
+                      chat_json: {
+                        ai_response: cleanText,
+                        source: 'CDRs',
+                        savedMessageIds: Array.isArray(savedMessageIds) ? savedMessageIds : [],
+                        hasPhoto: Array.isArray((body as any)?.images)
+                          ? (body as any).images.length > 0
+                          : Boolean(imageBase64),
+                        model,
+                      },
+                    } as any,
+                  ]);
+                  if (error) console.warn(`[GROK][${traceId}] CDR autosave failed (SSE)`, error);
+                }
+
+                // лог инкремента — без ожидания
+                try {
+                  const proto =
+                    req.headers.get('x-forwarded-proto') ||
+                    reqHeaders.get('x-forwarded-proto') ||
+                    'https';
+                  const host =
+                    req.headers.get('x-forwarded-host') ||
+                    reqHeaders.get('x-forwarded-host') ||
+                    req.headers.get('host') ||
+                    reqHeaders.get('host') ||
+                    (req as any)?.nextUrl?.host ||
+                    '';
+                  const base = host ? `${proto}://${host}` : (req as any)?.nextUrl?.origin || '';
+                  const usageUrl = `${base}/api/user/log-generation`;
+                  void fetch(usageUrl, {
+                    method: 'POST',
+                    headers: {
+                      ...(authzHeader ? { Authorization: authzHeader } : {}),
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      action: 'profile_generation_incremented',
+                      correlation_id: correlationId,
+                    }),
+                    keepalive: true,
+                  }).catch((e) =>
+                    console.warn(`[GROK][${traceId}] log-generation threw (SSE)`, String(e))
+                  );
+                } catch {}
+              } catch (e) {
+                console.warn(`[GROK][${traceId}] post-save (SSE) failed`, String(e));
+              }
+            } catch (e) {
+              stopHeartbeat();
+              controller.enqueue(
+                encoder.encode(`event: error\ndata: ${JSON.stringify(String(e))}\n\n`)
+              );
+              controller.close();
+            }
+          })();
+        },
+        cancel() {
+          stopHeartbeat();
+        },
+      });
+
+      return new NextResponse(stream, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+          'x-trace-id': traceId,
+        },
+      });
+    }
+
     if (contentType.includes('application/json')) {
       data = await grokResponse.json();
 
@@ -815,7 +956,7 @@ INSTRUCTION:
     // ── NEW: Auto-save CDRs result into saved_chats (folder="CDRs") ─────────
     if (isCdrs && user?.id) {
       const now = Date.now();
-      const title = `CDR ${new Date(now).toISOString()}`;
+      const title = `CDRs ${new Date(now).toLocaleDateString('en-GB')}`;
       // fire-and-forget через async IIFE (без .catch на PromiseLike)
       void (async () => {
         const { error } = await supabase.from('saved_chats').insert([
@@ -900,4 +1041,34 @@ INSTRUCTION:
       { status: 500 }
     );
   }
+}
+
+// ── helper: извлекаем финальный текст из SSE Grok (только для CDRs потоков) ──
+function extractFinalFromXaiSse(raw: string): string {
+  const lines = raw
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith('data:'))
+    .map((l) => l.slice(5).trim());
+
+  let acc = '';
+  for (const line of lines) {
+    if (line === '[DONE]') break;
+    try {
+      const obj = JSON.parse(line);
+      const part =
+        obj?.choices?.[0]?.delta?.content ??
+        obj?.choices?.[0]?.message?.content ??
+        obj?.content ??
+        '';
+      if (typeof part === 'string') {
+        acc += part;
+        continue;
+      }
+    } catch {
+      // не JSON — добавим «как есть»
+    }
+    acc += line;
+  }
+  return acc;
 }

@@ -49,6 +49,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="preload" href="/loading/octo-static.webp" as="image" />
+        {/* no-flash theme init: применяем .dark/.light до первой покраски */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+          (function() {
+            try {
+              var key = 'theme';
+              var stored = localStorage.getItem(key);
+              var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              var theme = stored ? stored : (systemDark ? 'dark' : 'light');
+              var root = document.documentElement;
+              if (theme === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
+              // Сразу сообщаем браузеру желаемую палитру (скроллбары, формы и т.п.)
+              root.style.colorScheme = theme === 'dark' ? 'dark' : 'light';
+            } catch (e) {}
+          })();
+        `,
+          }}
+        />
       </head>
       <body className={inter.className}>
         <Providers>

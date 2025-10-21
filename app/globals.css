@@ -64,6 +64,7 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  color-scheme: light dark;
 }
 
 html::-webkit-scrollbar {
@@ -81,6 +82,13 @@ html::-webkit-scrollbar {
   width: 0px;
   height: 0px;
   background: transparent;
+}
+
+/* Стабильная ширина при вертикальном скролле (анти-рывок гаттера) */
+.no-scrollbar,
+[data-templates],
+[data-cdr-selection] {
+  scrollbar-gutter: stable both-edges;
 }
 
 /* Возвращаем выделение текста внутри форм */
@@ -154,18 +162,29 @@ input, textarea, select, button, label {
 .file-title::before {
   content: "• ";
   color: var(--text-secondary);
-  user-select: none;           /* ⬅️ */
-  -webkit-user-select: none;   /* ⬅️ */
-  pointer-events: none;        /* ⬅️ исключаем “промах” по псевдоэлементу */
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;     /* исключаем “промах” по псевдоэлементу */
+  will-change: opacity;     /* декоративный, не участвует в лэйауте */
 }
 .file-title {
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
+/* Файл/элемент списка — плавная смена цвета без флэша */
 [data-templates] [data-row] .file-title,
 [data-cdr-selection] [data-row] .file-title {
   transition: color .15s ease;
+  will-change: color;
+}
+
+/* Кликабельные строки — стабильный хитбокс и мягкая промоция слоя */
+[data-templates] [data-row],
+[data-cdr-selection] [data-row] {
+  line-height: 1.25;   /* ~ Tailwind leading-5 */
+  min-height: 24px;
+  will-change: transform;
 }
 
 /* Разрешаем клики внутри панелей */

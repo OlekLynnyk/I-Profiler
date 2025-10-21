@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Files, Pencil } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthProvider';
 import { useInjectPrompt } from '@/app/hooks/useInjectPrompt';
@@ -16,6 +16,91 @@ type TemplatesPanelProps = { isCdrMode?: boolean };
 
 const CDRS = 'CDRs' as const;
 const UNGROUPED = '__ungrouped__' as const;
+
+/** Детектор «тапа»: завершает жест на document, чтобы pointerup не терялся */
+function useTapToggle({
+  onTap,
+  thresh = 6, // px
+  cooldownMs = 180,
+}: {
+  onTap: () => void;
+  thresh?: number;
+  cooldownMs?: number;
+}) {
+  const start = useRef<{ x: number; y: number; id: number | null } | null>(null);
+  const moved = useRef(false);
+  const lastAt = useRef(0);
+
+  const cleanup = () => {
+    window.removeEventListener('pointerup', handleUp, true);
+    window.removeEventListener('pointercancel', handleCancel, true);
+    start.current = null;
+    moved.current = false;
+  };
+
+  const handleUp = (e: PointerEvent) => {
+    if (!start.current) return cleanup();
+    // если слежение за конкретным pointerId нужно — раскомментируйте:
+    // if (start.current.id !== null && e.pointerId !== start.current.id) return;
+
+    const dx = Math.abs(e.clientX - start.current.x);
+    const dy = Math.abs(e.clientY - start.current.y);
+    const dist = dx > dy ? dx : dy;
+
+    const now = performance.now();
+    const hasSelection =
+      typeof window.getSelection === 'function' && !!window.getSelection()?.toString();
+
+    cleanup();
+
+    if (hasSelection) return; // пользователь выделял текст — не считаем тапом
+    if (dist > thresh) return; // явный перетаскивающий жест — не тап
+
+    if (now - lastAt.current < cooldownMs) return; // анти-дубль
+    lastAt.current = now;
+
+    onTap();
+  };
+
+  const handleCancel = () => cleanup();
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation(); // не отдаём глобальному close-on-outside
+    start.current = { x: e.clientX, y: e.clientY, id: e.nativeEvent.pointerId ?? null };
+    moved.current = false;
+    // слушаем завершение жеста на документе (capture), даже если палец вышел за пределы
+    window.addEventListener('pointerup', handleUp, true);
+    window.addEventListener('pointercancel', handleCancel, true);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!start.current) return;
+    const dx = Math.abs(e.clientX - start.current.x);
+    const dy = Math.abs(e.clientY - start.current.y);
+    if (dx > thresh || dy > thresh) moved.current = true;
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    // локально только гасим всплытие — завершение делаем через document listener
+    e.stopPropagation();
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const now = performance.now();
+      if (now - lastAt.current < cooldownMs) return;
+      lastAt.current = now;
+      onTap();
+    }
+    if (e.key === 'Escape') {
+      // потребитель сам решит, сворачивать ли — здесь не вызываем onTap
+      e.stopPropagation();
+    }
+  };
+
+  return { onPointerDown, onPointerMove, onPointerUp, onKeyDown };
+}
 
 export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProps) {
   const { session } = useAuth();
@@ -39,6 +124,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // состояние раскрытия секций/папок (уровень 2)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const [newFolderOpen, setNewFolderOpen] = useState(false);
@@ -211,6 +297,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     }
   };
 
+  /** ===== УСТОЙЧИВОЕ РАСКРЫТИЕ СЕКЦИЙ (уровень 2) c useTapToggle ===== */
   const Section = ({
     id,
     title,
@@ -223,30 +310,35 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     emptyDeletable?: boolean;
   }) => {
     const isEmpty = Array.isArray(children) ? (children as any[]).length === 0 : false;
+
+    const tap = useTapToggle({
+      onTap: () => toggle(id),
+      thresh: 6,
+      cooldownMs: 180,
+    });
+
     return (
       <div>
         <div
           className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok"
           role="button"
           tabIndex={0}
+          aria-expanded={!!expanded[id]}
+          aria-controls={`tpl-sec-${id}`}
           draggable={false}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onPointerUp={(e) => e.stopPropagation()}
-          onClick={() => toggle(id)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') toggle(id);
-          }}
+          onPointerDown={tap.onPointerDown}
+          onPointerMove={tap.onPointerMove}
+          onPointerUp={tap.onPointerUp}
+          onKeyDown={tap.onKeyDown}
         >
           <span className="text-sm text-[var(--text-primary)]">{title}</span>
           <span className="text-[var(--text-secondary)] text-xs pointer-events-none select-none">
             {expanded[id] ? '▲' : '▼'}
           </span>
         </div>
+
         {expanded[id] && (
-          <div>
+          <div id={`tpl-sec-${id}`}>
             {isEmpty ? (
               <div data-templates className="px-3 py-1 flex justify-between items-center">
                 <span className="text-xs text-[var(--text-secondary)] italic">
@@ -285,36 +377,41 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     );
   };
 
-  // ==== Обновлённый Row: без state на hover, стабильный клик, клавиатура, CSS-tooltip ====
+  /**
+   * Строка шаблона (уровень 3): такой же стабильный «тап», чтобы вставка не пропускалась
+   */
   const Row = ({ tpl }: { tpl: TemplateItem }) => {
     const gated = (tpl.folder || '') === CDRS && !isCdrMode;
 
+    const tap = useTapToggle({
+      onTap: () => {
+        if (!gated) handleInsert(tpl);
+      },
+      thresh: 6,
+      cooldownMs: 180,
+    });
+
     return (
       <div
-        className="group relative flex justify-between items-center px-3 py-1 cursor-pointer no-select"
-        onPointerDown={(e) => e.stopPropagation()} // не предотвращаем default; только гасим всплытие
-        onPointerUp={(e) => {
-          e.stopPropagation();
-          if (!gated) handleInsert(tpl);
-        }}
+        className="group relative flex justify-between items-center px-3 py-1 cursor-pointer no-select leading-5 min-h-[24px]"
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            if (!gated) handleInsert(tpl);
-          }
-        }}
         draggable={false}
         data-row
+        style={{ willChange: 'transform' }}
+        onPointerDown={tap.onPointerDown}
+        onPointerMove={tap.onPointerMove}
+        onPointerUp={tap.onPointerUp}
+        onKeyDown={tap.onKeyDown}
       >
         <span
-          onPointerDown={(e) => e.stopPropagation()}
-          className={`file-title no-select text-sm transition-colors duration-150 ${
+          className={`file-title no-select select-none text-sm transition-colors duration-150 ${
             gated
               ? 'text-[var(--text-secondary)]'
               : 'text-[var(--text-primary)] hover:text-[var(--accent)]'
           }`}
+          draggable={false}
+          style={{ willChange: 'color' }} // плавная смена цвета без мерцаний
         >
           {tpl.title}
         </span>
@@ -322,7 +419,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
         <div className="flex items-center gap-2">
           {tpl.system ? (
             <button
-              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              className="tap-ok text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               onPointerDown={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -361,14 +458,15 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
           <div
             className="
               pointer-events-none
-              absolute left-3 -top-1 translate-y-[-100%]
+              absolute left-3 -top-1 translate-y-[-100%] z-10
               opacity-0 group-hover:opacity-100
               transition-opacity duration-150
               px-2 py-1 rounded-md text-[11px]
               bg-[var(--card-bg)] text-[var(--text-secondary)]
               border border-[var(--card-border)] shadow-sm
-              max-w-[calc(100%-24px)] whitespace-normal break-words
+              max-w-[240px] whitespace-normal break-words
             "
+            style={{ willChange: 'opacity' }}
           >
             Available in CDRs mode. Toggle “CDRs” to use.
           </div>
@@ -381,7 +479,11 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
   if (err) return <p className="text-sm text-[var(--danger)]">{err}</p>;
 
   return (
-    <div className="flex flex-col gap-1" data-templates>
+    <div
+      className="flex flex-col gap-1"
+      data-templates
+      style={{ scrollbarGutter: 'stable both-edges' }}
+    >
       {systemFolders.map((name) => (
         <Section key={`sys-${name}`} id={name} title={name}>
           {(grouped.get(name) ?? []).length === 0 ? (
@@ -416,7 +518,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
         )}
       </div>
 
-      {/* Модалки без изменений, только добавлен type="button" где нужно */}
+      {/* Модалки без изменений, только type="button" где нужно */}
       {newFolderOpen && (
         <div
           role="dialog"

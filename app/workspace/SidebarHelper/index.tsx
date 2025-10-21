@@ -101,13 +101,14 @@ export default function SidebarHelper({
     if (isCdrMode) setActiveBox('saved-messages');
   }, [isCdrMode]);
 
+  // УСТОЙЧИВОЕ «КЛИК-ВНЕ» (iOS Safari/Chrome): pointerdown + touchstart + mousedown (capture)
   useEffect(() => {
     const onStart = (e: Event) => {
       if ((e as any).defaultPrevented) return;
 
       const pe = e as PointerEvent;
-      if ('button' in pe && pe.button !== 0) return;
-      if (window.getSelection?.()?.toString()) return;
+      if ('button' in pe && pe.button !== 0) return; // только ЛКМ/тап
+      if (window.getSelection?.()?.toString()) return; // при выделении не закрываем
       if (!openSidebar.left) return;
 
       const hasOpenModal = !!document.querySelector(
@@ -118,6 +119,7 @@ export default function SidebarHelper({
       const targetEl = e.target as Element | null;
       if (!targetEl) return;
 
+      // внутри левого сайдбара или его триггеров — не закрываем
       if (
         targetEl.closest('[data-sidebar-root="left"]') ||
         targetEl.closest('[data-sidebar="left"]')
@@ -125,14 +127,20 @@ export default function SidebarHelper({
         return;
       }
 
+      // игнорируем зоны, помеченные как интерактивные
       if (targetEl.closest('[data-ignore-sidebar-close="true"]')) return;
 
       closeSidebar('left');
     };
 
     window.addEventListener('pointerdown', onStart, true);
+    window.addEventListener('touchstart', onStart as EventListener, true);
+    window.addEventListener('mousedown', onStart as EventListener, true);
+
     return () => {
       window.removeEventListener('pointerdown', onStart, true);
+      window.removeEventListener('touchstart', onStart as EventListener, true);
+      window.removeEventListener('mousedown', onStart as EventListener, true);
     };
   }, [openSidebar.left, closeSidebar]);
 
@@ -153,17 +161,17 @@ export default function SidebarHelper({
         p-4
         transition-transform duration-500 ease-in-out
         ${openSidebar.left ? 'translate-x-0' : '-translate-x-full'}
-        h-[calc(100vh-190px)]   /* ⬅️ десктоп-высота как у правого сайдбара */
         overflow-hidden
+        h-[calc(100vh-190px)]   /* десктоп-высота (как и было) */
       `}
       style={{
         backgroundColor: 'var(--background)',
         boxShadow: 'none',
         border: 'none',
-        isolation: 'isolate',
+        // ⚠️ убрали isolation: 'isolate' — на iOS иногда ломает hit-test
         backfaceVisibility: 'hidden',
-        transform: 'translateZ(0)', // сглаживаем субпиксельные рывки
-        // На мобиле перекрываем высоту, на десктопе — undefined, значит действует класс
+        transform: 'translateZ(0)', // сглаживание
+        // На мобиле перекрываем высоту (единственный источник)
         height: mobileHeight,
       }}
     >
@@ -171,11 +179,15 @@ export default function SidebarHelper({
         className="h-full overflow-y-auto overflow-x-hidden no-scrollbar relative pb-8"
         data-ignore-sidebar-close="true"
         onPointerDown={(e) => e.stopPropagation()}
-        // ⬇️ возвращаем нижний fade/тень 1-в-1 как справа
-        style={{
-          WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
-          maskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
-        }}
+        style={
+          isMobile
+            ? { scrollbarGutter: 'stable both-edges' }
+            : {
+                scrollbarGutter: 'stable both-edges',
+                WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+              }
+        }
       >
         {sidebarBoxes.map((box: BoxData) => (
           <SidebarBox

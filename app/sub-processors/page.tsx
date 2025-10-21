@@ -4,7 +4,7 @@ export default function SubProcessorsPage() {
   return (
     <main
       aria-labelledby="subprocessors-title"
-      className="relative mx-auto max-w-4xl px-6 py-16 sm:py-20 text-white"
+      className="relative mx-auto max-w-4xl px-6 py-16 sm:py-20 text-[var(--text-primary)]"
     >
       {/* Верхний мягкий глоу */}
       <div
@@ -14,7 +14,7 @@ export default function SubProcessorsPage() {
 
       <h1
         id="subprocessors-title"
-        className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-6 sm:mb-8"
+        className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] mb-6 sm:mb-8"
       >
         Sub-processors
       </h1>
@@ -22,8 +22,8 @@ export default function SubProcessorsPage() {
       {/* Стеклянная карточка */}
       <section
         className="
-          relative rounded-3xl bg-white/5 backdrop-blur
-          ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+          relative rounded-3xl backdrop-blur
+          bg-[var(--card-bg)] ring-1 ring-[var(--card-border)] shadow-[0_10px_40px_rgba(0,0,0,0.35)]
           px-5 sm:px-8 py-6 sm:py-8 space-y-6
         "
       >
@@ -33,13 +33,13 @@ export default function SubProcessorsPage() {
           className="pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-3xl bg-gradient-to-r from-transparent via-[#A855F7]/60 to-transparent"
         />
 
-        <p className="text-sm text-white/70">
+        <p className="text-sm text-[var(--text-secondary)]">
           <span className="font-medium">Effective Date:</span> 9 October 2025
           <br />
           <span className="font-medium">Last Updated:</span> 9 October 2025
         </p>
 
-        <p className="text-white/80">
+        <p className="text-[var(--text-secondary)]">
           This page lists the third-party service providers that H1NTED engages as{' '}
           <strong>sub-processors</strong> to support the Platform{' '}
           <strong>solely where H1NTED acts as a data processor</strong> on behalf of business
@@ -51,8 +51,10 @@ export default function SubProcessorsPage() {
           .
         </p>
 
-        <h2 className="text-xl font-semibold tracking-tight text-white">What a sub-processor is</h2>
-        <p className="text-white/80">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+          What a sub-processor is
+        </h2>
+        <p className="text-[var(--text-secondary)]">
           A sub-processor is a third party engaged by H1NTED that may process personal data{' '}
           <strong>on our customers’ instructions</strong> to provide, secure, or support the
           Platform (hosting, storage, authentication, payments, support tooling, AI inference,
@@ -61,10 +63,10 @@ export default function SubProcessorsPage() {
           provide equivalent guarantees.
         </p>
 
-        <h2 className="text-xl font-semibold tracking-tight text-white">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
           Current sub-processors (processor scope)
         </h2>
-        <blockquote className="text-white/70 border-l border-white/10 pl-4">
+        <blockquote className="text-[var(--text-secondary)] border-l border-[var(--card-border)] pl-4">
           Scope below applies to processing where H1NTED is <strong>processor</strong>. Data is
           limited to the minimum necessary to perform the service.
         </blockquote>
@@ -72,8 +74,8 @@ export default function SubProcessorsPage() {
         {/* Таблица со скроллом на мобильных */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-left align-top text-sm">
-            <thead className="text-white/80">
-              <tr className="border-b border-white/10">
+            <thead className="text-[var(--text-secondary)]">
+              <tr className="border-b border-[var(--card-border)]">
                 <th className="py-3 pr-4 font-semibold">Provider</th>
                 <th className="py-3 pr-4 font-semibold">Service/Role</th>
                 <th className="py-3 pr-4 font-semibold">Typical Data Processed</th>
@@ -82,9 +84,11 @@ export default function SubProcessorsPage() {
                 <th className="py-3 pr-4 font-semibold">DPA / Info</th>
               </tr>
             </thead>
-            <tbody className="text-white/80">
-              <tr className="border-b border-white/10">
-                <td className="py-3 pr-4 font-medium text-white">Amazon Web Services (AWS)</td>
+            <tbody className="text-[var(--text-secondary)]">
+              <tr className="border-b border-[var(--card-border)]">
+                <td className="py-3 pr-4 font-medium text-[var(--text-primary)]">
+                  Amazon Web Services (AWS)
+                </td>
                 <td className="py-3 pr-4">Cloud hosting, storage, load balancing</td>
                 <td className="py-3 pr-4">
                   Pseudonymous user IDs, <strong>ephemeral</strong> User Inputs/Outputs during
@@ -106,8 +110,8 @@ export default function SubProcessorsPage() {
                 </td>
               </tr>
 
-              <tr className="border-b border-white/10">
-                <td className="py-3 pr-4 font-medium text-white">Supabase</td>
+              <tr className="border-b border-[var(--card-border)]">
+                <td className="py-3 pr-4 font-medium text-[var(--text-primary)]">Supabase</td>
                 <td className="py-3 pr-4">Managed database &amp; authentication for dashboard</td>
                 <td className="py-3 pr-4">
                   Account identifiers, session tokens, minimal operational metadata
@@ -128,8 +132,8 @@ export default function SubProcessorsPage() {
                 </td>
               </tr>
 
-              <tr className="border-b border-white/10">
-                <td className="py-3 pr-4 font-medium text-white">Stripe</td>
+              <tr className="border-b border-[var(--card-border)]">
+                <td className="py-3 pr-4 font-medium text-[var(--text-primary)]">Stripe</td>
                 <td className="py-3 pr-4">Payments &amp; anti-fraud</td>
                 <td className="py-3 pr-4">
                   Billing contact, business name, email, payment metadata (no full card numbers
@@ -149,8 +153,8 @@ export default function SubProcessorsPage() {
                 </td>
               </tr>
 
-              <tr className="border-b border-white/10">
-                <td className="py-3 pr-4 font-medium text-white">Zoho</td>
+              <tr className="border-b border-[var(--card-border)]">
+                <td className="py-3 pr-4 font-medium text-[var(--text-primary)]">Zoho</td>
                 <td className="py-3 pr-4">Email/support tooling (contact forms, ticketing)</td>
                 <td className="py-3 pr-4">Support messages, contact email, headers/metadata</td>
                 <td className="py-3 pr-4">EU/US (service-dependent)</td>
@@ -168,7 +172,7 @@ export default function SubProcessorsPage() {
               </tr>
 
               <tr>
-                <td className="py-3 pr-4 font-medium text-white">
+                <td className="py-3 pr-4 font-medium text-[var(--text-primary)]">
                   Third-party AI inference provider(s)
                 </td>
                 <td className="py-3 pr-4">Model inference to generate Outputs from User Inputs</td>
@@ -186,8 +190,8 @@ export default function SubProcessorsPage() {
           </table>
         </div>
 
-        <h3 className="text-lg font-semibold tracking-tight text-white">Notes</h3>
-        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-white/80">
+        <h3 className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">Notes</h3>
+        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-[var(--text-secondary)]">
           <li>
             <strong>AI models:</strong> Third-party inference is used{' '}
             <strong>only for runtime processing</strong>; User Inputs/Outputs are{' '}
@@ -205,10 +209,10 @@ export default function SubProcessorsPage() {
           </li>
         </ul>
 
-        <h2 className="text-xl font-semibold tracking-tight text-white">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
           Locations &amp; international transfers
         </h2>
-        <p className="text-white/80">
+        <p className="text-[var(--text-secondary)]">
           Where personal data is transferred from the EEA/UK to a country without an adequacy
           decision, H1NTED implements the{' '}
           <strong>EU Standard Contractual Clauses (2021/914)</strong> (and the UK IDTA/Addendum
@@ -216,10 +220,10 @@ export default function SubProcessorsPage() {
           providers, we may rely on the <strong>EU–US Data Privacy Framework</strong>.
         </p>
 
-        <h2 className="text-xl font-semibold tracking-tight text-white">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
           How we add or change sub-processors
         </h2>
-        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-white/80">
+        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-[var(--text-secondary)]">
           <li>
             <strong>Advance notice:</strong> We will post updates to this page and, for affected
             customers with a signed DPA, provide{' '}
@@ -257,10 +261,10 @@ export default function SubProcessorsPage() {
           </li>
         </ul>
 
-        <h2 className="text-xl font-semibold tracking-tight text-white">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
           Data retention (processor scope)
         </h2>
-        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-white/80">
+        <ul className="list-disc marker:text-[#A855F7] pl-6 space-y-1 text-[var(--text-secondary)]">
           <li>
             <strong>User Inputs/Outputs:</strong> Ephemeral by design (auto-deletion within short
             windows after processing).
@@ -274,8 +278,10 @@ export default function SubProcessorsPage() {
           </li>
         </ul>
 
-        <h2 className="text-xl font-semibold tracking-tight text-white">Security overview</h2>
-        <p className="text-white/80">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+          Security overview
+        </h2>
+        <p className="text-[var(--text-secondary)]">
           We apply defence-in-depth measures across our stack and require equivalent commitments
           from sub-processors: encryption in transit, network/data segregation, role-based access
           with least privilege, audit logging and monitoring, secure key management, and prompt
@@ -283,8 +289,8 @@ export default function SubProcessorsPage() {
           available on their compliance pages.
         </p>
 
-        <h2 className="text-xl font-semibold tracking-tight text-white">Contact</h2>
-        <p className="text-white/80">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">Contact</h2>
+        <p className="text-[var(--text-secondary)]">
           Questions about this page or data transfers? Email{' '}
           <a
             className="underline"
@@ -303,7 +309,7 @@ export default function SubProcessorsPage() {
         </p>
 
         {/* Низ карточки */}
-        <div className="pt-4 mt-2 border-t border-white/10" />
+        <div className="pt-4 mt-2 border-t border-[var(--card-border)]" />
       </section>
     </main>
   );

@@ -35,6 +35,7 @@ frontend:
         - printf "SENTRY_DSN=%s\n" "$SENTRY_DSN" >> .env.production
         - printf "SYNC_SECRET_KEY=%s\n" "$SYNC_SECRET_KEY" >> .env.production
         - printf "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=%s\n" "$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY" >> .env.production
+        - printf "CDRS_STREAMING_ENABLED=%s\n" "$CDRS_STREAMING_ENABLED" >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next

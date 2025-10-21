@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 type Step = {
   id: number;
@@ -45,37 +45,44 @@ const MOBILE_VIDEO = `${VIDEO_BASE}/how-it-works-mobile.MP4`;
 export default function HowItWorks() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  // ⬇︎ новые refs только для левой части
   const monolithRef = useRef<HTMLDivElement | null>(null);
   const notchRef = useRef<HTMLDivElement | null>(null);
-
   const railRef = useRef<HTMLDivElement | null>(null);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
 
-  const [active, setActive] = useState<number>(1);
-  const [showPoster, setShowPoster] = useState<boolean>(false);
-  const [beamPath, setBeamPath] = useState<string>('');
-  const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [edgePulse, setEdgePulse] = useState<boolean>(false);
+  const [active, setActive] = useState(1);
+  const [showPoster, setShowPoster] = useState(false);
+  const [beamPath, setBeamPath] = useState('');
+  const [isPaused, setIsPaused] = useState(false);
+  const [edgePulse, setEdgePulse] = useState(false);
 
-  // Политики производительности
-  const reduceMotion = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
-    }
-    return false;
+  // «клиентские» флаги считаются только после маунта,
+  // чтобы SSR и первый CSR-рендер совпадали (нет hydration error)
+  const [mounted, setMounted] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [saveData, setSaveData] = useState(false);
+  const [lowCPU, setLowCPU] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
-  const saveData =
-    typeof navigator !== 'undefined' &&
-    ((navigator as any)?.connection?.saveData === true ||
-      (navigator as any)?.connection?.effectiveType === '2g');
-  const lowCPU =
-    typeof navigator !== 'undefined' &&
-    typeof (navigator as any)?.hardwareConcurrency === 'number' &&
-    (navigator as any).hardwareConcurrency < 4;
 
-  // Авто play/pause — ТОЛЬКО ДЕСКТОП (lg+)
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      setReduceMotion(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
+      const nav: any = navigator;
+      setSaveData(
+        Boolean(nav?.connection?.saveData === true || nav?.connection?.effectiveType === '2g')
+      );
+      const hc = typeof nav?.hardwareConcurrency === 'number' ? nav.hardwareConcurrency : 8;
+      setLowCPU(hc < 4);
+    } catch {
+      /* no-op */
+    }
+  }, [mounted]);
+
+  // Авто play/pause — только десктоп (lg+)
   useEffect(() => {
     const isDesktop =
       typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)')?.matches === true;
@@ -87,13 +94,7 @@ export default function HowItWorks() {
 
     const io = new IntersectionObserver(
       (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            vid.play().catch(() => {});
-          } else {
-            vid.pause();
-          }
-        });
+        entries.forEach((e) => (e.isIntersecting ? vid.play().catch(() => {}) : vid.pause()));
       },
       { threshold: 0.35 }
     );
@@ -141,7 +142,7 @@ export default function HowItWorks() {
     else vid.pause();
   };
 
-  // === Луч: старт из "notch" на левом ребре монолита (если есть), иначе центр видео
+  // === Луч
   const recalcBeam = () => {
     const rail = railRef.current;
     const sec = sectionRef.current;
@@ -152,7 +153,6 @@ export default function HowItWorks() {
     const railRect = rail.getBoundingClientRect();
     const aRect = activeEl.getBoundingClientRect();
 
-    // стартовая точка
     let startX: number;
     let startY: number;
 
@@ -203,27 +203,27 @@ export default function HowItWorks() {
     };
   }, [active]);
 
-  // Edge pulse при смене шага — короткий импульс подсветки фаски у “стыка”
+  // Edge pulse
   useEffect(() => {
-    if (reduceMotion || saveData || lowCPU) return;
+    if (!mounted || reduceMotion || saveData || lowCPU) return;
     setEdgePulse(true);
     const t = setTimeout(() => setEdgePulse(false), 200);
     return () => clearTimeout(t);
-  }, [active, reduceMotion, saveData, lowCPU]);
+  }, [active, mounted, reduceMotion, saveData, lowCPU]);
 
-  // Micro-tilt (десктоп)
   const handleTilt = (e: React.MouseEvent<HTMLDivElement>) => {
     if (reduceMotion || saveData || lowCPU) return;
     const el = monolithRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width; // 0..1
-    const y = (e.clientY - r.top) / r.height; // 0..1
-    const rx = (x - 0.5) * 4; // -2..2
-    const ry = (0.5 - y) * 4; // -2..2
+    const x = (e.clientX - r.left) / r.width;
+    const y = (e.clientY - r.top) / r.height;
+    const rx = (x - 0.5) * 4;
+    const ry = (0.5 - y) * 4;
     el.style.setProperty('--rx', `${rx.toFixed(2)}deg`);
     el.style.setProperty('--ry', `${ry.toFixed(2)}deg`);
   };
+
   const resetTilt = () => {
     const el = monolithRef.current;
     if (!el) return;
@@ -236,23 +236,15 @@ export default function HowItWorks() {
       <div className="w-full relative px-4">
         {/* ===== MOBILE (под видео) ===== */}
         <div className="lg:hidden w-full mx-auto max-w-[520px] mb-12">
-          {/* ⛔️ Заголовок How it works скрыт на мобайле */}
           <div className="px-4 pb-[env(safe-area-inset-bottom)]" aria-label="How it works — steps">
-            {/* Отступ от видео до первого текста: 20px */}
             <div className="h-[10px]" aria-hidden />
-
-            {/* Единственный текст — полный месседж из шага 3 */}
             <p className="hidden sm:block text-[15px] leading-[1.6] text-white/80 max-w-[46ch] mx-auto">
               {STEPS[2].desc}
             </p>
-
-            {/* Разделитель */}
             <div
               className="mt-7 mb-4 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
               aria-hidden
             />
-
-            {/* Теглайн (оставляем как есть и где есть) */}
             <p className="text-center text-[12px] uppercase tracking-widest text-white/75 font-light">
               DO BETTER. MOVE FURTHER
               <br className="block" />
@@ -262,12 +254,11 @@ export default function HowItWorks() {
         </div>
         {/* ===== /MOBILE ===== */}
 
-        {/* ===== DESKTOP (без изменений) ===== */}
+        {/* ===== DESKTOP ===== */}
         <div className="hidden lg:block pt-20 pb-20">
           <div className="w-full relative grid items-center gap-12 lg:grid-cols-[0.95fr_0.05fr_1fr]">
             {/* ЛЕВАЯ КОЛОНКА — Optic Monolith */}
             <div className="relative mx-auto w-[360px] translate-x-6">
-              {/* Ambient Halo за монолитом */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute -z-10 -left-10 -top-14 w-[460px] h-[760px] rounded-[72px] blur-3xl"
@@ -276,14 +267,13 @@ export default function HowItWorks() {
                     'radial-gradient(120% 120% at 30% 30%, rgba(168,85,247,0.16) 0%, rgba(168,85,247,0) 60%)',
                 }}
               />
-
-              {/* Монолит */}
               <div
                 ref={monolithRef}
                 onMouseMove={handleTilt}
                 onMouseLeave={resetTilt}
                 className="relative w-[360px] h-[640px] [transform-style:preserve-3d] will-change-transform"
                 style={{
+                  // порядок и значения постоянны на SSR/первом CSR-рендере
                   transform: 'perspective(1200px) rotateX(var(--ry,0deg)) rotateY(var(--rx,0deg))',
                   transition:
                     reduceMotion || saveData || lowCPU
@@ -291,15 +281,12 @@ export default function HowItWorks() {
                       : 'transform 320ms cubic-bezier(0.22,1,0.36,1)',
                 }}
               >
-                {/* Backplate (Titanium) */}
                 <div
                   className="absolute inset-0 rounded-[40px] ring-1 ring-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.60)]"
                   style={{
                     background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(0,0,0,0.45))',
                   }}
                 />
-
-                {/* Video cavity */}
                 <div className="absolute inset-[8px] rounded-[36px] overflow-hidden bg-black/30">
                   {!showPoster ? (
                     <video
@@ -325,8 +312,6 @@ export default function HowItWorks() {
                       priority
                     />
                   )}
-
-                  {/* Внутренняя виньетка и периметральная тень */}
                   <div
                     aria-hidden
                     className="pointer-events-none absolute inset-0"
@@ -336,8 +321,6 @@ export default function HowItWorks() {
                     }}
                   />
                 </div>
-
-                {/* Optic Glass: фаска + конусный хайлайт */}
                 <div
                   className={`absolute inset-0 rounded-[40px] pointer-events-none ring-1 ${edgePulse ? 'ring-[rgba(168,85,247,0.28)]' : 'ring-white/10'}`}
                   style={{
@@ -349,15 +332,11 @@ export default function HowItWorks() {
                     transition: 'box-shadow 200ms ease, ring-color 200ms ease',
                   }}
                 />
-
-                {/* Notch — стыковка луча с левым ребром */}
                 <div
                   ref={notchRef}
                   aria-hidden
                   className="absolute left-[-2px] top-1/2 -translate-y-1/2 h-6 w-[6px] rounded-[999px] bg-[#A855F7]/30 blur-[1px] shadow-[0_0_16px_rgba(168,85,247,0.55)]"
                 />
-
-                {/* Pearl кнопка Play/Pause */}
                 {!showPoster && (
                   <button
                     type="button"
@@ -399,7 +378,7 @@ export default function HowItWorks() {
               </div>
             </div>
 
-            {/* СЕРЕДИНА — «рейка» (без изменений) */}
+            {/* СЕРЕДИНА — рейка */}
             <div ref={railRef} className="relative mx-auto h-full w-[2px] bg-white/12 rounded">
               <div
                 aria-hidden
@@ -413,7 +392,7 @@ export default function HowItWorks() {
               />
             </div>
 
-            {/* ПРАВАЯ КОЛОНКА — шаги (не трогаем) */}
+            {/* ПРАВАЯ КОЛОНКА — шаги */}
             <div className="max-w-[480px] ml-0 mr-auto">
               <h2 className="mb-10 text-3xl font-extrabold tracking-tight text-white xl:text-4xl uppercase">
                 How it works
@@ -471,7 +450,7 @@ export default function HowItWorks() {
               </div>
             </div>
 
-            {/* SVG-луч — теперь стартует из notch */}
+            {/* SVG-луч */}
             <svg
               className="pointer-events-none absolute inset-0"
               xmlns="http://www.w3.org/2000/svg"

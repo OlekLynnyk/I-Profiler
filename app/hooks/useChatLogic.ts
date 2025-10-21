@@ -294,13 +294,29 @@ export function useChatLogic(): UseChatLogicResult {
         body: JSON.stringify(body),
       });
 
-      const aiData = await aiResponse.json();
+      // ── CDRs: поддержка SSE ответа сервера (text/event-stream) ─────────
+      const ct = aiResponse.headers.get('content-type') || '';
+      let aiText: string;
 
-      if (!aiResponse.ok) {
-        throw new Error(aiData.error || 'AI generation failed');
+      if (options?.mode === 'cdrs' && ct.includes('text/event-stream')) {
+        // сервер шлёт «обёрнутые» SSE: каждая внешняя data: содержит строку inner-SSE
+        const rawOuter = await aiResponse.text(); // ждём закрытия стрима
+        aiText = extractFinalFromWrappedSse(rawOuter).trim();
+        if (!aiText) {
+          throw new Error('AI generation failed (empty SSE payload)');
+        }
+      } else {
+        const aiData = await aiResponse.json();
+        if (!aiResponse.ok) {
+          throw new Error(aiData?.error || 'AI generation failed');
+        }
+        aiText = aiData?.result || aiData?.text || 'No response from AI';
       }
 
-      const aiText = aiData.result || 'No response from AI';
+      // 🔹 по запросу: убираем спецсимволы markdown ТОЛЬКО для CDRs
+      if (options?.mode === 'cdrs') {
+        aiText = aiText.replace(/[#*]/g, '');
+      }
 
       const aiMessage: ChatMessage = {
         id: uuidv4(),
@@ -321,13 +337,13 @@ export function useChatLogic(): UseChatLogicResult {
         },
       ]);
 
-      // ── AUTOSAVE: только для CDRs ───────────────────────────────────────────────
+      // ── AUTOSAVE: только для CDRs ─────────────────────────────────────
       if (options?.mode === 'cdrs' && userId) {
         try {
           await supabase.from('saved_chats').insert([
             {
               user_id: userId,
-              profile_name: `CDR #${Date.now()}`,
+              profile_name: `CDRs ${new Date().toLocaleDateString('en-GB')}`,
               saved_at: Date.now(),
               chat_json: {
                 ai_response: aiText,
@@ -377,16 +393,15 @@ export function useChatLogic(): UseChatLogicResult {
       setRefreshToken((prev) => prev + 1);
       await refetch();
     } catch (error) {
-      console.error(
-        JSON.stringify({
-          level: 'error',
-          traceId,
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : null,
-          context: 'handleGenerate',
-          timestamp: new Date().toISOString(),
-        })
-      );
+      // безопасное логирование без JSON.stringify над объектами ошибки
+      console.error({
+        level: 'error',
+        traceId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : null,
+        context: 'handleGenerate',
+        timestamp: new Date().toISOString(),
+      });
 
       setErrorMessage(`An unexpected error occurred. Please try again. (Trace ID: ${traceId})`);
       setGenerationError({ index: baseMessages.length });
@@ -397,6 +412,73 @@ export function useChatLogic(): UseChatLogicResult {
       setIsGenerating(false);
     }
   };
+
+  // ─────────────────────────────────────────────────────────────────────
+  // CDRs SSE helpers — совместимы с серверной «обёрткой»
+  // Сервер шлёт внешние SSE:
+  //   data: "<chunkStr из upstream SSE>"   ← JSON-строка
+  // Внутри chunkStr содержатся строки inner-SSE от XAI: "data: {...}\n\n"
+  // 1) Разворачиваем внешние data → собираем inner-SSE
+  // 2) Из inner-SSE извлекаем delta/content, игнорируя служебные чанки
+  // ─────────────────────────────────────────────────────────────────────
+  function extractFinalFromWrappedSse(rawOuter: string): string {
+    const payloads = rawOuter
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith('data:'))
+      .map((l) => l.slice(5).trim());
+
+    let inner = '';
+
+    for (const payload of payloads) {
+      if (!payload || payload === '[DONE]') continue;
+
+      try {
+        // server отправляет JSON.stringify(chunkStr) — ожидаем строку
+        const maybeStr = JSON.parse(payload);
+        if (typeof maybeStr !== 'string') continue; // служебные объекты пропускаем
+        inner += maybeStr;
+        if (!maybeStr.endsWith('\n')) inner += '\n';
+      } catch {
+        // нестроковые/невалидные payload — игнорируем (чтобы не было «мусора»)
+        continue;
+      }
+    }
+
+    return extractFinalFromXaiSse(inner);
+  }
+
+  function extractFinalFromXaiSse(rawInner: string): string {
+    const lines = rawInner
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith('data:'))
+      .map((l) => l.slice(5).trim());
+
+    let acc = '';
+
+    for (const line of lines) {
+      if (!line || line === '[DONE]') break;
+
+      try {
+        const obj = JSON.parse(line);
+        // Берём только полезный текст модели
+        const part =
+          obj?.choices?.[0]?.delta?.content ??
+          obj?.choices?.[0]?.message?.content ??
+          (typeof obj?.content === 'string' ? obj.content : '');
+
+        if (typeof part === 'string' && part) {
+          acc += part;
+        }
+      } catch {
+        // служебные не-JSON строки игнорируем
+        continue;
+      }
+    }
+
+    return acc;
+  }
 
   const retryGeneration = () => {
     if (lastInput) handleGenerate(lastInput);

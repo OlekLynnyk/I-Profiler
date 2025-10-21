@@ -1,10 +1,10 @@
 'use client';
 import Image from 'next/image';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 type Props = {
   src?: string; // можно переопределить S3/CloudFront URL
-  poster?: string;
+  poster?: string; // может быть пустым
   className?: string;
 };
 
@@ -13,51 +13,58 @@ const MOBILE_VIDEO = `${VIDEO_BASE}/how-it-works-mobile.MP4`;
 
 export default function HowItWorksVideoMobile({
   src = MOBILE_VIDEO,
-  poster = '',
+  poster,
   className = '',
 }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  const [mounted, setMounted] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [saveData, setSaveData] = useState(false);
+  const [lowCPU, setLowCPU] = useState(false);
+
   const [showPoster, setShowPoster] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Политики производительности (как было)
-  const reduceMotion = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
-    }
-    return false;
-  }, []);
-  const saveData =
-    typeof navigator !== 'undefined' &&
-    ((navigator as any)?.connection?.saveData === true ||
-      (navigator as any)?.connection?.effectiveType === '2g');
-  const lowCPU =
-    typeof navigator !== 'undefined' &&
-    typeof (navigator as any)?.hardwareConcurrency === 'number' &&
-    (navigator as any).hardwareConcurrency < 4;
-
-  // ✅ Стабильная высота: задаём --vh только на маунте и при смене ориентации (без resize!)
+  // маунт
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Политики производительности — только на клиенте (после маунта)
+  useEffect(() => {
+    if (!mounted) return;
+
+    try {
+      setReduceMotion(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
+
+      const nav: any = navigator;
+      setSaveData(
+        Boolean(nav?.connection?.saveData === true || nav?.connection?.effectiveType === '2g')
+      );
+
+      const hc = typeof nav?.hardwareConcurrency === 'number' ? nav.hardwareConcurrency : 8;
+      setLowCPU(hc < 4);
+    } catch {
+      /* no-op */
+    }
+  }, [mounted]);
+
+  // Стабильная высота
+  useEffect(() => {
+    if (!mounted) return;
     const setStableVH = () => {
       const h = (window.visualViewport?.height ?? window.innerHeight) * 0.01;
       document.documentElement.style.setProperty('--vh', `${h}px`);
     };
     setStableVH();
-
-    const onOrientation = () => {
-      // даём вьюпорту устаканиться после поворота
-      requestAnimationFrame(() => setTimeout(setStableVH, 300));
-    };
-
+    const onOrientation = () => requestAnimationFrame(() => setTimeout(setStableVH, 300));
     window.addEventListener('orientationchange', onOrientation);
-    return () => {
-      window.removeEventListener('orientationchange', onOrientation);
-    };
-  }, []);
+    return () => window.removeEventListener('orientationchange', onOrientation);
+  }, [mounted]);
 
-  // Авто play/pause по видимости (как было)
+  // Автоплей по видимости
   useEffect(() => {
     const vid = videoRef.current;
     const el = sectionRef.current;
@@ -77,12 +84,12 @@ export default function HowItWorksVideoMobile({
     return () => io.disconnect();
   }, [showPoster]);
 
-  // Триггерим постер при экономии/редьюс-моушен/низком CPU (как было)
+  // Включаем постер при экономии/редьюс-моушен/низком CPU
   useEffect(() => {
     if (reduceMotion || saveData || lowCPU) setShowPoster(true);
   }, [reduceMotion, saveData, lowCPU]);
 
-  // Состояние play/pause (как было)
+  // Состояние play/pause
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -108,13 +115,11 @@ export default function HowItWorksVideoMobile({
       ref={sectionRef}
       className={`md:hidden relative w-full overflow-hidden bg-black ${className}`}
       style={{
-        // ✅ стабильная высота без «прыжков»
         height: 'calc(var(--vh, 100svh) * 100)',
         overscrollBehaviorY: 'contain',
       }}
       aria-label="How it works — intro video"
     >
-      {/* ВИДЕО на весь экран, без обрезки (letterbox/pillarbox) */}
       <div className="absolute inset-0 grid place-items-center">
         {!showPoster ? (
           <video
@@ -126,24 +131,25 @@ export default function HowItWorksVideoMobile({
             preload="metadata"
             autoPlay
             onClick={togglePlay}
-            poster={poster}
+            // не отдаём пустой poster, чтобы не было hydration diff
+            {...(poster ? { poster } : {})}
             crossOrigin="anonymous"
           >
             <source src={src} type="video/mp4" />
           </video>
-        ) : (
+        ) : // Рендерим изображение ТОЛЬКО если есть валидный src
+        poster ? (
           <Image src={poster} alt="Preview of product flow" fill className="object-contain" />
+        ) : (
+          <div className="h-full w-full bg-black" aria-hidden />
         )}
       </div>
 
-      {/* Верхний scrim — мягкая стыковка со статусбаром */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-16"
         style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.44), rgba(0,0,0,0))' }}
       />
-
-      {/* Нижний seam — плавный переход к следующему блоку (не влияет на layout) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-32"
@@ -153,7 +159,6 @@ export default function HowItWorksVideoMobile({
         }}
       />
 
-      {/* Play/Pause — как было */}
       {!showPoster && (
         <button
           type="button"

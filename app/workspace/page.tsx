@@ -542,11 +542,9 @@ export default function WorkspacePage() {
               />
             </ErrorBoundary>
           )}
-          {isSidebarOpen && (
-            <ErrorBoundary>
-              <Sidebar packageType={packageType} refreshToken={refreshToken} />
-            </ErrorBoundary>
-          )}
+          <ErrorBoundary>
+            <Sidebar packageType={packageType} refreshToken={refreshToken} />
+          </ErrorBoundary>
 
           <HeaderBar
             onLogout={handleLogoutConfirm}
@@ -676,6 +674,7 @@ export default function WorkspacePage() {
 
             <div
               id="ws-input-panel"
+              data-composer-root
               className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe keyboard-safe"
             >
               <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl overflow-visible">
@@ -741,6 +740,8 @@ export default function WorkspacePage() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything"
                     disabled={isDragging}
+                    inputMode="text"
+                    enterKeyHint="send"
                     className="w-full px-4 py-2 text-sm placeholder:text-sm ios-no-zoom leading-5 min-h-[36px] placeholder-[var(--text-secondary)] rounded-xl focus:outline-none focus:ring-0 bg-[var(--card-bg)] text-[var(--text-primary)] resize-none overflow-y-auto max_h-[120px]"
                   />
 
@@ -1187,7 +1188,7 @@ export default function WorkspacePage() {
               setShowSaveModal(false);
               refetch?.();
             }}
-            defaultProfileName={`Discernment Report #${Date.now()}`}
+            defaultProfileName={`DR ${new Date().toLocaleDateString('en-GB')}`}
           />
 
           {ready && showStep1 && (
