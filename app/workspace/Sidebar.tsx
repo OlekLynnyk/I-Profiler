@@ -124,17 +124,12 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
     };
   }, [openSidebar.right, closeSidebar]);
 
-  // ── NEW: высота сайдбара на мобиле, чтобы не перекрывать композер (как слева)
+  // ── NEW: потолок высоты для всех вьюпортов, чтобы не перекрывать composer/инпуты
   const [isMobile, setIsMobile] = useState(false);
-  const [mobileHeights, setMobileHeights] = useState({
-    header: 56, // fallback top-14
-    composer: 140, // безопасный запас
-  });
+  const [maxHeight, setMaxHeight] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     setIsMobile(isMobileViewport());
-
-    if (!isMobileViewport()) return;
 
     const headerEl = document.querySelector<HTMLElement>('[data-header-root]') || null;
     const composerEl = document.querySelector<HTMLElement>('[data-composer-root]') || null;
@@ -142,7 +137,8 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
     const measure = () => {
       const hh = headerEl?.getBoundingClientRect().height ?? 56;
       const ch = composerEl?.getBoundingClientRect().height ?? 140;
-      setMobileHeights({ header: Math.round(hh), composer: Math.round(ch) });
+      const ceiling = `calc(100vh - ${Math.round(hh + ch)}px - env(safe-area-inset-bottom, 0px))`;
+      setMaxHeight(ceiling);
     };
 
     measure();
@@ -159,11 +155,6 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       roComposer?.disconnect();
     };
   }, []);
-
-  // высота для мобилы (иначе не задаём — десктоп не трогаем)
-  const mobileHeight = isMobile
-    ? `calc(100vh - ${mobileHeights.header + mobileHeights.composer}px - env(safe-area-inset-bottom, 0px))`
-    : undefined;
 
   const boxes: SectionBox[] = [
     {
@@ -306,17 +297,20 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         boxShadow: 'none',
         border: 'none',
         willChange: 'transform',
-        height: mobileHeight, // ← единственный источник высоты на мобиле
+        // авто-рост и потолок для всех режимов, чтобы не перекрывать поле ввода
+        height: 'auto',
+        maxHeight: maxHeight,
       }}
     >
       <div
-        className="h-full overflow-y-auto no-scrollbar relative pb-8"
+        className="overflow-y-auto no-scrollbar relative pb-8"
         style={
           isMobile
-            ? {}
+            ? { maxHeight: 'inherit' }
             : {
                 WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
                 maskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+                maxHeight: 'inherit',
               }
         }
       >

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Copy, ThumbsUp, ThumbsDown, FileText } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 
 interface Attachment {
@@ -64,18 +64,44 @@ export default function ChatBubble({
   }
 
   useEffect(() => {
-    if (!isUser && !attachments?.length) {
-      let i = 0;
-      const interval = setInterval(() => {
-        setDisplayedText(text.slice(0, i + 1));
-        i++;
-        if (i >= text.length) clearInterval(interval);
-      }, 10);
-
-      return () => clearInterval(interval);
-    } else if (!isUser) {
+    if (isUser) return;
+    if (attachments?.length) {
       setDisplayedText(text);
+      return;
     }
+
+    const msPerChar = 10;
+    const startedAtRef = { current: performance.now() };
+
+    const render = () => {
+      const elapsed = performance.now() - startedAtRef.current;
+      const targetLen = Math.min(text.length, Math.floor(elapsed / msPerChar));
+      setDisplayedText(text.slice(0, targetLen));
+      return targetLen;
+    };
+
+    // первый рендер
+    render();
+
+    // плавное обновление в активной вкладке
+    const interval = setInterval(() => {
+      const done = render() >= text.length;
+      if (done) clearInterval(interval);
+    }, 16);
+
+    // «догон» при возврате из фонового режима
+    const onVis = () => {
+      if (!document.hidden) {
+        const done = render() >= text.length;
+        if (done) clearInterval(interval);
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [text, isUser, attachments?.length]);
 
   const handleCopy = async () => {

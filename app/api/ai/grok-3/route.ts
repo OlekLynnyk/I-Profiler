@@ -159,6 +159,25 @@ const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const jitter = (base: number) => Math.max(0, Math.floor(base * (0.5 + Math.random())));
 const isRetriableStatus = (s: number) => s === 408 || s === 429 || (s >= 500 && s <= 599);
 
+// Сигнатуры, по которым распознаём попадание профайлинга в промпт
+const PROFILING_SIGNATURES = [
+  'INSTRUCTIONS TO AI',
+  'DATA SUFFICIENCY & BACKGROUND RULES',
+  "The user's photo is the primary object",
+  'Do not produce A–B–C',
+  "I don't know. Insufficient data for analysis. Clear the history and upload a photo",
+];
+
+function hasProfilingSig(content: any): boolean {
+  try {
+    const s = typeof content === 'string' ? content : JSON.stringify(content ?? '');
+    const low = s.toLowerCase();
+    return PROFILING_SIGNATURES.some((sig) => low.includes(sig.toLowerCase()));
+  } catch {
+    return false;
+  }
+}
+
 // Диагностические флаги
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -256,6 +275,11 @@ export async function POST(req: NextRequest) {
     const isCdrs = mode === 'cdrs';
     const isImage = mode === 'image';
     const shouldStream = isCdrs && CDRS_STREAMING_ENABLED;
+
+    let branch: 'cdrs' | 'image' | 'chat' = isCdrs ? 'cdrs' : isImage ? 'image' : 'chat';
+    let historyCount = 0;
+    let profSignatureHit = false;
+    let cdrsFormulaStatus: 'hit' | 'miss' | 'n/a' = 'n/a';
 
     if (isImage && Array.isArray(savedMessageIds) && savedMessageIds.length > 0) {
       return withTraceJson(
@@ -406,6 +430,7 @@ export async function POST(req: NextRequest) {
               `--- END OF CDRs FORMULA ---`,
             ].join('\n\n'),
           });
+          cdrsFormulaStatus = 'hit';
         } else {
           messages.push({
             role: 'system',
@@ -415,6 +440,7 @@ export async function POST(req: NextRequest) {
               `- If an internal formula is unavailable, produce the best possible analysis using the provided saved reports.`,
             ].join('\n\n'),
           });
+          cdrsFormulaStatus = 'miss';
         }
 
         // Load saved reports (attachments) from Supabase.saved_chats
@@ -467,8 +493,9 @@ export async function POST(req: NextRequest) {
         const since = Date.now() - 12 * 60 * 60 * 1000;
         const { data: historyRows, error: historyError } = await supabase
           .from('chat_messages')
-          .select('*')
+          .select('role,type,content,timestamp')
           .eq('profile_id', profileId)
+          .neq('type', 'system_marker') // ← не тянем служебные маркеры профайлинга
           .gt('timestamp', since)
           .order('timestamp', { ascending: true });
 
@@ -488,6 +515,7 @@ export async function POST(req: NextRequest) {
             // keep as is
           }
           messages.push({ role: row.role, content: parsedContent });
+          historyCount++;
         }
 
         const userLanguage =
@@ -608,6 +636,43 @@ INSTRUCTION:
       messages.push({ role: 'user', content: userContent });
     }
 
+    // 1) первичная проверка на сигнатуры профайлинга
+    try {
+      const joined = JSON.stringify(messages).toLowerCase();
+      profSignatureHit = PROFILING_SIGNATURES.some((sig) => joined.includes(sig.toLowerCase()));
+    } catch {}
+
+    // 2) 🔒 санитизация: в CDRs НЕ допускаем попадание профайлинга
+    if (isCdrs && profSignatureHit) {
+      const before = messages.length;
+      messages = messages.filter((m) => !hasProfilingSig(m.content));
+      const after = messages.length;
+
+      // пересчёт флага после очистки
+      try {
+        const joined2 = JSON.stringify(messages).toLowerCase();
+        profSignatureHit = PROFILING_SIGNATURES.some((sig) => joined2.includes(sig.toLowerCase()));
+      } catch {}
+
+      console.warn(`[GROK][${traceId}] CDRS_SANITIZED`, { removed: before - after });
+    }
+
+    // 3) мета-лог (уже после очистки)
+    console.log(`[GROK][${traceId}] BRANCH_META`, {
+      branch,
+      shouldStream,
+      historyCount,
+      cdrsFormulaStatus,
+      profSignatureHit,
+      savedIdsCount: Array.isArray(savedMessageIds) ? savedMessageIds.length : 0,
+      imagesCount: Array.isArray((body as any)?.images)
+        ? (body as any).images.length
+        : imageBase64
+          ? 1
+          : 0,
+    });
+
+    // 4) отправляем в XAI
     console.log(`[GROK][${traceId}] XAI: sending messages`, { count: messages.length });
 
     // ── RETRY BLOCK ──────────────────────────────────────────────────────────
@@ -887,6 +952,10 @@ INSTRUCTION:
           'Cache-Control': 'no-cache, no-transform',
           Connection: 'keep-alive',
           'x-trace-id': traceId,
+          'x-branch': branch,
+          'x-history-count': String(historyCount),
+          'x-cdrs-formula': cdrsFormulaStatus,
+          'x-prof-sig': profSignatureHit ? '1' : '0',
         },
       });
     }
@@ -1032,7 +1101,12 @@ INSTRUCTION:
       max_tokens,
     });
 
-    return withTraceJson(traceId, { result: cleanText, model });
+    const res = withTraceJson(traceId, { result: cleanText, model });
+    res.headers.set('x-branch', branch);
+    res.headers.set('x-history-count', String(historyCount));
+    res.headers.set('x-cdrs-formula', cdrsFormulaStatus);
+    res.headers.set('x-prof-sig', profSignatureHit ? '1' : '0');
+    return res;
   } catch (err: any) {
     console.error(`[GROK][${traceId}] UNEXPECTED`, { error: String(err?.message || err) });
     return withTraceJson(

@@ -161,6 +161,12 @@ export default function WorkspacePage() {
   const { openSidebar, toggleSidebar, closeAllSidebars } = useSidebar();
 
   useEffect(() => {
+    const ensure = () => setIsHelperOpen(true);
+    window.addEventListener('sidebarHelper:ensureMount', ensure);
+    return () => window.removeEventListener('sidebarHelper:ensureMount', ensure);
+  }, []);
+
+  useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)'); // md-брейкпоинт
     const apply = (isDesktop: boolean) => {
       setIsHelperOpen(isDesktop);
@@ -535,7 +541,6 @@ export default function WorkspacePage() {
           {isHelperOpen && (
             <ErrorBoundary>
               <SidebarHelper
-                key={isCdrMode ? 'cdr' : 'normal'}
                 isCdrMode={isCdrMode}
                 onSelectForCdr={handleSelectForCdr}
                 preselectedIds={cdrSelected.map((x) => x.id)}
@@ -675,6 +680,7 @@ export default function WorkspacePage() {
             <div
               id="ws-input-panel"
               data-composer-root
+              data-ignore-sidebar-close="true"
               className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe keyboard-safe"
             >
               <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl overflow-visible">
@@ -849,7 +855,6 @@ export default function WorkspacePage() {
                           if (next) {
                             setIsHelperOpen(true);
                             if (!openSidebar?.left) toggleSidebar('left');
-                            window.dispatchEvent(new Event('sidebarHelper:openSaved'));
                           }
                         }}
                         aria-pressed={isCdrMode}

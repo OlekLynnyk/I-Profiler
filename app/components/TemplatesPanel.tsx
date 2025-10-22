@@ -30,6 +30,7 @@ function useTapToggle({
   const start = useRef<{ x: number; y: number; id: number | null } | null>(null);
   const moved = useRef(false);
   const lastAt = useRef(0);
+  const cancel = () => cleanup();
 
   const cleanup = () => {
     window.removeEventListener('pointerup', handleUp, true);
@@ -99,7 +100,7 @@ function useTapToggle({
     }
   };
 
-  return { onPointerDown, onPointerMove, onPointerUp, onKeyDown };
+  return { onPointerDown, onPointerMove, onPointerUp, onKeyDown, cancel };
 }
 
 export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProps) {
@@ -211,6 +212,10 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
 
   const handleDuplicateSystem = async (tpl: TemplateItem) => {
     if (!userId) return;
+
+    const ok = window.confirm(`Duplicate "${tpl.title}" to My templates?`);
+    if (!ok) return;
+
     try {
       await duplicateTemplateFromSystem(tpl.id, userId);
       await refresh();
@@ -422,7 +427,9 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               className="tap-ok text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               onPointerDown={(e) => {
                 e.stopPropagation();
-                e.preventDefault();
+              }}
+              onPointerUp={(e) => {
+                e.stopPropagation();
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -439,7 +446,9 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               onPointerDown={(e) => {
                 e.stopPropagation();
-                e.preventDefault();
+              }}
+              onPointerUp={(e) => {
+                e.stopPropagation();
               }}
               onClick={(e) => {
                 e.stopPropagation();

@@ -32,14 +32,12 @@ export default function SidebarHelper({
   const { plan } = useUserPlan();
   const injectPrompt = useInjectPrompt();
 
-  // ---- мобильные настройки высоты (десктоп не трогаем)
+  // ---- измерение и потолок высоты (мобайл + десктоп)
   const [isMobile, setIsMobile] = useState(false);
-  const [mobileHeights, setMobileHeights] = useState({ header: 56, composer: 140 });
+  const [maxHeight, setMaxHeight] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const mobile = isMobileViewport();
-    setIsMobile(mobile);
-    if (!mobile) return;
+    setIsMobile(isMobileViewport());
 
     const headerEl = document.querySelector<HTMLElement>('[data-header-root]') || null;
     const composerEl = document.querySelector<HTMLElement>('[data-composer-root]') || null;
@@ -47,7 +45,7 @@ export default function SidebarHelper({
     const measure = () => {
       const hh = headerEl?.getBoundingClientRect().height ?? 56;
       const ch = composerEl?.getBoundingClientRect().height ?? 140;
-      setMobileHeights({ header: Math.round(hh), composer: Math.round(ch) });
+      setMaxHeight(`calc(100vh - ${Math.round(hh + ch)}px - env(safe-area-inset-bottom, 0px))`);
     };
 
     measure();
@@ -127,7 +125,10 @@ export default function SidebarHelper({
         return;
       }
 
-      // игнорируем зоны, помеченные как интерактивные
+      if (targetEl.closest('[data-header-root]') || targetEl.closest('[data-composer-root]')) {
+        return;
+      }
+
       if (targetEl.closest('[data-ignore-sidebar-close="true"]')) return;
 
       closeSidebar('left');
@@ -144,11 +145,6 @@ export default function SidebarHelper({
     };
   }, [openSidebar.left, closeSidebar]);
 
-  // высота только для мобилы — десктоп управляется классом
-  const mobileHeight = isMobile
-    ? `calc(100vh - ${mobileHeights.header + mobileHeights.composer}px - env(safe-area-inset-bottom, 0px))`
-    : undefined;
-
   return (
     <aside
       ref={sidebarRef}
@@ -162,7 +158,6 @@ export default function SidebarHelper({
         transition-transform duration-500 ease-in-out
         ${openSidebar.left ? 'translate-x-0' : '-translate-x-full'}
         overflow-hidden
-        h-[calc(100vh-190px)]   /* десктоп-высота (как и было) */
       `}
       style={{
         backgroundColor: 'var(--background)',
@@ -171,21 +166,23 @@ export default function SidebarHelper({
         // ⚠️ убрали isolation: 'isolate' — на iOS иногда ломает hit-test
         backfaceVisibility: 'hidden',
         transform: 'translateZ(0)', // сглаживание
-        // На мобиле перекрываем высоту (единственный источник)
-        height: mobileHeight,
+        // авто-рост + потолок, чтобы не перекрывать композер/инпуты
+        height: 'auto',
+        maxHeight: maxHeight,
       }}
     >
       <div
-        className="h-full overflow-y-auto overflow-x-hidden no-scrollbar relative pb-8"
+        className="overflow-y-auto overflow-x-hidden no-scrollbar relative pb-8 scroll-stable"
         data-ignore-sidebar-close="true"
         onPointerDown={(e) => e.stopPropagation()}
         style={
           isMobile
-            ? { scrollbarGutter: 'stable both-edges' }
+            ? { scrollbarGutter: 'stable both-edges', maxHeight: 'inherit' }
             : {
                 scrollbarGutter: 'stable both-edges',
                 WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
                 maskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+                maxHeight: 'inherit',
               }
         }
       >

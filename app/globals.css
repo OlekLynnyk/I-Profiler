@@ -203,3 +203,15 @@ input, textarea, select, button, label {
 .tap-ok {
   touch-action: manipulation;
 }
+
+/* === ДОБАВЛЕНО: стабильная прокрутка внутри сайдбара/панелей на мобиле === */
+.scroll-stable {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch; /* iOS momentum scroll без глитчей хит-теста */
+}
+
+/* === ДОБАВЛЕНО: тапы по чекбоксу без лишних жестов/подсветки на мобилках === */
+input[type="checkbox"].tap-ok {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}

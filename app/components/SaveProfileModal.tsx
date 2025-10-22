@@ -349,8 +349,18 @@ export default function SaveProfileModal({
                   <Download size={20} />
                 </button>
                 <button
-                  onClick={onClose}
-                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                  }}
+                  className="
+                    text-[var(--text-secondary)] hover:text-[var(--text-primary)]
+                    -m-2 p-2
+                    rounded-md
+                  "
+                  style={{ touchAction: 'manipulation', minWidth: 44, minHeight: 44 }}
                   aria-label="Close Modal"
                 >
                   <X size={20} />

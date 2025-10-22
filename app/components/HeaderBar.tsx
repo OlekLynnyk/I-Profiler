@@ -31,6 +31,7 @@ export default function HeaderBar({
 
   // ЛЕВАЯ панель
   const handleLeftPanelClick = () => {
+    window.dispatchEvent(new Event('sidebarHelper:ensureMount'));
     if (openSidebar.left) {
       closeSidebar('left');
     } else {

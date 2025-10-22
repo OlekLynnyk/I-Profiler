@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useAuth } from '@/app/context/AuthProvider';
 import { useSavedProfiles, SavedProfile, SavedBlockName } from '@/app/hooks/useSavedProfiles';
 import SaveProfileModal from '@/app/components/SaveProfileModal';
@@ -17,13 +17,48 @@ const UNGROUPED_ID = '__ungrouped__' as const;
 const MAX_CUSTOM_BLOCKS = 15;
 const MAX_BLOCK_NAME_LEN = 30;
 
+/** ⬇️ Жёсткий лимит на вложения в CDRs */
+const MAX_CDR_ATTACH = 5;
+
+/** Точечная защита от повторного alert на один жест */
+const useAlertOnce = () => {
+  const lockRef = useRef(false);
+  return (msg: string) => {
+    if (lockRef.current) return;
+    lockRef.current = true;
+    try {
+      alert(msg);
+    } finally {
+      // снимаем блокировку чуть позже, чтобы повторные события того же жеста не показали alert снова
+      setTimeout(() => {
+        lockRef.current = false;
+      }, 0);
+    }
+  };
+};
+
+// утилиты
+const REFRESH_DEBOUNCE_MS = 200;
+const equalStringArrays = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((x, i) => x === b[i]);
+const equalSetToArray = (set: Set<string>, arr: string[]) => {
+  if (set.size !== arr.length) return false;
+  for (const id of arr) if (!set.has(id)) return false;
+  return true;
+};
+const TAP_TOLERANCE_POINTER = 4;
+const TAP_TOLERANCE_TOUCH = 18;
+const isFromCheckbox = (el: EventTarget | null) => {
+  const node = el as HTMLElement | null;
+  return !!node?.closest('label, input[type="checkbox"]');
+};
+
 export default function SavedProfileList({
   selectionMode = false,
   onSelectForCdr,
   showCreateBlockButton = false,
   preselectedIds = [],
 }: SavedProfileListProps) {
-  console.debug('[SavedProfileList] selectionMode =', selectionMode);
   const { session } = useAuth();
   const userId = session?.user?.id;
 
@@ -41,14 +76,24 @@ export default function SavedProfileList({
   });
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const alertOnce = useAlertOnce();
+
+  // синхронизация выбранных (по содержимому)
+  const preselectedKey = useMemo(
+    () => (preselectedIds && preselectedIds.length ? preselectedIds.slice().sort().join('|') : ''),
+    [preselectedIds]
+  );
 
   useEffect(() => {
     if (selectionMode) {
-      setSelectedIds(new Set(preselectedIds));
+      if (!equalSetToArray(selectedIds, preselectedIds)) {
+        setSelectedIds(new Set(preselectedIds));
+      }
     } else {
-      setSelectedIds(new Set());
+      if (selectedIds.size) setSelectedIds(new Set());
     }
-  }, [selectionMode, preselectedIds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectionMode, preselectedKey]);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newBlockName, setNewBlockName] = useState('');
@@ -69,14 +114,16 @@ export default function SavedProfileList({
 
   const ungrouped = useMemo(() => profiles.filter((p) => !p.folder), [profiles]);
 
-  // Фоновый refresh (без мигания)
+  // refresh с дебаунсом
   const refresh = async () => {
     if (!userId) return;
     try {
       const [items, folderList] = await Promise.all([getSavedProfiles(userId), getFolders(userId)]);
       setProfiles(items);
+
       const ordered = Array.from(new Set([CDRS_ID, ...folderList.filter((n) => n !== CDRS_ID)]));
-      setFolders(ordered);
+      setFolders((prev) => (equalStringArrays(prev, ordered) ? prev : ordered));
+
       setExpanded((prev) => {
         const next: Record<string, boolean> = { ...prev };
         for (const f of ordered) {
@@ -90,7 +137,7 @@ export default function SavedProfileList({
     }
   };
 
-  // Первичная загрузка
+  // первичная загрузка
   useEffect(() => {
     if (!userId) return;
     let active = true;
@@ -125,15 +172,23 @@ export default function SavedProfileList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  // Глобальные события
+  // глобальные события
   useEffect(() => {
     const handler = () => setCreateModalOpen(true);
     window.addEventListener('savedMessages:createBlock', handler as EventListener);
     return () => window.removeEventListener('savedMessages:createBlock', handler as EventListener);
   }, []);
 
+  const refreshRafRef = useRef<number | null>(null);
+  const scheduleRefresh = () => {
+    if (refreshRafRef.current) cancelAnimationFrame(refreshRafRef.current);
+    refreshRafRef.current = requestAnimationFrame(() => {
+      setTimeout(() => void refresh(), REFRESH_DEBOUNCE_MS);
+    });
+  };
+
   useEffect(() => {
-    const onRefresh = () => refresh();
+    const onRefresh = () => scheduleRefresh();
     window.addEventListener('savedMessages:refresh', onRefresh as EventListener);
     return () => window.removeEventListener('savedMessages:refresh', onRefresh as EventListener);
   }, [userId]);
@@ -199,7 +254,8 @@ export default function SavedProfileList({
     try {
       await createFolder(userId, name);
       const fs = await getFolders(userId);
-      setFolders([CDRS_ID, ...fs.filter((n) => n !== CDRS_ID)]);
+      const nextOrdered = [CDRS_ID, ...fs.filter((n) => n !== CDRS_ID)];
+      setFolders((prev) => (equalStringArrays(prev, nextOrdered) ? prev : nextOrdered));
       setNewBlockName('');
       setCreateModalOpen(false);
     } catch (err: any) {
@@ -230,10 +286,8 @@ export default function SavedProfileList({
 
   const toggleExpanded = (id: string) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  /**
-   * Заголовок секции (уровень 2): стабильный pointerup-триггер + порог движения
-   */
-  const SectionHeader = ({ title, id }: { title: string; id: string }) => {
+  /** Заголовок секции */
+  const SectionHeader = memo(({ title, id }: { title: string; id: string }) => {
     const startRef = useRef<{ x: number; y: number } | null>(null);
     const movedRef = useRef(false);
     const panelId = `saved-sec-${id}`;
@@ -247,7 +301,7 @@ export default function SavedProfileList({
         aria-controls={panelId}
         draggable={false}
         onPointerDown={(e) => {
-          e.stopPropagation(); // НЕ делаем preventDefault — иначе click может не родиться
+          e.stopPropagation();
           startRef.current = { x: e.clientX, y: e.clientY };
           movedRef.current = false;
         }}
@@ -255,12 +309,18 @@ export default function SavedProfileList({
           if (!startRef.current) return;
           const dx = Math.abs(e.clientX - startRef.current.x);
           const dy = Math.abs(e.clientY - startRef.current.y);
-          if (dx > 3 || dy > 3) movedRef.current = true;
+          const tol =
+            (e as any).pointerType === 'touch' ? TAP_TOLERANCE_TOUCH : TAP_TOLERANCE_POINTER;
+          if (dx > tol || dy > tol) movedRef.current = true;
+        }}
+        onPointerCancel={() => {
+          startRef.current = null;
+          movedRef.current = true;
         }}
         onPointerUp={(e) => {
           e.stopPropagation();
           startRef.current = null;
-          if (movedRef.current) return; // скролл/drag — не переключаем
+          if (movedRef.current) return;
           toggleExpanded(id);
         }}
         onKeyDown={(e) => {
@@ -281,16 +341,17 @@ export default function SavedProfileList({
         </span>
       </div>
     );
-  };
+  });
 
   /**
-   * Строка (уровень 3): pointerup-триггер с порогом + stopPropagation.
-   * В selectionMode открытие модалки не выполняем.
+   * Строка (уровень 3)
+   * ⬅️ Фикс: при попытке выбрать 6-й — блокируем локально и показываем alert один раз.
    */
-  const Row = ({ profile }: { profile: SavedProfile }) => {
+  const Row = memo(({ profile }: { profile: SavedProfile }) => {
     const checked = selectedIds.has(profile.id);
     const startRef = useRef<{ x: number; y: number } | null>(null);
     const movedRef = useRef(false);
+    const scrollStartRef = useRef<number>(0);
 
     return (
       <div
@@ -299,24 +360,34 @@ export default function SavedProfileList({
         tabIndex={0}
         aria-label={profile.profile_name}
         className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok leading-5 min-h-[24px]"
-        style={{ willChange: 'transform' }}
         onPointerDown={(e) => {
+          if (selectionMode && isFromCheckbox(e.target)) return;
           e.stopPropagation();
           startRef.current = { x: e.clientX, y: e.clientY };
           movedRef.current = false;
+          scrollStartRef.current = document.scrollingElement?.scrollTop ?? window.scrollY ?? 0;
         }}
         onPointerMove={(e) => {
+          if (selectionMode && isFromCheckbox(e.target)) return;
           if (!startRef.current) return;
           const dx = Math.abs(e.clientX - startRef.current.x);
           const dy = Math.abs(e.clientY - startRef.current.y);
-          if (dx > 3 || dy > 3) movedRef.current = true;
+          const tol =
+            (e as any).pointerType === 'touch' ? TAP_TOLERANCE_TOUCH : TAP_TOLERANCE_POINTER;
+          if (dx > tol || dy > tol) movedRef.current = true;
+        }}
+        onPointerCancel={() => {
+          startRef.current = null;
+          movedRef.current = true;
         }}
         onPointerUp={(e) => {
+          if (selectionMode && isFromCheckbox(e.target)) return;
           e.stopPropagation();
           startRef.current = null;
           if (movedRef.current) return;
-          if (selectionMode) return; // выбор через чекбокс
-          // Открываем модалку на следующий тик, чтобы overlay не закрывал её тем же событием
+          const scrollNow = document.scrollingElement?.scrollTop ?? window.scrollY ?? 0;
+          if (Math.abs(scrollNow - scrollStartRef.current) > 1) return;
+          if (selectionMode) return;
           setTimeout(() => setSelectedProfile(profile), 0);
         }}
         onKeyDown={(e) => {
@@ -330,30 +401,57 @@ export default function SavedProfileList({
         <span
           className="file-title no-select select-none text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors duration-150"
           draggable={false}
-          style={{ willChange: 'color' }}
         >
           {profile.profile_name}
         </span>
 
         {selectionMode && (
-          <input
-            type="checkbox"
-            checked={checked}
-            readOnly
-            onClick={(e) => {
-              e.stopPropagation();
-              const next = new Set(selectedIds);
-              if (!checked) next.add(profile.id);
-              else next.delete(profile.id);
-              setSelectedIds(next);
-              onSelectForCdr?.(profile);
-            }}
+          <label
+            className="relative inline-flex items-center min-h-[36px] min-w-[36px] px-1 tap-ok"
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
-            className="accent-[var(--accent)]"
-            aria-label="Select for CDRs"
-            aria-checked={checked}
-          />
+            onPointerMove={(e) => e.stopPropagation()}
+            onPointerCancel={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(e) => {
+                e.stopPropagation();
+
+                // 👉 если пытаемся ДОБАВИТЬ и уже 5 выбрано — блокируем здесь
+                if (e.target.checked && selectedIds.size >= MAX_CDR_ATTACH) {
+                  // откатываем визуально (контролируемое поле само останется false, т.к. не меняем state)
+                  e.preventDefault?.();
+                  alertOnce(`You can attach up to ${MAX_CDR_ATTACH} saved reports.`);
+                  return;
+                }
+
+                setSelectedIds((prev) => {
+                  const next = new Set(prev);
+                  if (e.target.checked) next.add(profile.id);
+                  else next.delete(profile.id);
+                  return next;
+                });
+
+                // дальше даём знать наверх (Workspace) — он подтвердит/синхронизирует чипы
+                onSelectForCdr?.(profile);
+              }}
+              className="accent-[var(--accent)] tap-ok"
+              aria-label="Select for CDRs"
+              aria-checked={checked}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
+              onPointerMove={(e) => e.stopPropagation()}
+              onPointerCancel={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+            />
+          </label>
         )}
 
         {!selectionMode && (
@@ -377,7 +475,7 @@ export default function SavedProfileList({
         )}
       </div>
     );
-  };
+  });
 
   if (loading) {
     return <p className="text-sm text-[var(--text-secondary)]">Loading saved reports…</p>;
