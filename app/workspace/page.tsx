@@ -681,7 +681,7 @@ export default function WorkspacePage() {
               id="ws-input-panel"
               data-composer-root
               data-ignore-sidebar-close="true"
-              className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe keyboard-safe"
+              className="fixed inset-x-0 bottom-0 w-full px-3 sm:px-4 md:px-6 pb-safe keyboard-safe z-[70]"
             >
               <div className="relative max-w-3xl mx-auto bg-[var(--card-bg)] rounded-3xl p-3 shadow-2xl overflow-visible">
                 <div

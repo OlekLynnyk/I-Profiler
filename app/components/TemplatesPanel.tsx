@@ -398,12 +398,11 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
 
     return (
       <div
-        className="group relative flex justify-between items-center px-3 py-1 cursor-pointer no-select leading-5 min-h-[24px]"
+        className="group isolate relative flex justify-between items-center px-3 py-1 cursor-pointer no-select leading-5 min-h-[24px]"
         role="button"
         tabIndex={0}
         draggable={false}
         data-row
-        style={{ willChange: 'transform' }}
         onPointerDown={tap.onPointerDown}
         onPointerMove={tap.onPointerMove}
         onPointerUp={tap.onPointerUp}
@@ -416,7 +415,6 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               : 'text-[var(--text-primary)] hover:text-[var(--accent)]'
           }`}
           draggable={false}
-          style={{ willChange: 'color' }} // плавная смена цвета без мерцаний
         >
           {tpl.title}
         </span>
@@ -489,7 +487,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
 
   return (
     <div
-      className="flex flex-col gap-1"
+      className="relative flex flex-col gap-1"
       data-templates
       style={{ scrollbarGutter: 'stable both-edges' }}
     >
@@ -532,7 +530,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
         <div
           role="dialog"
           aria-modal="true"
-          className="absolute inset-0 z-50 flex items-center justify-center"
+          className="absolute inset-0 z-50 flex items-start justify-center"
           data-modal="open"
           data-interactive="true"
         >
@@ -584,7 +582,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
         <div
           role="dialog"
           aria-modal="true"
-          className="absolute inset-0 z-50 flex items-center justify-center"
+          className="absolute inset-0 z-50 flex items-start justify-center"
           data-modal="open"
           data-interactive="true"
         >
@@ -651,7 +649,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
         <div
           role="dialog"
           aria-modal="true"
-          className="absolute inset-0 z-50 flex items-center justify-center"
+          className="absolute inset-0 z-50 flex items-start justify-center"
           data-modal="open"
           data-interactive="true"
         >

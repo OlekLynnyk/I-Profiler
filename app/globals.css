@@ -158,6 +158,8 @@ input, textarea, select, button, label {
   text-rendering: optimizeLegibility;
 }
 
+/* --- FIX: Убираем лишние will-change, которые провоцировали фликер --- */
+
 /* Маркер для заголовков файлов/элементов списков */
 .file-title::before {
   content: "• ";
@@ -165,7 +167,7 @@ input, textarea, select, button, label {
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;     /* исключаем “промах” по псевдоэлементу */
-  will-change: opacity;     /* декоративный, не участвует в лэйауте */
+  /* will-change: opacity;  ← удалено */
 }
 .file-title {
   word-break: break-word;
@@ -176,15 +178,14 @@ input, textarea, select, button, label {
 [data-templates] [data-row] .file-title,
 [data-cdr-selection] [data-row] .file-title {
   transition: color .15s ease;
-  will-change: color;
 }
 
-/* Кликабельные строки — стабильный хитбокс и мягкая промоция слоя */
+/* Кликабельные строки — стабильный хитбокс без промоции слоя */
 [data-templates] [data-row],
 [data-cdr-selection] [data-row] {
   line-height: 1.25;   /* ~ Tailwind leading-5 */
   min-height: 24px;
-  will-change: transform;
+  /* will-change: transform; ← удалено */
 }
 
 /* Разрешаем клики внутри панелей */
@@ -204,14 +205,27 @@ input, textarea, select, button, label {
   touch-action: manipulation;
 }
 
-/* === ДОБАВЛЕНО: стабильная прокрутка внутри сайдбара/панелей на мобиле === */
+/* === Стабильная прокрутка внутри сайдбара/панелей на мобиле === */
 .scroll-stable {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch; /* iOS momentum scroll без глитчей хит-теста */
 }
 
-/* === ДОБАВЛЕНО: тапы по чекбоксу без лишних жестов/подсветки на мобилках === */
+/* === Тапы по чекбоксу без лишних жестов/подсветки на мобилках === */
 input[type="checkbox"].tap-ok {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* --- NEW: безопасный fade-оверлей вместо mask-image на контейнере списка --- */
+.scroll-fade {
+  position: relative;
+}
+.scroll-fade::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 14%; /* эквивалент прежнему затуханию ~от 85% */
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, var(--background) 100%);
 }

@@ -127,6 +127,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
   // ── NEW: потолок высоты для всех вьюпортов, чтобы не перекрывать composer/инпуты
   const [isMobile, setIsMobile] = useState(false);
   const [maxHeight, setMaxHeight] = useState<string | undefined>(undefined);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     setIsMobile(isMobileViewport());
@@ -135,22 +136,45 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
     const composerEl = document.querySelector<HTMLElement>('[data-composer-root]') || null;
 
     const measure = () => {
-      const hh = headerEl?.getBoundingClientRect().height ?? 56;
-      const ch = composerEl?.getBoundingClientRect().height ?? 140;
-      const ceiling = `calc(100vh - ${Math.round(hh + ch)}px - env(safe-area-inset-bottom, 0px))`;
-      setMaxHeight(ceiling);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        // Реальные кромки: низ хедера и верх композера — это и есть доступное окно
+        const headerBottom = Math.round(headerEl?.getBoundingClientRect().bottom ?? 56);
+
+        if (composerEl) {
+          const composerTop = Math.round(composerEl.getBoundingClientRect().top);
+          const available = Math.max(0, composerTop - headerBottom);
+          setMaxHeight(`${available}px`);
+        } else {
+          // Фолбэк (поведение как у вас раньше): когда нет композера на странице
+          const hh = Math.round(headerEl?.getBoundingClientRect().height ?? 56);
+          const ch = 140;
+          const ceiling = `calc(100vh - ${hh + ch}px - env(safe-area-inset-bottom, 0px))`;
+          setMaxHeight(ceiling);
+        }
+      });
     };
 
+    // первый замер
     measure();
 
     const roHeader = headerEl ? new ResizeObserver(measure) : null;
     const roComposer = composerEl ? new ResizeObserver(measure) : null;
-    roHeader?.observe(headerEl as Element);
-    roComposer?.observe(composerEl as Element);
+    if (headerEl) roHeader?.observe(headerEl);
+    if (composerEl) roComposer?.observe(composerEl);
 
+    // реагируем на адресную строку/клавиатуру/ориентацию/скролл — только пересчёт, без изменения разметки
     window.addEventListener('resize', measure);
+    window.addEventListener('orientationchange', measure);
+    (window as any).visualViewport?.addEventListener('resize', measure);
+    (window as any).visualViewport?.addEventListener('scroll', measure);
+
     return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', measure);
+      window.removeEventListener('orientationchange', measure);
+      (window as any).visualViewport?.removeEventListener('resize', measure);
+      (window as any).visualViewport?.removeEventListener('scroll', measure);
       roHeader?.disconnect();
       roComposer?.disconnect();
     };
@@ -225,7 +249,6 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
                 : 'bg-transparent text-[var(--text-primary)] ring-[var(--card-border)] hover:bg-[var(--surface-secondary)]'
             )}
           >
-            {/* === единственная правка: добавлен свотч цвета + текст === */}
             <span className="flex items-center gap-2">
               <span
                 aria-hidden
@@ -255,7 +278,6 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
                 : 'bg-transparent text-[var(--text-primary)] ring-[var(--card-border)] hover:bg-[var(--surface-secondary)]'
             )}
           >
-            {/* === единственная правка: добавлен свотч цвета + текст === */}
             <span className="flex items-center gap-2">
               <span
                 aria-hidden
@@ -284,7 +306,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       onClick={(e) => e.stopPropagation()}
       className={`
         fixed right-0 top-12
-        w-full max-w-sm md:w-80
+        w-[66.666vw] md:w-80
         text-[var(--text-primary)]
         z-[60]
         p-4
@@ -299,7 +321,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         willChange: 'transform',
         // авто-рост и потолок для всех режимов, чтобы не перекрывать поле ввода
         height: 'auto',
-        maxHeight: maxHeight,
+        maxHeight: maxHeight, // вычисляется по реальному зазору между header и composer
       }}
     >
       <div

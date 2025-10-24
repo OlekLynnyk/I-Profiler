@@ -294,7 +294,7 @@ export default function SavedProfileList({
 
     return (
       <div
-        className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok leading-5 min-h-[24px]"
+        className="isolate flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok leading-5 min-h-[24px]"
         role="button"
         tabIndex={0}
         aria-expanded={!!expanded[id]}
@@ -348,7 +348,9 @@ export default function SavedProfileList({
    * ⬅️ Фикс: при попытке выбрать 6-й — блокируем локально и показываем alert один раз.
    */
   const Row = memo(({ profile }: { profile: SavedProfile }) => {
-    const checked = selectedIds.has(profile.id);
+    const checked = selectionMode
+      ? (preselectedIds?.includes(profile.id) ?? false)
+      : selectedIds.has(profile.id);
     const startRef = useRef<{ x: number; y: number } | null>(null);
     const movedRef = useRef(false);
     const scrollStartRef = useRef<number>(0);
@@ -422,20 +424,23 @@ export default function SavedProfileList({
               onChange={(e) => {
                 e.stopPropagation();
 
-                // 👉 если пытаемся ДОБАВИТЬ и уже 5 выбрано — блокируем здесь
-                if (e.target.checked && selectedIds.size >= MAX_CDR_ATTACH) {
-                  // откатываем визуально (контролируемое поле само останется false, т.к. не меняем state)
+                if (
+                  e.target.checked &&
+                  (selectionMode ? (preselectedIds?.length ?? 0) : selectedIds.size) >=
+                    MAX_CDR_ATTACH
+                ) {
                   e.preventDefault?.();
                   alertOnce(`You can attach up to ${MAX_CDR_ATTACH} saved reports.`);
                   return;
                 }
 
-                setSelectedIds((prev) => {
-                  const next = new Set(prev);
-                  if (e.target.checked) next.add(profile.id);
-                  else next.delete(profile.id);
-                  return next;
-                });
+                if (!selectionMode)
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (e.target.checked) next.add(profile.id);
+                    else next.delete(profile.id);
+                    return next;
+                  });
 
                 // дальше даём знать наверх (Workspace) — он подтвердит/синхронизирует чипы
                 onSelectForCdr?.(profile);
@@ -486,7 +491,7 @@ export default function SavedProfileList({
   }
 
   return (
-    <div className="flex flex-col gap-1" data-cdr-selection={selectionMode ? 'on' : 'off'}>
+    <div className="relative flex flex-col gap-1" data-cdr-selection={selectionMode ? 'on' : 'off'}>
       <SectionHeader title="Combined Discernment Reports" id={CDRS_ID} />
       {expanded[CDRS_ID] && (
         <div id={`saved-sec-${CDRS_ID}`}>
@@ -566,7 +571,7 @@ export default function SavedProfileList({
         <div
           role="dialog"
           aria-modal="true"
-          className="absolute inset-0 z-50 flex items-center justify-center"
+          className="absolute inset-0 z-50 flex items-start justify-center"
           data-modal="open"
         >
           <div

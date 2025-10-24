@@ -35,6 +35,7 @@ export default function SidebarHelper({
   // ---- измерение и потолок высоты (мобайл + десктоп)
   const [isMobile, setIsMobile] = useState(false);
   const [maxHeight, setMaxHeight] = useState<string | undefined>(undefined);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     setIsMobile(isMobileViewport());
@@ -43,11 +44,26 @@ export default function SidebarHelper({
     const composerEl = document.querySelector<HTMLElement>('[data-composer-root]') || null;
 
     const measure = () => {
-      const hh = headerEl?.getBoundingClientRect().height ?? 56;
-      const ch = composerEl?.getBoundingClientRect().height ?? 140;
-      setMaxHeight(`calc(100vh - ${Math.round(hh + ch)}px - env(safe-area-inset-bottom, 0px))`);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        const headerBottom = Math.round(headerEl?.getBoundingClientRect().bottom ?? 56);
+        const composerTop = composerEl
+          ? Math.round(composerEl.getBoundingClientRect().top)
+          : (() => {
+              const vv = (window as any).visualViewport?.height;
+              return Math.round(
+                typeof vv === 'number'
+                  ? vv
+                  : document.documentElement?.clientHeight || window.innerHeight || 0
+              );
+            })();
+
+        const available = Math.max(0, composerTop - headerBottom);
+        setMaxHeight(`${available}px`);
+      });
     };
 
+    // первый замер
     measure();
 
     const roHeader = headerEl ? new ResizeObserver(measure) : null;
@@ -55,9 +71,18 @@ export default function SidebarHelper({
     if (headerEl) roHeader?.observe(headerEl);
     if (composerEl) roComposer?.observe(composerEl);
 
-    window.addEventListener('resize', measure);
+    // реагируем на адресную строку/клавиатуру/ориентацию/скролл
+    window.addEventListener('resize', measure, { passive: true });
+    window.addEventListener('orientationchange', measure, { passive: true });
+    (window as any).visualViewport?.addEventListener('resize', measure, { passive: true });
+    (window as any).visualViewport?.addEventListener('scroll', measure, { passive: true });
+
     return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', measure);
+      window.removeEventListener('orientationchange', measure);
+      (window as any).visualViewport?.removeEventListener('resize', measure);
+      (window as any).visualViewport?.removeEventListener('scroll', measure);
       roHeader?.disconnect();
       roComposer?.disconnect();
     };
@@ -99,16 +124,12 @@ export default function SidebarHelper({
     if (isCdrMode) setActiveBox('saved-messages');
   }, [isCdrMode]);
 
-  // УСТОЙЧИВОЕ «КЛИК-ВНЕ» (iOS Safari/Chrome): pointerdown + touchstart + mousedown (capture)
+  // УСТОЙЧИВОЕ «КЛИК-ВНЕ»: закрываем сайдбар ПОСЛЕ действия пользователя (bubble, 'click')
   useEffect(() => {
-    const onStart = (e: Event) => {
-      if ((e as any).defaultPrevented) return;
-
-      const pe = e as PointerEvent;
-      if ('button' in pe && pe.button !== 0) return; // только ЛКМ/тап
-      if (window.getSelection?.()?.toString()) return; // при выделении не закрываем
+    const onDocClick = (e: MouseEvent) => {
       if (!openSidebar.left) return;
 
+      // активная модалка — не закрываем
       const hasOpenModal = !!document.querySelector(
         '[role="dialog"][aria-modal="true"], [data-modal="open"]'
       );
@@ -117,32 +138,26 @@ export default function SidebarHelper({
       const targetEl = e.target as Element | null;
       if (!targetEl) return;
 
-      // внутри левого сайдбара или его триггеров — не закрываем
+      // клики внутри левого сайдбара/служебных зон не закрывают
       if (
         targetEl.closest('[data-sidebar-root="left"]') ||
-        targetEl.closest('[data-sidebar="left"]')
+        targetEl.closest('[data-sidebar="left"]') ||
+        targetEl.closest('[data-header-root]') ||
+        targetEl.closest('[data-composer-root]') ||
+        targetEl.closest('[data-ignore-sidebar-close="true"]')
       ) {
         return;
       }
 
-      if (targetEl.closest('[data-header-root]') || targetEl.closest('[data-composer-root]')) {
-        return;
-      }
+      // если есть выделение — не считаем «клик-вне»
+      if (window.getSelection?.()?.toString()) return;
 
-      if (targetEl.closest('[data-ignore-sidebar-close="true"]')) return;
-
-      closeSidebar('left');
+      // закрываем после обработки клика целевым элементом
+      queueMicrotask(() => closeSidebar('left'));
     };
 
-    window.addEventListener('pointerdown', onStart, true);
-    window.addEventListener('touchstart', onStart as EventListener, true);
-    window.addEventListener('mousedown', onStart as EventListener, true);
-
-    return () => {
-      window.removeEventListener('pointerdown', onStart, true);
-      window.removeEventListener('touchstart', onStart as EventListener, true);
-      window.removeEventListener('mousedown', onStart as EventListener, true);
-    };
+    window.addEventListener('click', onDocClick, false);
+    return () => window.removeEventListener('click', onDocClick, false);
   }, [openSidebar.left, closeSidebar]);
 
   return (
@@ -152,23 +167,23 @@ export default function SidebarHelper({
       data-sidebar-root="left"
       className={`
         fixed top-12 left-0
-        w-full max-w-sm md:w-80
+        w-[66.666vw] md:w-80
         text-[var(--text-primary)] z-[60]
         p-4
         transition-transform duration-500 ease-in-out
         ${openSidebar.left ? 'translate-x-0' : '-translate-x-full'}
         overflow-hidden
+        after:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-8 after:bg-gradient-to-t after:from-[var(--background)] after:to-transparent after:z-[1]
       `}
       style={{
         backgroundColor: 'var(--background)',
         boxShadow: 'none',
         border: 'none',
-        // ⚠️ убрали isolation: 'isolate' — на iOS иногда ломает hit-test
-        backfaceVisibility: 'hidden',
-        transform: 'translateZ(0)', // сглаживание
-        // авто-рост + потолок, чтобы не перекрывать композер/инпуты
+        // убираем форс-GPU на контейнере fixed, чтобы избежать iOS fixed+transform артефактов
+        // backfaceVisibility: 'hidden',
+        // transform: 'translateZ(0)',
         height: 'auto',
-        maxHeight: maxHeight,
+        maxHeight: maxHeight, // <- точный «зазор» между header и composer
       }}
     >
       <div
@@ -180,8 +195,7 @@ export default function SidebarHelper({
             ? { scrollbarGutter: 'stable both-edges', maxHeight: 'inherit' }
             : {
                 scrollbarGutter: 'stable both-edges',
-                WebkitMaskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
-                maskImage: 'linear-gradient(to bottom, #000 0%, #000 85%, transparent 100%)',
+                /* mask-image убрана: см. CSS .scroll-fade */
                 maxHeight: 'inherit',
               }
         }
