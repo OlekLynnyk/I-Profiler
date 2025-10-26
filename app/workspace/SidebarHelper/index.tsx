@@ -135,16 +135,17 @@ export default function SidebarHelper({
       );
       if (hasOpenModal) return;
 
+      const path = (e as any).composedPath?.() as EventTarget[] | undefined;
       const targetEl = e.target as Element | null;
-      if (!targetEl) return;
 
       // клики внутри левого сайдбара/служебных зон не закрывают
       if (
-        targetEl.closest('[data-sidebar-root="left"]') ||
-        targetEl.closest('[data-sidebar="left"]') ||
-        targetEl.closest('[data-header-root]') ||
-        targetEl.closest('[data-composer-root]') ||
-        targetEl.closest('[data-ignore-sidebar-close="true"]')
+        (path && path.some((n) => (n as Element)?.closest?.('[data-sidebar-root="left"]'))) ||
+        targetEl?.closest?.('[data-sidebar-root="left"]') ||
+        targetEl?.closest?.('[data-sidebar="left"]') ||
+        targetEl?.closest?.('[data-header-root]') ||
+        targetEl?.closest?.('[data-composer-root]') ||
+        targetEl?.closest?.('[data-ignore-sidebar-close="true"]')
       ) {
         return;
       }
@@ -152,8 +153,8 @@ export default function SidebarHelper({
       // если есть выделение — не считаем «клик-вне»
       if (window.getSelection?.()?.toString()) return;
 
-      // закрываем после обработки клика целевым элементом
-      queueMicrotask(() => closeSidebar('left'));
+      // закрываем ПОСЛЕ того, как все внутренние обработчики закончат работу
+      requestAnimationFrame(() => requestAnimationFrame(() => closeSidebar('left')));
     };
 
     window.addEventListener('click', onDocClick, false);
@@ -167,7 +168,7 @@ export default function SidebarHelper({
       data-sidebar-root="left"
       className={`
         fixed top-12 left-0
-        w-[75.000vw] md:w-80
+        w-[80.000vw] md:w-80
         text-[var(--text-primary)] z-[60]
         p-4
         transition-transform duration-500 ease-in-out
@@ -178,9 +179,6 @@ export default function SidebarHelper({
         backgroundColor: 'var(--background)',
         boxShadow: 'none',
         border: 'none',
-        // убираем форс-GPU на контейнере fixed, чтобы избежать iOS fixed+transform артефактов
-        // backfaceVisibility: 'hidden',
-        // transform: 'translateZ(0)',
         height: 'auto',
         maxHeight: maxHeight, // <- точный «зазор» между header и composer
       }}
@@ -189,6 +187,9 @@ export default function SidebarHelper({
         className="overflow-y-auto overflow-x-hidden no-scrollbar relative pb-8 scroll-stable"
         data-ignore-sidebar-close="true"
         onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
         style={
           isMobile
             ? { scrollbarGutter: 'stable both-edges', maxHeight: 'inherit' }

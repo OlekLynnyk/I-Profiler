@@ -53,7 +53,7 @@ const isFromCheckbox = (el: EventTarget | null) => {
 };
 
 /** ⬇️ Новое: детект реального скролл-контейнера и порог дельты */
-const SCROLL_DELTA_TOL = 3; // px
+const SCROLL_DELTA_TOL = 12; // px
 function getScrollableAncestor(el: HTMLElement | null): HTMLElement | null {
   let node: HTMLElement | null = el?.parentElement ?? null;
   while (node) {
@@ -317,6 +317,8 @@ export default function SavedProfileList({
   const SectionHeader = memo(({ title, id }: { title: string; id: string }) => {
     const startRef = useRef<{ x: number; y: number } | null>(null);
     const movedRef = useRef(false);
+    const didScrollRef = useRef(false); // ⬅️ NEW
+    const cleanupRef = useRef<(() => void) | null>(null); // ⬅️ NEW
     const panelId = `saved-sec-${id}`;
 
     // ⬇️ Новое: учитываем прокрутку реального скролл-контейнера
@@ -331,14 +333,23 @@ export default function SavedProfileList({
         aria-expanded={!!expanded[id]}
         aria-controls={panelId}
         draggable={false}
+        style={{ touchAction: 'pan-y' }} // ⬅️ NEW: позволяет вертикальный пан
         onPointerDown={(e) => {
           e.stopPropagation();
           startRef.current = { x: e.clientX, y: e.clientY };
           movedRef.current = false;
+          didScrollRef.current = false;
 
           const sc = getScrollableAncestor(e.currentTarget as HTMLElement);
           scrollElRef.current = sc;
           scrollStartRef.current = sc?.scrollTop ?? 0;
+
+          const onScroll = () => {
+            const cur = sc?.scrollTop ?? 0;
+            if (Math.abs(cur - scrollStartRef.current) > 2) didScrollRef.current = true;
+          };
+          sc?.addEventListener('scroll', onScroll, { passive: true });
+          cleanupRef.current = () => sc?.removeEventListener('scroll', onScroll);
         }}
         onPointerMove={(e) => {
           if (!startRef.current) return;
@@ -351,6 +362,8 @@ export default function SavedProfileList({
         onPointerCancel={() => {
           startRef.current = null;
           movedRef.current = true;
+          cleanupRef.current?.(); // ⬅️ NEW
+          cleanupRef.current = null; // ⬅️ NEW
         }}
         onPointerUp={(e) => {
           e.stopPropagation();
@@ -359,10 +372,24 @@ export default function SavedProfileList({
             Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) >
             SCROLL_DELTA_TOL;
 
+          // финальная фиксация факта скролла и очистка
+          if (Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) > 2) {
+            didScrollRef.current = true; // ⬅️ NEW
+          }
+          cleanupRef.current?.(); // ⬅️ NEW
+          cleanupRef.current = null; // ⬅️ NEW
+
           startRef.current = null;
-          if (movedRef.current || scrolledContainer) return;
+          if (movedRef.current || didScrollRef.current || scrolledContainer) return; // ⬅️ NEW
 
           toggleExpanded(id);
+        }}
+        onClickCapture={(e) => {
+          // ⬅️ NEW: глотаем click после скролла
+          if (movedRef.current || didScrollRef.current) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -394,6 +421,8 @@ export default function SavedProfileList({
       : selectedIds.has(profile.id);
     const startRef = useRef<{ x: number; y: number } | null>(null);
     const movedRef = useRef(false);
+    const didScrollRef = useRef(false); // ⬅️ NEW
+    const cleanupRef = useRef<(() => void) | null>(null); // ⬅️ NEW
 
     // ⬇️ Новое: учитываем прокрутку ближайшего скролл-контейнера
     const scrollElRef = useRef<HTMLElement | null>(null);
@@ -406,15 +435,24 @@ export default function SavedProfileList({
         tabIndex={0}
         aria-label={profile.profile_name}
         className="flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok leading-5 min-h-[24px]"
+        style={{ touchAction: 'pan-y' }} // ⬅️ NEW
         onPointerDown={(e) => {
           if (selectionMode && isFromCheckbox(e.target)) return;
           e.stopPropagation();
           startRef.current = { x: e.clientX, y: e.clientY };
           movedRef.current = false;
+          didScrollRef.current = false;
 
           const sc = getScrollableAncestor(e.currentTarget as HTMLElement);
           scrollElRef.current = sc;
           scrollStartRef.current = sc?.scrollTop ?? 0;
+
+          const onScroll = () => {
+            const cur = sc?.scrollTop ?? 0;
+            if (Math.abs(cur - scrollStartRef.current) > 2) didScrollRef.current = true;
+          };
+          sc?.addEventListener('scroll', onScroll, { passive: true });
+          cleanupRef.current = () => sc?.removeEventListener('scroll', onScroll);
         }}
         onPointerMove={(e) => {
           if (selectionMode && isFromCheckbox(e.target)) return;
@@ -428,6 +466,8 @@ export default function SavedProfileList({
         onPointerCancel={() => {
           startRef.current = null;
           movedRef.current = true;
+          cleanupRef.current?.(); // ⬅️ NEW
+          cleanupRef.current = null; // ⬅️ NEW
         }}
         onPointerUp={(e) => {
           if (selectionMode && isFromCheckbox(e.target)) return;
@@ -437,11 +477,25 @@ export default function SavedProfileList({
             Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) >
             SCROLL_DELTA_TOL;
 
+          // финальная фиксация факта скролла и очистка
+          if (Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) > 2) {
+            didScrollRef.current = true; // ⬅️ NEW
+          }
+          cleanupRef.current?.(); // ⬅️ NEW
+          cleanupRef.current = null; // ⬅️ NEW
+
           startRef.current = null;
-          if (movedRef.current || scrolledContainer) return;
+          if (movedRef.current || didScrollRef.current || scrolledContainer) return; // ⬅️ NEW
           if (selectionMode) return;
 
           setTimeout(() => setSelectedProfile(profile), 0);
+        }}
+        onClickCapture={(e) => {
+          // ⬅️ NEW
+          if (movedRef.current || didScrollRef.current) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -452,7 +506,7 @@ export default function SavedProfileList({
         draggable={false}
       >
         <span
-          className="file-title no-select select-none text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors duration-150"
+          className="file-title no-select select-none text-sm text-[var(--text-primary)]"
           draggable={false}
         >
           {profile.profile_name}
@@ -580,7 +634,7 @@ export default function SavedProfileList({
               onChange={(e) => setNewBlockName(e.target.value)}
               placeholder="Block name (up to 30 chars)"
               className="
-                w-full rounded-lg px-3 py-2 text-sm
+                w-full rounded-lg px-3 py-2 text-base md:text-sm
                 bg-[var(--surface)] text-[var(--text-primary)]
                 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]
               "

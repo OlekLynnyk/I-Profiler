@@ -4,23 +4,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 type Props = {
   text?: string;
-  /** CSS-селектор якоря (н-р: "#ws-onb-anchor", "#ws-save-btn") */
   targetSelector: string;
-
-  /** Заголовок и текст тела (если не заданы — используется fallback для первых двух шагов) */
   title?: string;
   body?: string;
-
-  /** Надпись на primary-кнопке (по умолчанию "Got it") */
   ctaLabel?: string;
-
-  /** Клик по primary-кнопке (accept/continue) */
   onAccept?: () => void | Promise<void>;
-
-  /** Закрытие по фону/ESC/кнопке "Later" */
   onDismiss: () => void | Promise<void>;
-
-  /** скрыть вторичную кнопку ("Later") */
   hideSecondary?: boolean;
 };
 
@@ -38,29 +27,79 @@ export default function OnboardingSpotlight({
   const [tipRect, setTipRect] = useState<DOMRect | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
 
-  // === следим за целью
+  // === следим за целью (устранение "залипания" при исчезновении якоря)
   useLayoutEffect(() => {
-    const el = document.querySelector(targetSelector) as HTMLElement | null;
-    if (!el) return;
+    let observed: HTMLElement | null = null;
 
-    const update = () => setRect(el.getBoundingClientRect());
-    update();
+    const getEl = () => document.querySelector(targetSelector) as HTMLElement | null;
+    const isVisible = (el: HTMLElement | null) =>
+      !!el && el.isConnected && el.getClientRects().length > 0;
 
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
+    const ensureOrDismiss = () => {
+      const el = getEl();
 
-    const onScroll = () => update();
-    const onResize = () => update();
+      // если цели нет или она невидима — снимаем подсветку и закрываем оверлей
+      if (!isVisible(el)) {
+        setRect(null);
+        try {
+          onDismiss?.();
+        } catch {}
+        // отключаем наблюдателей, если были
+        if (observed) {
+          try {
+            ro.unobserve(observed);
+          } catch {}
+          observed = null;
+        }
+        return;
+      }
 
+      // цель есть и видима
+      setRect(el!.getBoundingClientRect());
+
+      // пере-подписка ResizeObserver при смене узла
+      if (observed !== el) {
+        if (observed) {
+          try {
+            ro.unobserve(observed);
+          } catch {}
+        }
+        ro.observe(el!);
+        observed = el!;
+      }
+    };
+
+    const ro = new ResizeObserver(ensureOrDismiss);
+    const mo = new MutationObserver(ensureOrDismiss);
+
+    // стартовая инициализация
+    ensureOrDismiss();
+
+    // следим за скроллом/resize/поворотом
+    const onScroll = () => ensureOrDismiss();
+    const onResize = () => ensureOrDismiss();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+
+    // следим за изменениями DOM (перерисовки сайдбара/шапки и т.п.)
+    mo.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class', 'hidden'],
+    });
 
     return () => {
-      ro.disconnect();
+      try {
+        ro.disconnect();
+        mo.disconnect();
+      } catch {}
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
     };
-  }, [targetSelector]);
+  }, [targetSelector, onDismiss]);
 
   // === следим за тултипом
   useLayoutEffect(() => {
@@ -69,16 +108,19 @@ export default function OnboardingSpotlight({
     };
     updateTip();
 
+    const el = tooltipRef.current;
     const ro = new ResizeObserver(updateTip);
-    if (tooltipRef.current) ro.observe(tooltipRef.current);
+    if (el) ro.observe(el);
 
     const onScroll = () => updateTip();
     const onResize = () => updateTip();
-
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
+
     return () => {
-      ro.disconnect();
+      try {
+        ro.disconnect();
+      } catch {}
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
     };

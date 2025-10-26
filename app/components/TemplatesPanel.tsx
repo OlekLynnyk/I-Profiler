@@ -365,9 +365,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
       >
         <span
           className={`file-title no-select select-none text-sm transition-colors duration-150 ${
-            gated
-              ? 'text-[var(--text-secondary)]'
-              : 'text-[var(--text-primary)] hover:text-[var(--accent)]'
+            gated ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'
           }`}
           draggable={false}
         >
@@ -433,7 +431,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder={`Block name (up to ${FOLDER_NAME_LIMIT} chars)`}
-              className="w-full rounded-lg px-3 py-2 text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-full rounded-lg px-3 py-2 text-base md:text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             />
             <div className="mt-3 flex justify-end gap-3">
               <button
@@ -491,7 +489,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               value={newTplTitle}
               onChange={(e) => setNewTplTitle(e.target.value)}
               placeholder="Template title"
-              className="w-full rounded-lg px-3 py-2 text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-full rounded-lg px-3 py-2 text-base md:text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             />
 
             <label className="block text-xs text-[var(--text-secondary)] mt-3 mb-1">Content</label>
@@ -499,7 +497,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               value={newTplContent}
               onChange={(e) => setNewTplContent(e.target.value)}
               rows={6}
-              className="w-full rounded-lg px-3 py-2 text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-full rounded-lg px-3 py-2 text-base md:text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             />
 
             <div className="mt-3 flex justify-end gap-3">
@@ -560,7 +558,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               value={editTplTitle}
               onChange={(e) => setEditTplTitle(e.target.value)}
               placeholder="Template title"
-              className="w-full rounded-lg px-3 py-2 text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-full rounded-lg px-3 py-2 text-base md:text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             />
 
             <label className="block text-xs text-[var(--text-secondary)] mt-3 mb-1">Content</label>
@@ -568,7 +566,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               value={editTplContent}
               onChange={(e) => setEditTplContent(e.target.value)}
               rows={6}
-              className="w-full rounded-lg px-3 py-2 text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-full rounded-lg px-3 py-2 text-base md:text-sm bg-[var(--surface)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             />
 
             <div className="mt-3 flex justify-end gap-3">
@@ -597,7 +595,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
                 onClick={submitUpdateTemplate}
                 className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--text-primary)] dark:bg-[var(--card-bg)] shadow-sm"
               >
-                Save changes
+                Save
               </button>
             </div>
           </div>

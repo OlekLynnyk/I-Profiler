@@ -214,7 +214,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
             href="/settings/profile"
             target="_blank"
             rel="noopener noreferrer"
-            className="block hover:text-[var(--accent)]"
+            className="block text-[var(--text-primary)]"
           >
             Edit Profile
           </a>
@@ -222,7 +222,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
             href="/settings/subscription"
             target="_blank"
             rel="noopener noreferrer"
-            className="block hover:text-[var(--accent)]"
+            className="block text-[var(--text-primary)]"
           >
             Manage Subscription
           </a>
@@ -306,7 +306,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       onClick={(e) => e.stopPropagation()}
       className={`
         fixed right-0 top-12
-        w-[75.000vw] md:w-80
+        w-[80.000vw] md:w-80
         text-[var(--text-primary)]
         z-[60]
         p-4
