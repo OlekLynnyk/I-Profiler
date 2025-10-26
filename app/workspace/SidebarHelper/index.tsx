@@ -167,13 +167,12 @@ export default function SidebarHelper({
       data-sidebar-root="left"
       className={`
         fixed top-12 left-0
-        w-[66.666vw] md:w-80
+        w-[75.000vw] md:w-80
         text-[var(--text-primary)] z-[60]
         p-4
         transition-transform duration-500 ease-in-out
         ${openSidebar.left ? 'translate-x-0' : '-translate-x-full'}
         overflow-hidden
-        after:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-8 after:bg-gradient-to-t after:from-[var(--background)] after:to-transparent after:z-[1]
       `}
       style={{
         backgroundColor: 'var(--background)',
@@ -195,8 +194,10 @@ export default function SidebarHelper({
             ? { scrollbarGutter: 'stable both-edges', maxHeight: 'inherit' }
             : {
                 scrollbarGutter: 'stable both-edges',
-                /* mask-image убрана: см. CSS .scroll-fade */
                 maxHeight: 'inherit',
+                WebkitMaskImage:
+                  'linear-gradient(to bottom, #000 0%, #000 86%, rgba(0,0,0,0) 100%)',
+                maskImage: 'linear-gradient(to bottom, #000 0%, #000 86%, rgba(0,0,0,0) 100%)',
               }
         }
       >

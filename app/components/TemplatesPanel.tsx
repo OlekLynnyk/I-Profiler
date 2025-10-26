@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Files, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthProvider';
 import { useInjectPrompt } from '@/app/hooks/useInjectPrompt';
 import {
@@ -17,10 +17,10 @@ type TemplatesPanelProps = { isCdrMode?: boolean };
 const CDRS = 'CDRs' as const;
 const UNGROUPED = '__ungrouped__' as const;
 
-/** Детектор «тапа»: завершает жест на document, чтобы pointerup не терялся */
+/** --- tap helper (без изменений) --- */
 function useTapToggle({
   onTap,
-  thresh = 6, // px
+  thresh = 6,
   cooldownMs = 180,
 }: {
   onTap: () => void;
@@ -28,64 +28,33 @@ function useTapToggle({
   cooldownMs?: number;
 }) {
   const start = useRef<{ x: number; y: number; id: number | null } | null>(null);
-  const moved = useRef(false);
   const lastAt = useRef(0);
-  const cancel = () => cleanup();
-
   const cleanup = () => {
     window.removeEventListener('pointerup', handleUp, true);
     window.removeEventListener('pointercancel', handleCancel, true);
     start.current = null;
-    moved.current = false;
   };
-
   const handleUp = (e: PointerEvent) => {
     if (!start.current) return cleanup();
-    // если слежение за конкретным pointerId нужно — раскомментируйте:
-    // if (start.current.id !== null && e.pointerId !== start.current.id) return;
-
     const dx = Math.abs(e.clientX - start.current.x);
     const dy = Math.abs(e.clientY - start.current.y);
-    const dist = dx > dy ? dx : dy;
-
     const now = performance.now();
-    const hasSelection =
-      typeof window.getSelection === 'function' && !!window.getSelection()?.toString();
-
     cleanup();
-
-    if (hasSelection) return; // пользователь выделял текст — не считаем тапом
-    if (dist > thresh) return; // явный перетаскивающий жест — не тап
-
-    if (now - lastAt.current < cooldownMs) return; // анти-дубль
+    if (typeof window.getSelection === 'function' && window.getSelection()?.toString()) return;
+    if (dx > thresh || dy > thresh) return;
+    if (now - lastAt.current < cooldownMs) return;
     lastAt.current = now;
-
     onTap();
   };
-
   const handleCancel = () => cleanup();
-
   const onPointerDown = (e: React.PointerEvent) => {
-    e.stopPropagation(); // не отдаём глобальному close-on-outside
+    e.stopPropagation();
     start.current = { x: e.clientX, y: e.clientY, id: e.nativeEvent.pointerId ?? null };
-    moved.current = false;
-    // слушаем завершение жеста на документе (capture), даже если палец вышел за пределы
     window.addEventListener('pointerup', handleUp, true);
     window.addEventListener('pointercancel', handleCancel, true);
   };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!start.current) return;
-    const dx = Math.abs(e.clientX - start.current.x);
-    const dy = Math.abs(e.clientY - start.current.y);
-    if (dx > thresh || dy > thresh) moved.current = true;
-  };
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    // локально только гасим всплытие — завершение делаем через document listener
-    e.stopPropagation();
-  };
-
+  const onPointerMove = () => {};
+  const onPointerUp = (e: React.PointerEvent) => e.stopPropagation();
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -94,13 +63,9 @@ function useTapToggle({
       lastAt.current = now;
       onTap();
     }
-    if (e.key === 'Escape') {
-      // потребитель сам решит, сворачивать ли — здесь не вызываем onTap
-      e.stopPropagation();
-    }
+    if (e.key === 'Escape') e.stopPropagation();
   };
-
-  return { onPointerDown, onPointerMove, onPointerUp, onKeyDown, cancel };
+  return { onPointerDown, onPointerMove, onPointerUp, onKeyDown };
 }
 
 export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProps) {
@@ -115,7 +80,6 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     deleteTemplateFolder,
     createTemplate,
     deleteTemplate,
-    duplicateTemplateFromSystem,
     logInsertIntoInput,
     updateTemplate,
   } = useTemplates();
@@ -125,7 +89,6 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // состояние раскрытия секций/папок (уровень 2)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const [newFolderOpen, setNewFolderOpen] = useState(false);
@@ -138,6 +101,11 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
   const [editTplId, setEditTplId] = useState<string | null>(null);
   const [editTplTitle, setEditTplTitle] = useState('');
   const [editTplContent, setEditTplContent] = useState('');
+
+  // --- refs для авто-скролла к форме
+  const newFolderRef = useRef<HTMLDivElement | null>(null);
+  const newTplRef = useRef<HTMLDivElement | null>(null);
+  const editTplRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onCreateFolder = () => setNewFolderOpen(true);
@@ -177,6 +145,22 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // --- авто-прокрутка к открытой форме (вверх панели)
+  useEffect(() => {
+    const el = newTplOpen
+      ? newTplRef.current
+      : newFolderOpen
+        ? newFolderRef.current
+        : editTplOpen
+          ? editTplRef.current
+          : null;
+    if (!el) return;
+    // делаем после layout
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
+    });
+  }, [newTplOpen, newFolderOpen, editTplOpen]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, TemplateItem[]>();
     for (const f of folders) map.set(f, []);
@@ -208,20 +192,6 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     if ((tpl.folder || '') === CDRS && !isCdrMode) return;
     injectPrompt(tpl.content);
     if (userId) await logInsertIntoInput(userId, tpl.id, !!tpl.system);
-  };
-
-  const handleDuplicateSystem = async (tpl: TemplateItem) => {
-    if (!userId) return;
-
-    const ok = window.confirm(`Duplicate "${tpl.title}" to My templates?`);
-    if (!ok) return;
-
-    try {
-      await duplicateTemplateFromSystem(tpl.id, userId);
-      await refresh();
-    } catch (e: any) {
-      alert(e?.message || 'Failed to duplicate template.');
-    }
   };
 
   const handleOpenEditUserTpl = (tpl: TemplateItem) => {
@@ -302,7 +272,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     }
   };
 
-  /** ===== УСТОЙЧИВОЕ РАСКРЫТИЕ СЕКЦИЙ (уровень 2) c useTapToggle ===== */
+  /** ====== секции/строки (без изменений) ====== */
   const Section = ({
     id,
     title,
@@ -315,13 +285,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     emptyDeletable?: boolean;
   }) => {
     const isEmpty = Array.isArray(children) ? (children as any[]).length === 0 : false;
-
-    const tap = useTapToggle({
-      onTap: () => toggle(id),
-      thresh: 6,
-      cooldownMs: 180,
-    });
-
+    const tap = useTapToggle({ onTap: () => toggle(id), thresh: 6, cooldownMs: 180 });
     return (
       <div>
         <div
@@ -332,7 +296,6 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
           aria-controls={`tpl-sec-${id}`}
           draggable={false}
           onPointerDown={tap.onPointerDown}
-          onPointerMove={tap.onPointerMove}
           onPointerUp={tap.onPointerUp}
           onKeyDown={tap.onKeyDown}
         >
@@ -382,29 +345,21 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
     );
   };
 
-  /**
-   * Строка шаблона (уровень 3): такой же стабильный «тап», чтобы вставка не пропускалась
-   */
   const Row = ({ tpl }: { tpl: TemplateItem }) => {
     const gated = (tpl.folder || '') === CDRS && !isCdrMode;
-
     const tap = useTapToggle({
-      onTap: () => {
-        if (!gated) handleInsert(tpl);
-      },
+      onTap: () => !gated && handleInsert(tpl),
       thresh: 6,
       cooldownMs: 180,
     });
-
     return (
       <div
-        className="group isolate relative flex justify-between items-center px-3 py-1 cursor-pointer no-select leading-5 min-h-[24px]"
+        className="group relative z-0 flex justify-between items-center px-3 py-1 cursor-pointer no-select leading-5 min-h-[24px]"
         role="button"
         tabIndex={0}
         draggable={false}
         data-row
         onPointerDown={tap.onPointerDown}
-        onPointerMove={tap.onPointerMove}
         onPointerUp={tap.onPointerUp}
         onKeyDown={tap.onKeyDown}
       >
@@ -418,36 +373,12 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
         >
           {tpl.title}
         </span>
-
         <div className="flex items-center gap-2">
-          {tpl.system ? (
-            <button
-              className="tap-ok text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              onPointerDown={(e) => {
-                e.stopPropagation();
-              }}
-              onPointerUp={(e) => {
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDuplicateSystem(tpl);
-              }}
-              title="Duplicate to My templates"
-              aria-label="Duplicate"
-              type="button"
-            >
-              <Files className="w-4 h-4 scale-75" />
-            </button>
-          ) : (
+          {!tpl.system && (
             <button
               className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              onPointerDown={(e) => {
-                e.stopPropagation();
-              }}
-              onPointerUp={(e) => {
-                e.stopPropagation();
-              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
                 handleOpenEditUserTpl(tpl);
@@ -460,24 +391,6 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
             </button>
           )}
         </div>
-
-        {gated && (
-          <div
-            className="
-              pointer-events-none
-              absolute left-3 -top-1 translate-y-[-100%] z-10
-              opacity-0 group-hover:opacity-100
-              transition-opacity duration-150
-              px-2 py-1 rounded-md text-[11px]
-              bg-[var(--card-bg)] text-[var(--text-secondary)]
-              border border-[var(--card-border)] shadow-sm
-              max-w-[240px] whitespace-normal break-words
-            "
-            style={{ willChange: 'opacity' }}
-          >
-            Available in CDRs mode. Toggle “CDRs” to use.
-          </div>
-        )}
       </div>
     );
   };
@@ -491,46 +404,13 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
       data-templates
       style={{ scrollbarGutter: 'stable both-edges' }}
     >
-      {systemFolders.map((name) => (
-        <Section key={`sys-${name}`} id={name} title={name}>
-          {(grouped.get(name) ?? []).length === 0 ? (
-            <div className="px-3 py-1 text-xs text-[var(--text-secondary)] italic">
-              No templates yet.
-            </div>
-          ) : (
-            (grouped.get(name) ?? []).map((tpl) => <Row key={tpl.id} tpl={tpl} />)
-          )}
-        </Section>
-      ))}
-
-      {customFolders.map((name) => {
-        const arr = grouped.get(name) ?? [];
-        return (
-          <Section key={`custom-${name}`} id={name} title={name} emptyDeletable>
-            {arr.map((tpl) => (
-              <Row key={tpl.id} tpl={tpl} />
-            ))}
-          </Section>
-        );
-      })}
-
-      <div className="mt-1 pt-1 border-t border-[var(--card-border)]">
-        <div className="px-3 py-1 text-xs text-[var(--text-secondary)]">Templates (no folder)</div>
-        {ungroupedUser.length === 0 ? (
-          <div className="px-3 py-1 text-xs text-[var(--text-secondary)] italic">
-            No personal templates yet.
-          </div>
-        ) : (
-          ungroupedUser.map((tpl) => <Row key={tpl.id} tpl={tpl} />)
-        )}
-      </div>
-
-      {/* Модалки без изменений, только type="button" где нужно */}
+      {/* === 1) Диалоги рендерим ВВЕРХУ панели + auto-scroll к ним === */}
       {newFolderOpen && (
         <div
+          ref={newFolderRef}
           role="dialog"
           aria-modal="true"
-          className="absolute inset-0 z-50 flex items-start justify-center"
+          className="relative z-40 flex items-start justify-center mb-2"
           data-modal="open"
           data-interactive="true"
         >
@@ -569,7 +449,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               <button
                 type="button"
                 onClick={submitCreateFolder}
-                className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--text-primary)]  dark:bg-[var(--card-bg)] shadow-sm"
+                className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--text-primary)] dark:bg-[var(--card-bg)] shadow-sm"
               >
                 Create
               </button>
@@ -580,9 +460,10 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
 
       {newTplOpen && (
         <div
+          ref={newTplRef}
           role="dialog"
           aria-modal="true"
-          className="absolute inset-0 z-50 flex items-start justify-center"
+          className="relative z-40 flex items-start justify-center mb-2"
           data-modal="open"
           data-interactive="true"
         >
@@ -636,7 +517,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               <button
                 type="button"
                 onClick={submitCreateTemplate}
-                className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--text-primary)]  dark:bg-[var(--card-bg)] shadow-sm"
+                className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--text-primary)] dark:bg-[var(--card-bg)] shadow-sm"
               >
                 Create template
               </button>
@@ -647,9 +528,10 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
 
       {editTplOpen && (
         <div
+          ref={editTplRef}
           role="dialog"
           aria-modal="true"
-          className="absolute inset-0 z-50 flex items-start justify-center"
+          className="relative z-40 flex items-start justify-center mb-2"
           data-modal="open"
           data-interactive="true"
         >
@@ -705,7 +587,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               <button
                 type="button"
                 onClick={submitDeleteFromEdit}
-                className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--danger)]  dark:bg-[var(--card-bg)] shadow-sm"
+                className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--danger)] dark:bg-[var(--card-bg)] shadow-sm"
                 title="Delete this template"
               >
                 Delete
@@ -713,7 +595,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
               <button
                 type="button"
                 onClick={submitUpdateTemplate}
-                className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--text-primary)]  dark:bg-[var(--card-bg)] shadow-sm"
+                className="h-8 px-3 rounded-full text-xs font-medium bg-[var(--button-bg)] text-[var(--text-primary)] dark:bg-[var(--card-bg)] shadow-sm"
               >
                 Save changes
               </button>
@@ -721,6 +603,41 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
           </div>
         </div>
       )}
+
+      {/* === 2) дальше — обычные секции/списки === */}
+      {systemFolders.map((name) => (
+        <Section key={`sys-${name}`} id={name} title={name}>
+          {(grouped.get(name) ?? []).length === 0 ? (
+            <div className="px-3 py-1 text-xs text-[var(--text-secondary)] italic">
+              No templates yet.
+            </div>
+          ) : (
+            (grouped.get(name) ?? []).map((tpl) => <Row key={tpl.id} tpl={tpl} />)
+          )}
+        </Section>
+      ))}
+
+      {customFolders.map((name) => {
+        const arr = grouped.get(name) ?? [];
+        return (
+          <Section key={`custom-${name}`} id={name} title={name} emptyDeletable>
+            {arr.map((tpl) => (
+              <Row key={tpl.id} tpl={tpl} />
+            ))}
+          </Section>
+        );
+      })}
+
+      <div className="mt-1 pt-1 border-t border-[var(--card-border)]">
+        <div className="px-3 py-1 text-xs text-[var(--text-secondary)]">Templates (no folder)</div>
+        {ungroupedUser.length === 0 ? (
+          <div className="px-3 py-1 text-xs text-[var(--text-secondary)] italic">
+            No personal templates yet.
+          </div>
+        ) : (
+          ungroupedUser.map((tpl) => <Row key={tpl.id} tpl={tpl} />)
+        )}
+      </div>
     </div>
   );
 }

@@ -83,28 +83,6 @@ export function useTemplates() {
     return trimmed;
   };
 
-  const buildDuplicateTitle = async (userId: string, base: string) => {
-    const prefix = 'My copy';
-    const sep = ' — ';
-    const { data } = await sb
-      .from('template_items')
-      .select('title')
-      .eq('user_id', userId)
-      .like('title', `${prefix}%${sep}${base}%`);
-
-    const rows = (data ?? []) as Array<{ title: string }>;
-    const existing = new Set(rows.map((r) => r.title));
-
-    if (!existing.has(`${prefix} — ${base}`)) return `${prefix} — ${base}`;
-    let n = 2;
-    while (n < 999) {
-      const candidate = `${prefix} (${n}) — ${base}`;
-      if (!existing.has(candidate)) return candidate;
-      n++;
-    }
-    return `${prefix} — ${base}`;
-  };
-
   /* Read */
 
   /** Список папок: системные (в фиксированном порядке) + кастомные пользователя. */
@@ -502,53 +480,6 @@ export function useTemplates() {
     }
   };
 
-  /** Дублировать системный темплейт в «вне папки» пользователя. */
-  const duplicateTemplateFromSystem = async (templateId: string, userId: string) => {
-    setIsLoading(true);
-    setError(null);
-
-    const get = await sb
-      .from('template_items')
-      .select('id, system, title, content')
-      .eq('id', templateId)
-      .single();
-
-    if (get.error) {
-      setIsLoading(false);
-      setError(get.error.message);
-      throw get.error;
-    }
-    const tpl = get.data as { id: string; system: boolean; title: string; content: string };
-    if (!tpl?.system) {
-      setIsLoading(false);
-      throw new Error('Only system templates can be duplicated here.');
-    }
-
-    const newTitle = await buildDuplicateTitle(userId, tpl.title);
-
-    const ins = await sb.from('template_items').insert([
-      {
-        user_id: userId,
-        system: false,
-        title: newTitle,
-        content: tpl.content,
-        folder: null, // по ТЗ: вне папки
-      },
-    ]);
-
-    await logUserAction({
-      userId,
-      action: 'templates:duplicate_from_system',
-      metadata: { fromId: templateId, newTitle },
-    });
-
-    setIsLoading(false);
-    if (ins.error) {
-      setError(ins.error.message);
-      throw ins.error;
-    }
-  };
-
   /** Лог: пользователь вставил темплейт в инпут (для аналитики). */
   const logInsertIntoInput = async (userId: string, templateId: string, isSystem: boolean) => {
     await logUserAction({
@@ -574,7 +505,6 @@ export function useTemplates() {
     updateTemplate,
     deleteTemplate,
     moveTemplateToFolder,
-    duplicateTemplateFromSystem,
     // analytics
     logInsertIntoInput,
     // constants

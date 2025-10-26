@@ -31,9 +31,20 @@ export default function HeaderBar({
 
   // ЛЕВАЯ панель
   const handleLeftPanelClick = () => {
+    // гарантируем монтирование левой панели
     window.dispatchEvent(new Event('sidebarHelper:ensureMount'));
+
     if (openSidebar.left) {
+      // уже открыт — просто закрываем
       closeSidebar('left');
+      return;
+    }
+
+    // надо открыть левый
+    if (openSidebar.right) {
+      // сначала закрываем правый, затем в следующий кадр открываем левый
+      closeSidebar('right');
+      requestAnimationFrame(() => toggleSidebar('left'));
     } else {
       toggleSidebar('left');
     }
@@ -42,7 +53,16 @@ export default function HeaderBar({
   // ПРАВАЯ панель
   const handleAccountPanelClick = () => {
     if (openSidebar.right) {
+      // уже открыт — просто закрываем
       closeSidebar('right');
+      return;
+    }
+
+    // надо открыть правый
+    if (openSidebar.left) {
+      // сначала закрываем левый, затем в следующий кадр открываем правый
+      closeSidebar('left');
+      requestAnimationFrame(() => toggleSidebar('right'));
     } else {
       toggleSidebar('right');
     }

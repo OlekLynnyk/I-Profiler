@@ -29,7 +29,6 @@ const useAlertOnce = () => {
     try {
       alert(msg);
     } finally {
-      // снимаем блокировку чуть позже, чтобы повторные события того же жеста не показали alert снова
       setTimeout(() => {
         lockRef.current = false;
       }, 0);
@@ -52,6 +51,21 @@ const isFromCheckbox = (el: EventTarget | null) => {
   const node = el as HTMLElement | null;
   return !!node?.closest('label, input[type="checkbox"]');
 };
+
+/** ⬇️ Новое: детект реального скролл-контейнера и порог дельты */
+const SCROLL_DELTA_TOL = 3; // px
+function getScrollableAncestor(el: HTMLElement | null): HTMLElement | null {
+  let node: HTMLElement | null = el?.parentElement ?? null;
+  while (node) {
+    const cs = window.getComputedStyle(node);
+    const oy = cs.overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return (document.scrollingElement ?? document.documentElement) as HTMLElement;
+}
 
 export default function SavedProfileList({
   selectionMode = false,
@@ -98,6 +112,19 @@ export default function SavedProfileList({
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newBlockName, setNewBlockName] = useState('');
   const [createErr, setCreateErr] = useState<string | null>(null);
+
+  // ⬆️ якорь для авто-скролла модалки
+  const modalTopRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!createModalOpen) return;
+    requestAnimationFrame(() => {
+      modalTopRef.current?.scrollIntoView({
+        block: 'start',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
+    });
+  }, [createModalOpen]);
 
   const cdrsItems = useMemo(() => profiles.filter((p) => p.folder === CDRS_ID), [profiles]);
 
@@ -292,9 +319,13 @@ export default function SavedProfileList({
     const movedRef = useRef(false);
     const panelId = `saved-sec-${id}`;
 
+    // ⬇️ Новое: учитываем прокрутку реального скролл-контейнера
+    const scrollElRef = useRef<HTMLElement | null>(null);
+    const scrollStartRef = useRef(0);
+
     return (
       <div
-        className="isolate flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok leading-5 min-h-[24px]"
+        className="relative z-0 flex justify-between items-center px-3 py-1 cursor-pointer no-select tap-ok leading-5 min-h-[24px]"
         role="button"
         tabIndex={0}
         aria-expanded={!!expanded[id]}
@@ -304,6 +335,10 @@ export default function SavedProfileList({
           e.stopPropagation();
           startRef.current = { x: e.clientX, y: e.clientY };
           movedRef.current = false;
+
+          const sc = getScrollableAncestor(e.currentTarget as HTMLElement);
+          scrollElRef.current = sc;
+          scrollStartRef.current = sc?.scrollTop ?? 0;
         }}
         onPointerMove={(e) => {
           if (!startRef.current) return;
@@ -319,8 +354,14 @@ export default function SavedProfileList({
         }}
         onPointerUp={(e) => {
           e.stopPropagation();
+
+          const scrolledContainer =
+            Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) >
+            SCROLL_DELTA_TOL;
+
           startRef.current = null;
-          if (movedRef.current) return;
+          if (movedRef.current || scrolledContainer) return;
+
           toggleExpanded(id);
         }}
         onKeyDown={(e) => {
@@ -353,7 +394,10 @@ export default function SavedProfileList({
       : selectedIds.has(profile.id);
     const startRef = useRef<{ x: number; y: number } | null>(null);
     const movedRef = useRef(false);
-    const scrollStartRef = useRef<number>(0);
+
+    // ⬇️ Новое: учитываем прокрутку ближайшего скролл-контейнера
+    const scrollElRef = useRef<HTMLElement | null>(null);
+    const scrollStartRef = useRef(0);
 
     return (
       <div
@@ -367,7 +411,10 @@ export default function SavedProfileList({
           e.stopPropagation();
           startRef.current = { x: e.clientX, y: e.clientY };
           movedRef.current = false;
-          scrollStartRef.current = document.scrollingElement?.scrollTop ?? window.scrollY ?? 0;
+
+          const sc = getScrollableAncestor(e.currentTarget as HTMLElement);
+          scrollElRef.current = sc;
+          scrollStartRef.current = sc?.scrollTop ?? 0;
         }}
         onPointerMove={(e) => {
           if (selectionMode && isFromCheckbox(e.target)) return;
@@ -385,11 +432,15 @@ export default function SavedProfileList({
         onPointerUp={(e) => {
           if (selectionMode && isFromCheckbox(e.target)) return;
           e.stopPropagation();
+
+          const scrolledContainer =
+            Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) >
+            SCROLL_DELTA_TOL;
+
           startRef.current = null;
-          if (movedRef.current) return;
-          const scrollNow = document.scrollingElement?.scrollTop ?? window.scrollY ?? 0;
-          if (Math.abs(scrollNow - scrollStartRef.current) > 1) return;
+          if (movedRef.current || scrolledContainer) return;
           if (selectionMode) return;
+
           setTimeout(() => setSelectedProfile(profile), 0);
         }}
         onKeyDown={(e) => {
@@ -442,7 +493,6 @@ export default function SavedProfileList({
                     return next;
                   });
 
-                // дальше даём знать наверх (Workspace) — он подтвердит/синхронизирует чипы
                 onSelectForCdr?.(profile);
               }}
               className="accent-[var(--accent)] tap-ok"
@@ -492,6 +542,79 @@ export default function SavedProfileList({
 
   return (
     <div className="relative flex flex-col gap-1" data-cdr-selection={selectionMode ? 'on' : 'off'}>
+      {/* якорь для появления модалки наверху */}
+      <div ref={modalTopRef} />
+
+      {/* модалка перенесена вверх + помечена интерактивной */}
+      {createModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="absolute inset-0 z-50 flex items-start justify-center"
+          data-modal="open"
+          data-interactive="true"
+        >
+          <div
+            className="absolute inset-0 bg-black/40"
+            onMouseDown={() => {
+              setCreateModalOpen(false);
+              setNewBlockName('');
+              setCreateErr(null);
+            }}
+          />
+          <div
+            className="
+              relative z-10 w-full max-w-sm
+              bg-[var(--card-bg)] text-[var(--text-primary)]
+              border border-[var(--card-border)]
+              rounded-2xl p-4 shadow-xl
+            "
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-medium mb-2">Create a new block</h3>
+            <input
+              autoFocus
+              type="text"
+              maxLength={MAX_BLOCK_NAME_LEN}
+              value={newBlockName}
+              onChange={(e) => setNewBlockName(e.target.value)}
+              placeholder="Block name (up to 30 chars)"
+              className="
+                w-full rounded-lg px-3 py-2 text-sm
+                bg-[var(--surface)] text-[var(--text-primary)]
+                focus:outline-none focus:ring-1 focus:ring-[var(--accent)]
+              "
+            />
+            {createErr && <p className="mt-2 text-xs text-[var(--danger)]">{createErr}</p>}
+            <div className="mt-3 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setCreateModalOpen(false);
+                  setNewBlockName('');
+                  setCreateErr(null);
+                }}
+                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateBlock}
+                className="
+                  h-8 px-3 rounded-full text-xs font-medium
+                  bg-[var(--button-bg)] text-[var(--text-primary)]
+                  hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
+                  shadow-sm
+                "
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <SectionHeader title="Combined Discernment Reports" id={CDRS_ID} />
       {expanded[CDRS_ID] && (
         <div id={`saved-sec-${CDRS_ID}`}>
@@ -565,74 +688,6 @@ export default function SavedProfileList({
           readonly={false}
           folders={folders.filter((f) => f !== CDRS_ID)}
         />
-      )}
-
-      {createModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="absolute inset-0 z-50 flex items-start justify-center"
-          data-modal="open"
-        >
-          <div
-            className="absolute inset-0 bg-black/40"
-            onMouseDown={() => {
-              setCreateModalOpen(false);
-              setNewBlockName('');
-              setCreateErr(null);
-            }}
-          />
-          <div
-            className="
-              relative z-10 w-full max-w-sm
-              bg-[var(--card-bg)] text-[var(--text-primary)]
-              border border-[var(--card-border)]
-              rounded-2xl p-4 shadow-xl
-            "
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-sm font-medium mb-2">Create a new block</h3>
-            <input
-              autoFocus
-              type="text"
-              maxLength={MAX_BLOCK_NAME_LEN}
-              value={newBlockName}
-              onChange={(e) => setNewBlockName(e.target.value)}
-              placeholder="Block name (up to 30 chars)"
-              className="
-                w-full rounded-lg px-3 py-2 text-sm
-                bg-[var(--surface)] text-[var(--text-primary)]
-                focus:outline-none focus:ring-1 focus:ring-[var(--accent)]
-              "
-            />
-            {createErr && <p className="mt-2 text-xs text-[var(--danger)]">{createErr}</p>}
-            <div className="mt-3 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setCreateModalOpen(false);
-                  setNewBlockName('');
-                  setCreateErr(null);
-                }}
-                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateBlock}
-                className="
-                  h-8 px-3 rounded-full text-xs font-medium
-                  bg-[var(--button-bg)] text-[var(--text-primary)]
-                  hover:bg-[var(--button-hover-bg)] dark:bg-[var(--card-bg)]
-                  shadow-sm
-                "
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

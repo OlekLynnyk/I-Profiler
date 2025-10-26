@@ -151,11 +151,11 @@ input, textarea, select, button, label {
   visibility: hidden !important;
 }
 
-/* Стабилизируем рендеринг шрифтов ТОЛЬКО на контейнерах (не на строках) */
+/* ⬇️ FIX: возвращаем дефолтное сглаживание — убираем фликер при hover в списках */
 [data-templates],
 [data-cdr-selection] {
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: auto;
+  text-rendering: auto;
 }
 
 /* --- FIX: Убираем лишние will-change, которые провоцировали фликер --- */
@@ -205,10 +205,13 @@ input, textarea, select, button, label {
   touch-action: manipulation;
 }
 
-/* === Стабильная прокрутка внутри сайдбара/панелей на мобиле === */
-.scroll-stable {
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch; /* iOS momentum scroll без глитчей хит-теста */
+.scroll-stable { overscroll-behavior: contain; }
+
+/* momentum-scroll только на iOS/touch */
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+    .scroll-stable { -webkit-overflow-scrolling: touch; }
+  }
 }
 
 /* === Тапы по чекбоксу без лишних жестов/подсветки на мобилках === */
@@ -228,4 +231,19 @@ input[type="checkbox"].tap-ok {
   height: 14%; /* эквивалент прежнему затуханию ~от 85% */
   pointer-events: none;
   background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, var(--background) 100%);
+}
+
+/* === FLICKER FIX (точечно для списков): выравниваем альфу акцентного цвета под базовый текст === */
+/* Светлая тема */
+html:not(.dark) [data-templates],
+html:not(.dark) [data-cdr-selection] {
+  /* #6366F1 -> rgba(99, 102, 241, 0.92) */
+  --accent: rgba(99, 102, 241, 0.92);
+}
+
+/* Тёмная тема */
+.dark [data-templates],
+.dark [data-cdr-selection] {
+  /* #B98AF6 -> rgba(185, 138, 246, 0.92) */
+  --accent: rgba(185, 138, 246, 0.92);
 }

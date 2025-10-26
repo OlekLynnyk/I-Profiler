@@ -8,12 +8,11 @@ interface SidebarBoxProps {
   box: BoxData;
   isActive: boolean;
   onToggle: () => void;
-  /** Если переданы children — они имеют приоритет над box.renderContent */
   children?: React.ReactNode;
 }
 
 export default function SidebarBox({ box, isActive, onToggle, children }: SidebarBoxProps) {
-  const panelId = useId(); // для aria-controls
+  const panelId = useId();
   const disabled = box.locked;
   const hasContent = typeof children !== 'undefined' ? !!children : !!box.renderContent;
 
@@ -31,13 +30,25 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
       aria-label={`Toggle ${box.title}`}
       title={disabled ? 'Upgrade required to access this feature' : ''}
       className={`
-        transition-opacity duration-300 mb-4 rounded-xl border
+        relative                                   /* нужно для слоя-оверлея */
+        transition-[background-color,border-color,box-shadow,color] duration-300
+        mb-4 rounded-xl border
         ${isActive ? 'border-[var(--accent)] bg-[var(--card-bg)]' : 'border-[var(--card-border)] bg-[var(--card-bg)]'}
         focus:outline-none focus-visible:ring focus-visible:ring-[var(--accent)]
-        ${disabled ? 'opacity-50' : 'cursor-default'}
+        ${disabled ? '' : 'cursor-default'}        /* больше НЕ трогаем opacity на корне */
       `}
-      style={{ willChange: 'opacity' }}
     >
+      {/* Вуаль для disabled: сохраняет прежний "fade", не трогая текст */}
+      <span
+        aria-hidden="true"
+        className={`
+          pointer-events-none absolute inset-0 rounded-xl
+          transition-opacity duration-300
+          bg-black/50 dark:bg-black/40            /* универсальный dim для обеих тем */
+          ${disabled ? 'opacity-100' : 'opacity-0'}
+        `}
+      />
+
       {/* header — тумблер */}
       <div
         className="px-4 py-3 flex justify-between items-center cursor-pointer select-none tap-ok leading-5 min-h-[24px]"
@@ -50,9 +61,7 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
       >
         <span className="text-sm font-medium text-[var(--text-primary)]">{box.title}</span>
 
-        {/* правый блок хедера */}
         <div className="flex items-center gap-px">
-          {/* Saved messages: Create block */}
           {box.id === 'saved-messages' && isActive && (
             <button
               type="button"
@@ -68,7 +77,6 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
             </button>
           )}
 
-          {/* Templates: файл → папка */}
           {box.id === 'templates' && isActive && (
             <>
               <button
@@ -102,15 +110,13 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
         </div>
       </div>
 
-      {/* content */}
       {isActive && hasContent && (
         <div
           id={panelId}
           role="region"
           aria-label={`${box.title} content`}
           data-ignore-sidebar-close="true"
-          className="px-4 pb-4 text-sm text-[var(--text-primary)]"
-          // гасим всю цепочку для pointer/touch, чтобы не улетало в глобальный capture
+          className="px-4 pb-4 text-sm text-[var(--text-primary)] overflow-visible relative"
           onPointerDown={(e) => e.stopPropagation()}
           onPointerUp={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
