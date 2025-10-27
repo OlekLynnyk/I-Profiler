@@ -200,9 +200,11 @@ input, textarea, select, button, label {
   -webkit-user-select: none;
 }
 
-/* Утилита: улучшение поведения тач-тапов на iOS/Safari */
 .tap-ok {
   touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .scroll-stable { overscroll-behavior: contain; }

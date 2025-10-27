@@ -306,7 +306,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       onClick={(e) => e.stopPropagation()}
       className={`
         fixed right-0 top-12
-        w-[80.000vw] md:w-80
+        w-[82.000vw] md:w-80
         text-[var(--text-primary)]
         z-[60]
         p-4

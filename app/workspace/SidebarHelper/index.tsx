@@ -124,9 +124,9 @@ export default function SidebarHelper({
     if (isCdrMode) setActiveBox('saved-messages');
   }, [isCdrMode]);
 
-  // УСТОЙЧИВОЕ «КЛИК-ВНЕ»: закрываем сайдбар ПОСЛЕ действия пользователя (bubble, 'click')
+  // УСТОЙЧИВОЕ «ТАП-ВНЕ»: pointerdown вместо click, без проверки selection
   useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
+    const onPointerDown = (e: PointerEvent) => {
       if (!openSidebar.left) return;
 
       // активная модалка — не закрываем
@@ -135,12 +135,10 @@ export default function SidebarHelper({
       );
       if (hasOpenModal) return;
 
-      const path = (e as any).composedPath?.() as EventTarget[] | undefined;
       const targetEl = e.target as Element | null;
 
-      // клики внутри левого сайдбара/служебных зон не закрывают
+      // тапы внутри левого сайдбара/служебных зон не закрывают
       if (
-        (path && path.some((n) => (n as Element)?.closest?.('[data-sidebar-root="left"]'))) ||
         targetEl?.closest?.('[data-sidebar-root="left"]') ||
         targetEl?.closest?.('[data-sidebar="left"]') ||
         targetEl?.closest?.('[data-header-root]') ||
@@ -150,70 +148,84 @@ export default function SidebarHelper({
         return;
       }
 
-      // если есть выделение — не считаем «клик-вне»
-      if (window.getSelection?.()?.toString()) return;
-
-      // закрываем ПОСЛЕ того, как все внутренние обработчики закончат работу
-      requestAnimationFrame(() => requestAnimationFrame(() => closeSidebar('left')));
+      closeSidebar('left');
     };
 
-    window.addEventListener('click', onDocClick, false);
-    return () => window.removeEventListener('click', onDocClick, false);
+    window.addEventListener('pointerdown', onPointerDown, { passive: true });
+    return () => window.removeEventListener('pointerdown', onPointerDown as any);
   }, [openSidebar.left, closeSidebar]);
 
   return (
-    <aside
-      ref={sidebarRef}
-      data-sidebar="left"
-      data-sidebar-root="left"
-      className={`
+    <>
+      {openSidebar.left && (
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          onClick={() => closeSidebar('left')}
+          className="fixed inset-0 z-[55] bg-transparent"
+          style={{
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'transparent',
+            userSelect: 'none' as any,
+            WebkitUserSelect: 'none' as any,
+          }}
+        />
+      )}
+
+      <aside
+        ref={sidebarRef}
+        data-sidebar="left"
+        data-sidebar-root="left"
+        className={`
         fixed top-12 left-0
-        w-[80.000vw] md:w-80
+        w-[82.000vw] md:w-80
         text-[var(--text-primary)] z-[60]
         p-4
         transition-transform duration-500 ease-in-out
         ${openSidebar.left ? 'translate-x-0' : '-translate-x-full'}
         overflow-hidden
       `}
-      style={{
-        backgroundColor: 'var(--background)',
-        boxShadow: 'none',
-        border: 'none',
-        height: 'auto',
-        maxHeight: maxHeight, // <- точный «зазор» между header и composer
-      }}
-    >
-      <div
-        className="overflow-y-auto overflow-x-hidden no-scrollbar relative pb-8 scroll-stable"
-        data-ignore-sidebar-close="true"
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => e.stopPropagation()}
-        style={
-          isMobile
-            ? { scrollbarGutter: 'stable both-edges', maxHeight: 'inherit' }
-            : {
-                scrollbarGutter: 'stable both-edges',
-                maxHeight: 'inherit',
-                WebkitMaskImage:
-                  'linear-gradient(to bottom, #000 0%, #000 86%, rgba(0,0,0,0) 100%)',
-                maskImage: 'linear-gradient(to bottom, #000 0%, #000 86%, rgba(0,0,0,0) 100%)',
-              }
-        }
+        style={{
+          backgroundColor: 'var(--background)',
+          boxShadow: 'none',
+          border: 'none',
+          height: 'auto',
+          maxHeight: maxHeight, // <- точный «зазор» между header и composer
+        }}
       >
-        {sidebarBoxes.map((box: BoxData) => (
-          <SidebarBox
-            key={box.id}
-            box={{
-              ...box,
-              renderContent: box.id === 'saved-messages' ? savedMessagesContent : box.renderContent,
-            }}
-            isActive={activeBox === box.id}
-            onToggle={() => setActiveBox((prev) => (prev === box.id ? null : box.id))}
-          />
-        ))}
-      </div>
-    </aside>
+        <div
+          className="overflow-y-auto overflow-x-hidden no-scrollbar relative pb-8 scroll-stable"
+          data-ignore-sidebar-close="true"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          style={
+            isMobile
+              ? { scrollbarGutter: 'stable both-edges', maxHeight: 'inherit' }
+              : {
+                  scrollbarGutter: 'stable both-edges',
+                  maxHeight: 'inherit',
+                  WebkitMaskImage:
+                    'linear-gradient(to bottom, #000 0%, #000 86%, rgba(0,0,0,0) 100%)',
+                  maskImage: 'linear-gradient(to bottom, #000 0%, #000 86%, rgba(0,0,0,0) 100%)',
+                }
+          }
+        >
+          {sidebarBoxes.map((box: BoxData) => (
+            <SidebarBox
+              key={box.id}
+              box={{
+                ...box,
+                renderContent:
+                  box.id === 'saved-messages' ? savedMessagesContent : box.renderContent,
+              }}
+              isActive={activeBox === box.id}
+              onToggle={() => setActiveBox((prev) => (prev === box.id ? null : box.id))}
+            />
+          ))}
+        </div>
+      </aside>
+    </>
   );
 }

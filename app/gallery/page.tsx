@@ -4,21 +4,8 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import GlobalLoading from '@/app/loading';
 
 // =============================
-// Pininfarina Mosaic Gallery (App Router page)
+// Pininfarina Masonry Gallery — Desktop-first
 // =============================
-// Правки по ТЗ:
-// - 50 изображений, рандом при каждой загрузке, мозаика без швов.
-// - Лоадер заменён на GlobalLoading и показывается до ПОЛНОЙ предзагрузки фото.
-// - 1-й клик (когда сайдбар закрыт) — подъём; 2-й клик/клик по i — открыть сайдбар.
-// - Когда сайдбар открыт: клик по любой карточке обновляет контент сайдбара (не закрывает его).
-// - Кнопка закрытия — крестик (X), Esc также закрывает.
-// - Ширина сайдбара: переключатель 1/3 (по умолчанию) ↔ 1/4, мягкая анимация.
-// - Заголовок «H1NTED Gallery» в шапке.
-
-// -----------------------------
-// ДАННЫЕ
-// -----------------------------
-// Источник данных демонстрационный. В проде используйте свой CDN/Supabase.
 
 type ImageItem = {
   id: string;
@@ -150,9 +137,7 @@ const BASE_IMAGES: ImageItem[] = [
   },
 ];
 
-// -----------------------------
-// УТИЛИТЫ
-// -----------------------------
+// ---------- утилиты ----------
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -162,33 +147,88 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// Прелоад изображений, чтобы не мигало при появлении
-function useImagesPreload(urls: string[]) {
+/** Предзагрузка с ограничением конкуренции и ретраями — БЕЗ возврата промиса из useEffect */
+function useImagesPreload(urls: string[], opts: { concurrency?: number; retries?: number } = {}) {
+  const { concurrency = 6, retries = 2 } = opts;
   const [ready, setReady] = useState(false);
+
   useEffect(() => {
     let alive = true;
-    const tasks = urls.map(
-      (src) =>
-        new Promise<void>((res) => {
-          const img = new Image();
-          img.onload = () => res();
-          img.onerror = () => res();
-          img.src = src;
-        })
-    );
-    Promise.all(tasks).then(() => alive && setReady(true));
+
+    const loadOne = (src: string, attempt = 0): Promise<void> =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.crossOrigin = 'anonymous';
+        img.referrerPolicy = 'no-referrer';
+        img.onload = () => resolve();
+        img.onerror = () => {
+          if (attempt < retries) {
+            const backoff = 200 * (attempt + 1);
+            setTimeout(() => {
+              if (!alive) return resolve();
+              loadOne(src, attempt + 1).then(resolve);
+            }, backoff);
+          } else {
+            resolve(); // не блокируем весь процесс из-за одного файла
+          }
+        };
+        img.src = src;
+      });
+
+    const queue = [...urls];
+    let done = 0;
+
+    async function runNext() {
+      if (!alive) return;
+      const src = queue.shift();
+      if (!src) return;
+      await loadOne(src);
+      if (!alive) return;
+      done++;
+      if (done === urls.length) {
+        setReady(true);
+      } else if (queue.length) {
+        // запускаем следующий
+        runNext();
+      }
+    }
+
+    // стартуем заданное число «воркеров»
+    const starters = Math.min(concurrency, queue.length);
+    for (let i = 0; i < starters; i++) runNext();
+
+    // ВОЗВРАЩАЕМ ТОЛЬКО CLEANUP
     return () => {
       alive = false;
     };
-  }, [urls]);
+  }, [urls, concurrency, retries]);
+
   return ready;
 }
 
-// -----------------------------
+// ---------- аспекты карточек ----------
+type Aspect = '1/1' | '4/3' | '3/4' | '16/9';
+const ASPECTS_POOL: Aspect[] = ['4/3', '4/3', '16/9', '1/1', '3/4'];
+
+const ASPECT_CLASS: Record<Aspect, string> = {
+  '1/1': 'aspect-[1/1]',
+  '4/3': 'aspect-[4/3]',
+  '3/4': 'aspect-[3/4]',
+  '16/9': 'aspect-[16/9]',
+};
+
+function randomAspect(): Aspect {
+  const u8 = new Uint8Array(1);
+  crypto.getRandomValues(u8);
+  return ASPECTS_POOL[u8[0] % ASPECTS_POOL.length];
+}
+
+// =============================
 // СТРАНИЦА
-// -----------------------------
+// =============================
 export default function Page() {
-  // Подготовим пул >= 50 изображений за счёт повторений с новыми id (до замены на реальные 50+ в проде)
+  // Пул >=50
   const duplicated: ImageItem[] = useMemo(() => {
     const need = 50;
     const out: ImageItem[] = [];
@@ -204,25 +244,23 @@ export default function Page() {
   }, []);
 
   const images = useMemo(() => shuffle(duplicated).slice(0, 50), [duplicated]);
-  const ready = useImagesPreload(images.map((i) => i.src));
+  const aspects = useMemo(() => images.map(() => randomAspect()), [images]);
+  const ready = useImagesPreload(
+    images.map((i) => i.src),
+    { concurrency: 6, retries: 2 }
+  );
 
   const [elevatedId, setElevatedId] = useState<string | null>(null);
   const [sidebarId, setSidebarId] = useState<string | null>(null);
-  const [sidebarSize, setSidebarSize] = useState<'third' | 'quarter'>('third'); // по умолчанию 1/3
 
-  const openSidebar = useCallback((id: string) => {
-    setSidebarId(id);
-  }, []);
+  const openSidebar = useCallback((id: string) => setSidebarId(id), []);
+  const closeSidebar = useCallback(() => setSidebarId(null), []);
 
-  const closeSidebar = useCallback(() => {
-    setSidebarId(null);
-  }, []);
-
-  // Esc закрывает сайдбар
+  // Esc → закрыть
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closeSidebar();
-    }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [closeSidebar]);
@@ -230,20 +268,15 @@ export default function Page() {
   // Клик по карточке
   const onCardClick = (id: string) => {
     if (sidebarId) {
-      // При открытом сайдбаре — обновляем его контент
       openSidebar(id);
       setElevatedId(null);
       return;
     }
-    // При закрытом: 1-й клик — приподнять; 2-й клик — открыть сайдбар
-    if (elevatedId === id) {
-      openSidebar(id);
-    } else {
-      setElevatedId(id);
-    }
+    if (elevatedId === id) openSidebar(id);
+    else setElevatedId(id);
   };
 
-  // Для клавиатуры: Enter/Space дублирует клик, i открывает/обновляет сайдбар
+  // Клавиатура
   const onCardKey = (e: React.KeyboardEvent, id: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -255,20 +288,22 @@ export default function Page() {
     }
   };
 
-  if (!ready) return <GlobalLoading />; // Используем фирменный лоадер до полной загрузки фото
+  if (!ready) return <GlobalLoading />;
 
-  const sidebarWidthClass = sidebarSize === 'third' ? 'lg:w-[33.33vw]' : 'lg:w-[25vw]';
-  const gridShiftClass = sidebarId
-    ? sidebarSize === 'third'
-      ? 'lg:ml-[33.33vw]'
-      : 'lg:ml-[25vw]'
-    : 'ml-0';
+  // Сайдбар всегда 1/3
+  const sidebarWidthClass = 'lg:w-[33.33vw]';
+  const gridShiftClass = sidebarId ? 'lg:ml-[33.33vw]' : 'ml-0';
 
   return (
     <div className="relative">
-      {/* Header */}
+      {/* Header: слева ↔ справа при открытом сайдбаре */}
       <header className="sticky top-0 z-30 bg-[var(--background)]/70 backdrop-blur supports-[backdrop-filter]:bg-[var(--background)]/60">
-        <div className="mx-auto max-w-[1600px] px-4 py-4">
+        <div
+          className={[
+            'mx-auto max-w-[1600px] px-4 py-4 transition-all duration-300 flex',
+            sidebarId ? 'justify-end' : 'justify-start',
+          ].join(' ')}
+        >
           <h1 className="text-base font-medium tracking-[0.2em] uppercase text-white/80">
             H1NTED Gallery
           </h1>
@@ -279,151 +314,188 @@ export default function Page() {
       <Sidebar
         item={images.find((i) => i.id === sidebarId) || null}
         onClose={closeSidebar}
-        size={sidebarSize}
-        setSize={setSidebarSize}
+        widthClass={sidebarWidthClass}
       />
 
-      {/* MOSAIC GRID */}
+      {/* MASONRY (без пустот) */}
       <div className={['transition-[margin] duration-300', gridShiftClass].join(' ')}>
-        <ul
+        <div
           className={[
-            'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6',
-            'auto-rows-[10px] gap-0 select-none',
+            'columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5',
+            'gap-x-3',
             'mx-auto max-w-[1600px] px-2 sm:px-4',
           ].join(' ')}
           aria-label="Pininfarina Gallery"
         >
           {images.map((item, idx) => (
-            <MosaicTile
-              key={item.id}
-              item={item}
-              elevated={elevatedId === item.id && sidebarId === null}
-              onClick={() => onCardClick(item.id)}
-              onOpenInfo={() => openSidebar(item.id)}
-              onKey={(e) => onCardKey(e, item.id)}
-              spanHint={randomSpan(idx)}
-            />
+            <div key={item.id} className="mb-3 break-inside-avoid">
+              <MosaicTile
+                item={item}
+                elevated={elevatedId === item.id && sidebarId === null}
+                onClick={() => onCardClick(item.id)}
+                onOpenInfo={() => openSidebar(item.id)}
+                onKey={(e) => onCardKey(e, item.id)}
+                aspectClass={ASPECT_CLASS[aspects[idx]]}
+              />
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );
 }
 
-// Размер плитки — ритм коллажа; grid-auto-rows=10px
-function randomSpan(seed: number) {
-  const r = (seed * 9301 + 49297) % 233280;
-  const p = r / 233280;
-  if (p < 0.55) return 18;
-  if (p < 0.8) return 24;
-  if (p < 0.95) return 32;
-  return 48;
-}
-
-// -----------------------------
-// ПЛИТКА
-// -----------------------------
+// =============================
+// ПЛИТКА с устойчивой загрузкой
+// =============================
 function MosaicTile({
   item,
   elevated,
   onClick,
   onOpenInfo,
   onKey,
-  spanHint,
+  aspectClass,
 }: {
   item: ImageItem;
   elevated: boolean;
   onClick: () => void;
   onOpenInfo: () => void;
   onKey: (e: React.KeyboardEvent) => void;
-  spanHint: number;
+  aspectClass: string;
 }) {
-  const style = { gridRowEnd: `span ${spanHint}` } as React.CSSProperties;
+  const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
+  const [reloadKey, setReloadKey] = useState(0);
+  const attempts = useRef(0);
+
+  useEffect(() => {
+    setStatus('loading');
+    attempts.current = 0;
+    setReloadKey(0);
+  }, [item.src]);
+
+  const handleError = () => {
+    if (attempts.current < 2) {
+      attempts.current += 1;
+      // небольшой бэкофф и принудительный ре-маунт <img>
+      setTimeout(() => setReloadKey((k) => k + 1), 200 * attempts.current);
+    } else {
+      setStatus('error');
+    }
+  };
 
   return (
-    <li style={style} className="relative">
-      <article
-        tabIndex={0}
-        aria-label={item.title}
-        onClick={onClick}
-        onKeyDown={onKey}
-        className={[
-          'group relative h-full w-full overflow-hidden',
-          'outline-none',
-          'transition-transform duration-200 ease-out will-change-transform',
-          elevated ? 'z-10 scale-[1.03] -translate-y-[2px] shadow-2xl' : '',
-        ].join(' ')}
-      >
-        <img
-          src={item.src}
-          alt={item.title}
-          loading="lazy"
-          className="block h-full w-full object-cover select-none"
-          draggable={false}
+    <article
+      tabIndex={0}
+      aria-label={item.title}
+      onClick={onClick}
+      onKeyDown={onKey}
+      className={[
+        'group relative w-full overflow-hidden rounded-[16px]',
+        'shadow-[0_8px_24px_rgba(0,0,0,.08)]',
+        'ring-1 ring-inset ring-white/5',
+        'transition-transform duration-200 ease-[cubic-bezier(.2,.8,.2,1)] will-change-transform',
+        elevated ? 'z-10 scale-[1.02] -translate-y-[2px]' : '',
+      ].join(' ')}
+    >
+      <div className={['relative', aspectClass].join(' ')}>
+        {/* Скелетон вместо «чёрной пустоты» */}
+        <div
+          className={[
+            'absolute inset-0',
+            'bg-[radial-gradient(100%_60%_at_30%_20%,rgba(255,255,255,.06),rgba(255,255,255,.02)_45%,transparent_80%)]',
+            'animate-pulse',
+            status === 'ok' ? 'opacity-0' : 'opacity-100',
+            'transition-opacity duration-200',
+          ].join(' ')}
         />
 
-        {/* Hover accent line */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          aria-hidden
-        >
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent mix-blend-overlay" />
-        </div>
+        {status !== 'error' ? (
+          <img
+            key={reloadKey}
+            src={item.src}
+            alt={item.title}
+            loading="lazy"
+            decoding="async"
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 h-full w-full object-cover select-none"
+            draggable={false}
+            onLoad={() => setStatus('ok')}
+            onError={handleError}
+          />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center">
+            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs text-white/70">
+              Изображение недоступно
+            </span>
+          </div>
+        )}
 
-        {/* Info button */}
-        <button
-          aria-label="Подробнее"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenInfo();
-          }}
-          className={[
-            'absolute left-2 top-2 z-10 grid place-items-center',
-            'h-8 w-8 rounded-full bg-black/40 backdrop-blur-sm',
-            'text-white/90 hover:text-white',
-            'transition-colors',
-          ].join(' ')}
-        >
-          <InfoIcon />
-        </button>
-      </article>
-    </li>
+        {/* Показываем UI только когда картинка реально загрузилась */}
+        {status === 'ok' && (
+          <>
+            {/* Hover-маска */}
+            <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/45" />
+            </div>
+
+            {/* Info puck — Pininfarina */}
+            <button
+              aria-label="Подробнее"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenInfo();
+              }}
+              className={[
+                'absolute left-3 top-3 z-10 grid place-items-center',
+                'h-7 w-7 rounded-full',
+                'bg-gradient-to-b from-white/14 to-white/6',
+                'backdrop-blur-md ring-1 ring-white/20',
+                'shadow-[0_2px_8px_rgba(0,0,0,.25)]',
+                'text-white/90',
+                'transition-all duration-150 hover:scale-[1.03] active:scale-[0.98]',
+              ].join(' ')}
+            >
+              <InfoIcon />
+            </button>
+
+            {/* Caption */}
+            <div className="absolute inset-x-0 bottom-0 px-3 pb-2">
+              <p className="truncate text-[13px] font-medium text-white drop-shadow">
+                {item.title}
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    </article>
   );
 }
 
-// -----------------------------
-// САЙДБАР
-// -----------------------------
+// =============================
+// САЙДБАР (1/3 ширины, без переключателя)
+// =============================
 function Sidebar({
   item,
   onClose,
-  size,
-  setSize,
+  widthClass,
 }: {
   item: ImageItem | null;
   onClose: () => void;
-  size: 'third' | 'quarter';
-  setSize: (s: 'third' | 'quarter') => void;
+  widthClass: string;
 }) {
   const open = Boolean(item);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // Убираем автозакрытие по клику вне — сайдбар живёт пока X или Esc
   useEffect(() => {
     if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (!panelRef.current) return;
-      // намеренно ничего не делаем
-    }
+    const onDown = (_e: MouseEvent) => {};
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  const widthClass = size === 'third' ? 'lg:w-[33.33vw]' : 'lg:w-[25vw]';
-
   return (
     <>
-      {/* Затемнение на мобильном без закрытия по клику */}
       <div
         className={[
           'fixed inset-0 z-40 bg-black/30 lg:hidden',
@@ -436,7 +508,7 @@ function Sidebar({
         ref={panelRef}
         className={[
           'fixed left-0 top-0 bottom-0 z-50 w-[85vw] max-w-[520px]',
-          widthClass,
+          widthClass, // lg:w-[33.33vw]
           'bg-neutral-950 text-neutral-100 border-r border-white/10',
           'px-6 py-6',
           'transition-transform duration-300 will-change-transform',
@@ -447,29 +519,25 @@ function Sidebar({
       >
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold tracking-wide">{item?.title ?? ''}</h2>
-
-          <div className="flex items-center gap-2">
-            {/* Переключатель ширины */}
-            <SizeSwitch size={size} setSize={setSize} />
-
-            {/* Кнопка закрытия X */}
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="grid place-items-center h-8 w-8 rounded-xl bg-white/10 hover:bg-white/15"
-            >
-              <CloseIcon />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="grid place-items-center h-8 w-8 rounded-xl bg-white/10 hover:bg-white/15"
+          >
+            <CloseIcon />
+          </button>
         </div>
 
-        <div className="mt-5 rounded-2xl overflow-hidden">
+        <div className="mt-5 rounded-2xl overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,.2)] ring-1 ring-inset ring-white/5">
           {item && (
             <img
               src={item.src}
               alt={item.title}
               className="w-full h-48 object-cover"
               draggable={false}
+              decoding="async"
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
             />
           )}
         </div>
@@ -480,53 +548,12 @@ function Sidebar({
   );
 }
 
-function SizeSwitch({
-  size,
-  setSize,
-}: {
-  size: 'third' | 'quarter';
-  setSize: (s: 'third' | 'quarter') => void;
-}) {
-  const isThird = size === 'third';
-  return (
-    <div className="relative flex h-8 items-center rounded-xl bg-white/10 px-1">
-      <button
-        className={[
-          'relative z-10 px-2 text-xs leading-none h-6 rounded-lg',
-          isThird ? 'text-white' : 'text-white/70',
-        ].join(' ')}
-        onClick={() => setSize('third')}
-        aria-pressed={isThird}
-      >
-        1/3
-      </button>
-      <button
-        className={[
-          'relative z-10 px-2 text-xs leading-none h-6 rounded-lg',
-          !isThird ? 'text-white' : 'text-white/70',
-        ].join(' ')}
-        onClick={() => setSize('quarter')}
-        aria-pressed={!isThird}
-      >
-        1/4
-      </button>
-      <span
-        className={[
-          'absolute top-1 bottom-1 w-[44px] rounded-lg bg-white/15 transition-transform',
-          isThird ? 'translate-x-1' : 'translate-x-[50px]',
-        ].join(' ')}
-        aria-hidden
-      />
-    </div>
-  );
-}
-
 function InfoIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="16"
-      height="16"
+      width="14"
+      height="14"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
