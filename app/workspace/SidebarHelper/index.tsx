@@ -124,35 +124,37 @@ export default function SidebarHelper({
     if (isCdrMode) setActiveBox('saved-messages');
   }, [isCdrMode]);
 
-  // УСТОЙЧИВОЕ «ТАП-ВНЕ»: pointerdown вместо click, без проверки selection
+  // УСТОЙЧИВОЕ «КЛИК-ВНЕ» ДЛЯ iOS: закрываем ПОСЛЕ клика по целевому элементу
   useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
+    const onClick = (e: MouseEvent) => {
       if (!openSidebar.left) return;
 
-      // активная модалка — не закрываем
+      // активная модалка — не закрываем глобально
       const hasOpenModal = !!document.querySelector(
         '[role="dialog"][aria-modal="true"], [data-modal="open"]'
       );
       if (hasOpenModal) return;
 
-      const targetEl = e.target as Element | null;
+      const t = e.target as Element | null;
 
-      // тапы внутри левого сайдбара/служебных зон не закрывают
+      // клики внутри левого сайдбара/служебных зон — игнорим
       if (
-        targetEl?.closest?.('[data-sidebar-root="left"]') ||
-        targetEl?.closest?.('[data-sidebar="left"]') ||
-        targetEl?.closest?.('[data-header-root]') ||
-        targetEl?.closest?.('[data-composer-root]') ||
-        targetEl?.closest?.('[data-ignore-sidebar-close="true"]')
+        t?.closest?.('[data-sidebar-root="left"]') ||
+        t?.closest?.('[data-sidebar="left"]') ||
+        t?.closest?.('[data-header-root]') ||
+        t?.closest?.('[data-composer-root]') ||
+        t?.closest?.('[data-ignore-sidebar-close="true"]')
       ) {
         return;
       }
 
-      closeSidebar('left');
+      // Важно: закрываем ПОСЛЕ того, как таргет получил свой click (iOS)
+      requestAnimationFrame(() => closeSidebar('left'));
     };
 
-    window.addEventListener('pointerdown', onPointerDown, { passive: true });
-    return () => window.removeEventListener('pointerdown', onPointerDown as any);
+    // capture=true — чтобы гарантированно сработать после таргета, но до bubbling-обработчиков документа
+    window.addEventListener('click', onClick, true);
+    return () => window.removeEventListener('click', onClick, true);
   }, [openSidebar.left, closeSidebar]);
 
   return (
@@ -161,8 +163,19 @@ export default function SidebarHelper({
         <button
           type="button"
           aria-label="Close sidebar"
-          onClick={() => closeSidebar('left')}
           className="fixed inset-0 z-[55] bg-transparent"
+          onPointerDown={(e) => {
+            // важен 'pointerdown': гасим жест ДО клика, исключая ретаргетинг iOS
+            e.preventDefault();
+            e.stopPropagation();
+            closeSidebar('left');
+          }}
+          // safety: дублируем на случай отсутствия pointer событий
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeSidebar('left');
+          }}
           style={{
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
