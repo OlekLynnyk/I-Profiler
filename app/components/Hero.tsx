@@ -20,12 +20,9 @@ const PHRASES = [
   'make clearer calls',
   'recognise intent faster',
   'spot risk early',
-  'judge fit with confidence',
-  'read doubt and conviction',
   'focus on what matters',
-  'decide sooner, regret less',
-  'build trust more quickly',
-  'weigh signals, not noise',
+  'build trust in seconds',
+  'weigh signals not noise',
 ] as const;
 
 /** Хук тайпврайтера: циклически печатает/стирает фразы */
@@ -320,7 +317,7 @@ export default function Hero({
         {logoSrc ? (
           <div
             className="absolute inset-0 flex justify-center opacity-[0.15]"
-            style={{ top: '60px' }}
+            style={{ top: '100px' }}
           >
             <div className="relative" style={{ width: 320, height: 320 }}>
               <Image src="/images/octo-ring.png" alt="ring" fill style={{ objectFit: 'contain' }} />
@@ -337,7 +334,7 @@ export default function Hero({
         ) : null}
 
         {/* Текст + кнопки (внизу, как на макете) */}
-        <div className="absolute left-0 right-0 px-5" style={{ bottom: 0 }}>
+        <div className="absolute left-0 right-0 px-5" style={{ bottom: -40 }}>
           {/* Разбито по строкам и цветам как в фигме */}
           <div
             className="font-monoBrand small-caps text-center"

@@ -230,9 +230,10 @@ export default function WatchExplainer({
             reduce ? undefined : { opacity: 1, y: 0, transition: { duration: 0.45, ease: easing } }
           }
           viewport={{ once: true, amount: 0.5 }}
-          className="text-center font-mono [font-variant:small-caps] text-white text-[20px] leading-[1.45] w-[351px]"
+          className="mt-18 text-center font-mono [font-variant:small-caps] text-white text-[20px] leading-[1.45] w-[351px]"
         >
-          {titleMobile}
+          <span className="text-white">One accessory image is all it takes.</span>{' '}
+          <span className="text-white/50">No biometrics. No profiling. Just Discernment.</span>
         </motion.h2>
 
         {/* ===== ГРУППА ЧАСОВ (MOBILE) — 1-в-1 визуально с десктопом, пропорционально ===== */}
@@ -244,7 +245,7 @@ export default function WatchExplainer({
               : { opacity: 1, y: 0, transition: { duration: 0.45, ease: easing, delay: 0.04 } }
           }
           viewport={{ once: true, amount: 0.5 }}
-          className="relative w-[375px] h-[620px] mt-4"
+          className="relative w-[375px] h-[450px] mt-4"
         >
           {/* Нижняя тень (scaled) */}
           <div
@@ -269,7 +270,7 @@ export default function WatchExplainer({
           />
 
           {/* Верхняя центральная метка (как на десктопе) */}
-          <div className="absolute left-1/2 top-[20px] -translate-x-1/2 w-[180px] text-center z-10">
+          <div className="absolute left-1/2 top-[40px] -translate-x-[53%] w-[180px] text-center z-10">
             <div className="text-white font-mono [font-variant:small-caps] text-[16px] leading-[1.45] mt-[10px]">
               <div>[{topMetric.label}]</div>
               <div>{topMetric.value}</div>
@@ -308,57 +309,57 @@ export default function WatchExplainer({
 
           {/* Подписи & линии — те же цвета/логика что на десктопе */}
           {/* Spontaneity (право-верх) */}
-          <div className="absolute left-[240px] top-[210px] w-[110px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
+          <div className="absolute left-[290px] top-[160px] w-[110px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
             <div>[{metrics[1].label}]</div>
             <div>{metrics[1].value}</div>
           </div>
           <svg
             className="absolute pointer-events-none"
-            width="180"
-            height="140"
-            style={{ left: 240, top: 190, color: 'rgba(255,255,255,0.4)' }}
+            width="280"
+            height="280"
+            style={{ left: 270, top: 160, color: 'rgba(255,255,255,0.5)' }}
           >
             <line x1="0" y1="140" x2="70" y2="40" stroke="currentColor" strokeWidth="1" />
             <circle cx="2" cy="137" r="3" fill="currentColor" />
           </svg>
 
           {/* Austerity (лево-верх) */}
-          <div className="absolute left-[20px] top-[210px] w-[94px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
+          <div className="absolute left-[16px] top-[160px] w-[94px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
             [{metrics[0].label}] {metrics[0].value}
           </div>
           <svg
             className="absolute pointer-events-none"
             width="150"
             height="130"
-            style={{ left: 0, top: 240, color: 'rgba(255,255,255,0.4)' }}
+            style={{ left: -15, top: 200, color: 'rgba(255,255,255,0.4)' }}
           >
             <line x1="75" y1="5" x2="130" y2="55" stroke="currentColor" strokeWidth="1" />
             <circle cx="130" cy="55" r="3" fill="currentColor" />
           </svg>
 
           {/* Strictness (лево-низ) */}
-          <div className="absolute left-[10px] top-[390px] w-[102px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
+          <div className="absolute left-[10px] top-[320px] w-[102px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
             [{metrics[3].label}] {metrics[3].value}
           </div>
           <svg
             className="absolute pointer-events-none"
             width="150"
             height="80"
-            style={{ left: -10, top: 405, color: 'rgba(255,255,255,0.4)' }}
+            style={{ left: -10, top: 352, color: 'rgba(255,255,255,0.4)' }}
           >
             <line x1="75" y1="10" x2="130" y2="10" stroke="currentColor" strokeWidth="1" />
             <circle cx="130" cy="10" r="3" fill="currentColor" />
           </svg>
 
           {/* Reliability (право-низ) */}
-          <div className="absolute left-[240px] top-[405px] w-[110px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
+          <div className="absolute left-[285px] top-[350px] w-[110px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
             [{metrics[2].label}] {metrics[2].value}
           </div>
           <svg
             className="absolute pointer-events-none"
             width="220"
             height="90"
-            style={{ left: 210, top: 415, color: 'rgba(255,255,255,0.4)' }}
+            style={{ left: 215, top: 370, color: 'rgba(255,255,255,0.4)' }}
           >
             <line x1="0" y1="20" x2="120" y2="20" stroke="currentColor" strokeWidth="1" />
             <circle cx="3" cy="20" r="3" fill="currentColor" />
@@ -368,7 +369,7 @@ export default function WatchExplainer({
           <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-0 w-[375px] h-[56px] bg-gradient-to-t from-black to-transparent" />
         </motion.div>
 
-        <p className="mt-6 text-center w-[351px] text-white font-mono [font-variant:small-caps] text-[16px] leading-[1.45] whitespace-pre-line">
+        <p className="mt-6 mb-8 text-center w-[351px] text-white font-mono [font-variant:small-caps] text-[16px] leading-[1.45] whitespace-pre-line">
           {captionMobile}
         </p>
       </div>
