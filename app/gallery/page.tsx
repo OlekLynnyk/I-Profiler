@@ -2,10 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import GlobalLoading from '@/app/loading';
-
-// =============================
-// Pininfarina Masonry Gallery — Desktop-first
-// =============================
+import Link from 'next/link';
 
 type ImageItem = {
   id: string;
@@ -304,9 +301,12 @@ export default function Page() {
             sidebarId ? 'justify-end' : 'justify-start',
           ].join(' ')}
         >
-          <h1 className="text-base font-medium tracking-[0.2em] uppercase text-white/80">
+          <Link
+            href="/"
+            className="text-base font-medium tracking-[0.2em] uppercase text-white/80 hover:opacity-90 transition"
+          >
             H1NTED Gallery
-          </h1>
+          </Link>
         </div>
       </header>
 
@@ -461,7 +461,7 @@ function MosaicTile({
 
             {/* Caption */}
             <div className="absolute inset-x-0 bottom-0 px-3 pb-2">
-              <p className="truncate text-[13px] font-medium text-white drop-shadow">
+              <p className="truncate text-[13px] font-medium text-white font-monoBrand tracking-tight">
                 {item.title}
               </p>
             </div>

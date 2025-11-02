@@ -1,12 +1,10 @@
 // app/layout.tsx
 import './globals.css';
-import { Inter } from 'next/font/google';
 import type { Metadata } from 'next';
 import { Providers } from './providers';
 import LayoutClient from './LayoutClient';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-
-const inter = Inter({ subsets: ['latin'] });
+import { azeretMono } from './fonts';
 
 // ✅ динамическая база, чтобы favicon корректно работал и на проде, и локально
 const BASE_URL =
@@ -45,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={azeretMono.variable} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="preload" href="/loading/octo-static.webp" as="image" />
@@ -69,7 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className="font-monoBrand antialiased bg-[var(--background)] text-[var(--foreground)]">
         <Providers>
           <ErrorBoundary>
             <LayoutClient>{children}</LayoutClient>

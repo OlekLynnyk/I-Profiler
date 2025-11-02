@@ -5,228 +5,216 @@ import { motion, useReducedMotion } from 'framer-motion';
 
 const EMAIL = 'hello@h1nted.com';
 
-// палитра и акцент — согласованы со стилем Pricing
-const PANEL_BG = '#F6F5ED';
-const PANEL_RING = '#E7E5DD';
-const TEXT_STRONG = '#111827';
-const TEXT = '#1F2937';
-const TEXT_DIM = '#4B5563';
-const ACCENT = '#A855F7';
-
 export default function Footer() {
   const reduce = useReducedMotion();
 
   return (
-    <footer className="mt-6 sm:mt-2 px-4 sm:px-6 pt-12 sm:pt-12 pb-12 md:pb-8 relative overflow-hidden bg-transparent pb-[env(safe-area-inset-bottom)]">
-      {/* верхний hairline — только на мобиле (оставил как было) */}
-      <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/18 to-transparent md:hidden" />
+    <footer className="relative overflow-hidden bg-black pb-[env(safe-area-inset-bottom)] font-monoBrand">
+      {/* ── ТОП-ЛАЙН (hairline) как в фигме ───────────────────────────────────── */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px z-10
+                   bg-gradient-to-r from-transparent via-white/20 to-transparent"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-[144px] left-1/2 -translate-x-1/2 w-[min(1100px,92%)] h-[200px] bg-white/5 blur-2xl rounded-[999px] z-0"
+      />
 
-      {/* ===== MOBILE (< md) — светлая «панель-окно» ===== */}
-      <section className="md:hidden relative z-10 mx-auto max-w-7xl w-full">
-        {/* мягкое свечение под панелью */}
+      {/* ── DESKTOP BACKDROP: размазанные градиенты/подсветка ─────────────────── */}
+      <div
+        aria-hidden
+        className="hidden md:block pointer-events-none absolute inset-x-0 bottom-0 h-[430px] -z-10"
+      >
+        {/* большой размытый слой (радиальная подсветка снизу) */}
         <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 -top-3 -translate-x-1/2 h-[56px] w-[min(680px,92%)] rounded-[999px] bg-white/10 blur-2xl"
-        />
-
-        <motion.div
-          initial={reduce ? undefined : { opacity: 0, y: 8, scale: 0.985 }}
-          whileInView={reduce ? undefined : { opacity: 1, y: 0, scale: 1 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mx-auto w-full max-w-[720px] rounded-3xl overflow-hidden"
+          className="absolute left-1/2 -translate-x-1/2 -bottom-[303px] w-[3449px] h-[753px] opacity-20"
           style={{
-            backgroundColor: PANEL_BG,
-            boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-            border: `1px solid ${PANEL_RING}`,
+            // мягкая белая «подложка» как glow
+            background:
+              'radial-gradient(60% 60% at 50% 100%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 60%)',
+            filter: 'blur(117px)',
           }}
-        >
-          {/* акцентная «полка» сверху панели */}
-          <motion.div
-            aria-hidden
-            className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-[#A855F7]/55 to-transparent"
-            animate={reduce ? undefined : { opacity: [0.65, 1, 0.65] }}
-            transition={reduce ? undefined : { duration: 6.5, repeat: Infinity, ease: 'easeInOut' }}
-          />
+        />
+        {/* задний вертикальный градиент (opacity 0.6 по фигме) */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 top-[54px] w-[3449px] h-[679px] opacity-60"
+          style={{
+            background: 'linear-gradient(180deg, #403C41 0%, #A49AA7 35.52%)',
+            filter: 'blur(47px)',
+            transform: 'matrix(1, 0, 0, -1, 0, 0)',
+          }}
+        />
+        {/* передний вертикальный градиент (opacity 0.9 по фигме) */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 -top-5 w-[1249px] h-[679px] opacity-90"
+          style={{
+            background: 'linear-gradient(180deg, #403C41 0%, #FFFFFF 35.52%)',
+            filter: 'blur(47px)',
+            transform: 'matrix(1, 0, 0, -1, 0, 0)',
+          }}
+        />
+      </div>
 
-          {/* тонкие scanlines внутри */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
+      {/* ── MOBILE (< md): чёрная панель по фигме ─────────────────────────────── */}
+      <section className="md:hidden relative mx-auto w-full max-w-[376px] px-3 py-8">
+        <div className="mx-auto flex w-full max-w-[352px] flex-col items-center gap-6">
+          {/* Title */}
+          <p
+            className="w-[352px] text-center text-white"
             style={{
-              opacity: 0.04,
-              backgroundImage:
-                'repeating-linear-gradient(0deg, #111827 0px, #111827 0.5px, transparent 0.5px, transparent 6px)',
-              maskImage:
-                'linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+              fontWeight: 400,
+              fontSize: 18,
+              lineHeight: '145%',
+              fontVariant: 'small-caps',
             }}
-          />
+          >
+            Questions or feedback?
+            <br />
+            Email us:
+          </p>
 
-          {/* контент панели */}
-          <div className="relative px-5 pt-6 pb-5">
-            <p className="text-center text-[14px] leading-6" style={{ color: TEXT }}>
-              Questions or feedback? Email us at{' '}
-              <a
-                href={`mailto:${EMAIL}`}
-                className="font-medium underline decoration-[0.08em] underline-offset-[3px]"
-                style={{ color: ACCENT }}
-              >
-                {EMAIL}
-              </a>
-            </p>
-
-            <div className="mt-6 h-px w-full" style={{ backgroundColor: PANEL_RING }} />
-
-            <nav
-              aria-label="Footer navigation"
-              className="mt-4 w-full flex items-center justify-center flex-wrap gap-3"
+          {/* Email pill (187×40, 10/15 padding) */}
+          <a
+            href={`mailto:${EMAIL}`}
+            className="inline-flex items-center justify-center rounded-[8px]"
+            style={{
+              width: 187,
+              height: 40,
+              padding: '10px 15px',
+              background: 'rgba(255,255,255,0.15)',
+            }}
+          >
+            <span
+              className="text-white text-center"
+              style={{
+                fontWeight: 400,
+                fontSize: 15,
+                lineHeight: '145%',
+                fontVariant: 'small-caps',
+              }}
             >
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center h-10 px-4 rounded-full text-[13px] transition-colors focus:outline-none focus-visible:ring-2"
-                style={{
-                  color: TEXT_STRONG,
-                  border: `1px solid ${PANEL_RING}`,
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(4px)',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
-                }}
-              >
-                Terms of Use
-              </a>
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center h-10 px-4 rounded-full text-[13px] transition-colors focus:outline-none focus-visible:ring-2"
-                style={{
-                  color: TEXT_STRONG,
-                  border: `1px solid ${PANEL_RING}`,
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(4px)',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
-                }}
-              >
-                Privacy Policy
-              </a>
-              <a
-                href="/cookies"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center h-10 px-4 rounded-full text-[13px] transition-colors focus:outline-none focus-visible:ring-2"
-                style={{
-                  color: TEXT_STRONG,
-                  border: `1px solid ${PANEL_RING}`,
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(4px)',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
-                }}
-              >
-                Cookies
-              </a>
-              {/* Cookie Settings → новая вкладка /cookies/settings */}
-              <a
-                href="/cookies/settings"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open Cookie Settings"
-                className="inline-flex items-center justify-center h-10 px-4 rounded-full text-[13px] transition-colors focus:outline-none focus-visible:ring-2"
-                style={{
-                  color: TEXT_STRONG,
-                  border: `1px solid ${PANEL_RING}`,
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(4px)',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
-                }}
-              >
-                Cookie Settings
-              </a>
-              <a
-                href="/sub-processors"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center h-10 px-4 rounded-full text-[13px] transition-colors focus:outline-none focus-visible:ring-2"
-                style={{
-                  color: TEXT_STRONG,
-                  border: `1px solid ${PANEL_RING}`,
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(4px)',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
-                }}
-              >
-                Sub-processors
-              </a>
+              {EMAIL}
+            </span>
+          </a>
 
-              <a
-                href="https://www.linkedin.com/in/oleksandrlynnyk/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2"
-                style={{
-                  color: TEXT_STRONG,
-                  border: `1px solid ${PANEL_RING}`,
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(4px)',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
-                }}
-                title="LinkedIn"
-              >
-                <FaLinkedin size={16} />
+          {/* Legal (13px, 145%, opacity .5, центр) */}
+          <div className="pt-1 w-[352px] text-center">
+            <p
+              className="mx-auto text-white/50"
+              style={{
+                fontWeight: 400,
+                fontSize: 13,
+                lineHeight: '145%',
+                fontVariant: 'small-caps',
+              }}
+            >
+              <br />
+              © 2025 LLC “H1NTED”. Proprietary technology protected by IP and trade-secret laws.
+              <br />
+              No reverse engineering, scraping, automated extraction, benchmarking, or training AI
+              models on our data or outputs.
+              <br />
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
+                See Terms
+              </a>{' '}
+              &amp;{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
+                Privacy
               </a>
-            </nav>
-
-            <div className="mt-6 h-px w-full" style={{ backgroundColor: PANEL_RING }} />
-
-            {/* легал — сдержанные тона */}
-            <div className="mt-4 space-y-2 text-center">
-              <p className="text-[12px] leading-6" style={{ color: TEXT_DIM }}>
-                © 2025 LLC “H1NTED”. Proprietary technology protected by IP and trade-secret laws.
-              </p>
-              <p className="text-[12.5px] leading-relaxed text-[#6B7280]">
-                No reverse engineering, scraping, automated extraction, benchmarking, or training AI
-                models on our data or outputs.
-              </p>
-            </div>
+              .
+            </p>
           </div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* ===== DESKTOP (>= md) ===== */}
-      <div className="hidden md:block relative z-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="md:pl-[40px] lg:pl-[72px] md:pr-4 lg:pr-[72px]">
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-y-6 items-start">
-              {/* Левая колонка */}
-              <div className="flex flex-col gap-2 text-[13px] leading-6 text-white/75 max-w-[46ch] md:max-w-[calc(46ch*0.95)]">
-                <p>
-                  Questions or feedback? Email us at{' '}
-                  <a
-                    href={`mailto:${EMAIL}`}
-                    className="text-[#A855F7] transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
-                  >
-                    {EMAIL}
-                  </a>
+      {/* ── DESKTOP (≥ md): сетка/размеры по фигме ────────────────────────────── */}
+      <section className="hidden md:block relative">
+        <div className="mx-auto w-full max-w-[1441px] px-[100px]">
+          <motion.div
+            initial={reduce ? undefined : { opacity: 0, y: 8 }}
+            whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="flex h-[430px] items-center"
+          >
+            {/* Контентный фрейм: padding 72px 100px, gap 40, justify-between */}
+            <div className="flex w-full items-center justify-between gap-10 py-[72px]">
+              {/* Левая колонка: 377, gap 24 */}
+              <div className="flex w-[377px] flex-col items-start gap-6">
+                <p
+                  className="text-white"
+                  style={{
+                    fontWeight: 400,
+                    fontSize: 16,
+                    lineHeight: '24px',
+                    fontVariant: 'small-caps',
+                  }}
+                >
+                  Questions or feedback?
+                  <br />
+                  Email us:
                 </p>
 
-                <p className="mt-2 text-white/70">
+                {/* Email pill 187×56 */}
+                <a
+                  href={`mailto:${EMAIL}`}
+                  className="inline-flex items-center justify-center rounded-[8px]"
+                  style={{
+                    width: 160,
+                    height: 45,
+                    padding: '10px 15px',
+                    background: 'rgba(255,255,255,0.15)',
+                  }}
+                >
+                  <span
+                    className="text-white text-center"
+                    style={{
+                      fontWeight: 400,
+                      fontSize: 15,
+                      lineHeight: '145%',
+                      fontVariant: 'small-caps',
+                    }}
+                  >
+                    {EMAIL}
+                  </span>
+                </a>
+              </div>
+
+              {/* Правая колонка: легал + ссылки (ширина/центр как в фигме) */}
+              <div className="flex w-[767px] mx-auto flex-col items-start gap-4">
+                <p
+                  className="mx-auto text-white/50"
+                  style={{
+                    fontSize: 16,
+                    lineHeight: '24px',
+                    fontWeight: 400,
+                    fontVariant: 'small-caps',
+                  }}
+                >
+                  <br />
                   © 2025 LLC “H1NTED”. Proprietary technology protected by IP and trade-secret
                   laws.
-                </p>
-                <p className="text-[12.5px] leading-relaxed text-white/60">
+                  <br />
                   No reverse engineering, scraping, automated extraction, benchmarking, or training
                   AI models on our data or outputs.
                 </p>
 
-                <p className="text-[12.5px] leading-relaxed text-white/60">
+                <p
+                  className="text-white/50"
+                  style={{
+                    fontWeight: 400,
+                    fontSize: 16,
+                    lineHeight: '24px',
+                    fontVariant: 'small-caps',
+                  }}
+                >
                   See{' '}
                   <a
                     href="/terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                    className="underline underline-offset-2 hover:text-white"
                   >
                     Terms
                   </a>{' '}
@@ -235,7 +223,7 @@ export default function Footer() {
                     href="/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                    className="underline underline-offset-2 hover:text-white"
                   >
                     Privacy
                   </a>{' '}
@@ -244,17 +232,16 @@ export default function Footer() {
                     href="/cookies"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                    className="underline underline-offset-2 hover:text-white"
                   >
                     Cookies
                   </a>{' '}
-                  · {/* Cookie Settings → новая вкладка /cookies/settings */}
+                  ·{' '}
                   <a
                     href="/cookies/settings"
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Open Cookie Settings"
-                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                    className="underline underline-offset-2 hover:text-white"
                   >
                     Cookie Settings
                   </a>{' '}
@@ -263,34 +250,30 @@ export default function Footer() {
                     href="/sub-processors"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline underline-offset-2 text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60 rounded-sm"
+                    className="underline underline-offset-2 hover:text-white"
                   >
                     Sub-processors
                   </a>
                 </p>
               </div>
 
-              {/* Справа — LinkedIn */}
-              <nav className="flex items-center gap-6 text-[13px]" aria-label="Footer navigation">
+              {/* Соц.иконка */}
+              <nav className="ml-6 flex items-center" aria-label="Footer navigation">
                 <a
                   href="https://www.linkedin.com/in/oleksandrlynnyk/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="LinkedIn"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-white/12 hover:ring-[#A855F7]/35 hover:bg-[#A855F7]/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A855F7]/60"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 ring-white/12 hover:ring-white/25 hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2"
+                  title="LinkedIn"
                 >
                   <FaLinkedin size={16} className="text-white/80" />
                 </a>
               </nav>
             </div>
-
-            {/* Нижний разделитель */}
-            <div className="mt-4">
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/12 to-transparent" />
-            </div>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </section>
     </footer>
   );
 }

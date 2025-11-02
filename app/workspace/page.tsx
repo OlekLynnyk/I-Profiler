@@ -483,6 +483,21 @@ export default function WorkspacePage() {
         window.dispatchEvent(new Event('savedMessages:refresh'));
       }
 
+      // ⬇️ NEW: закрываем сайдбар автоматически только на мобильных
+      if (typeof window !== 'undefined') {
+        const isMobile =
+          window.matchMedia('(pointer: coarse)').matches ||
+          window.matchMedia('(max-width: 767px)').matches;
+
+        if (isMobile) {
+          try {
+            closeAllSidebars();
+          } catch (err) {
+            console.warn('Sidebar close failed (safe ignore):', err);
+          }
+        }
+      }
+
       refetch().catch(console.error);
       setAttachmentError('');
     } catch (err: any) {

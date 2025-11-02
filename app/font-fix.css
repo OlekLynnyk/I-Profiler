@@ -1,0 +1,16 @@
+/* JetBrains Mono fallback for Cyrillic, downloaded from Google Fonts */
+@font-face {
+  font-family: 'AzeretMonoFixed';
+  src: url('https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbV2o-flEEny0FZhsfKu5zL5tHl.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+0400-04FF; /* Cyrillic */
+}
+
+@font-face {
+  font-family: 'AzeretMonoFixed';
+  src: local('Azeret Mono');
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: U+0000-03FF; /* Latin */
+}

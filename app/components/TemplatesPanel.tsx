@@ -300,7 +300,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
           onKeyDown={tap.onKeyDown}
         >
           <span className="text-sm text-[var(--text-primary)]">{title}</span>
-          <span className="text-[var(--text-secondary)] text-xs pointer-events-none select-none">
+          <span className="text-[var(--text-secondary)] text-[8px] relative top-px pointer-events-none select-none">
             {expanded[id] ? '▲' : '▼'}
           </span>
         </div>
@@ -398,7 +398,7 @@ export default function TemplatesPanel({ isCdrMode = false }: TemplatesPanelProp
 
   return (
     <div
-      className="relative flex flex-col gap-1"
+      className="relative flex flex-col gap-1 font-monoBrand"
       data-templates
       style={{ scrollbarGutter: 'stable both-edges' }}
     >

@@ -192,7 +192,28 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         >
           <MonthlyUsage refreshToken={refreshToken} usageBump={usageBump} />
           <button
-            onClick={handleOpenPortal}
+            onClick={async () => {
+              try {
+                setPortalLoading(true);
+                const res = await fetch('/api/stripe/create-checkout-session', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    priceId: 'price_1SOHlgAGnqjZyhfA7Z9fMlSl', // ← твой Live-прайс из Stripe
+                  }),
+                });
+
+                if (!res.ok) throw new Error('Stripe checkout failed');
+                const { url } = await res.json();
+                if (url) window.location.href = url;
+                else throw new Error('Missing Stripe redirect URL');
+              } catch (err) {
+                console.error('❌ Stripe checkout error:', err);
+                alert('Payment redirect failed. Please try again later.');
+              } finally {
+                setPortalLoading(false);
+              }
+            }}
             disabled={portalLoading}
             className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
           >
@@ -364,7 +385,9 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
                     {box.title}
                   </span>
                 )}
-                <span className="text-[var(--text-secondary)] text-xs">{isActive ? '▲' : '▼'}</span>
+                <span className="relative top-px text-[var(--text-secondary)] text-[8px]">
+                  {isActive ? '▲' : '▼'}
+                </span>
               </div>
               {isActive && (
                 <div id={`${box.id}-content`} className="px-3 sm:px-4 pb-4">

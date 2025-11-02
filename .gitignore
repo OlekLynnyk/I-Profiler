@@ -45,3 +45,6 @@ env.production
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# cookie jars
+jar-*.cookies

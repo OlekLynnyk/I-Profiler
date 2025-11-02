@@ -404,7 +404,7 @@ export default function SavedProfileList({
         title={id === CDRS_ID ? "You can't move items into CDRs." : undefined}
       >
         <span className="text-sm text-[var(--text-primary)]">{title}</span>
-        <span className="text-[var(--text-secondary)] text-xs pointer-events-none select-none">
+        <span className="text-[var(--text-secondary)] text-[8px] relative top-px pointer-events-none select-none">
           {expanded[id] ? '▲' : '▼'}
         </span>
       </div>
@@ -595,8 +595,10 @@ export default function SavedProfileList({
   }
 
   return (
-    <div className="relative flex flex-col gap-1" data-cdr-selection={selectionMode ? 'on' : 'off'}>
-      {/* якорь для появления модалки наверху */}
+    <div
+      className="relative flex flex-col gap-1 font-monoBrand"
+      data-cdr-selection={selectionMode ? 'on' : 'off'}
+    >
       <div ref={modalTopRef} />
 
       {/* модалка перенесена вверх + помечена интерактивной */}

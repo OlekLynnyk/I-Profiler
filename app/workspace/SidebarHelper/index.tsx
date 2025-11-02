@@ -181,6 +181,8 @@ export default function SidebarHelper({
             WebkitTapHighlightColor: 'transparent',
             userSelect: 'none' as any,
             WebkitUserSelect: 'none' as any,
+            pointerEvents: openSidebar.left ? 'auto' : 'none',
+            willChange: 'opacity, transform',
           }}
         />
       )}

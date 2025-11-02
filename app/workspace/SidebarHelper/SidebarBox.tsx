@@ -106,7 +106,9 @@ export default function SidebarBox({ box, isActive, onToggle, children }: Sideba
             </>
           )}
 
-          <span className="text-[var(--text-secondary)] text-xs">{isActive ? '▲' : '▼'}</span>
+          <span className="text-[var(--text-secondary)] text-[8px] relative top-px">
+            {isActive ? '▲' : '▼'}
+          </span>
         </div>
       </div>
 

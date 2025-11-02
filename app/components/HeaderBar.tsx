@@ -34,15 +34,36 @@ export default function HeaderBar({
     // гарантируем монтирование левой панели
     window.dispatchEvent(new Event('sidebarHelper:ensureMount'));
 
+    const isMobile =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(max-width: 767px)').matches);
+
+    // ✅ На мобильных: всегда форсируем полное закрытие перед открытием
+    if (isMobile) {
+      if (openSidebar.left) {
+        closeSidebar('left');
+        return;
+      }
+      // если открыт правый — закроем и откроем левый через кадр
+      if (openSidebar.right) {
+        closeSidebar('right');
+        requestAnimationFrame(() => toggleSidebar('left'));
+      } else {
+        // двойное закрытие-открытие предотвращает залипание
+        closeSidebar('left');
+        requestAnimationFrame(() => toggleSidebar('left'));
+      }
+      return;
+    }
+
+    // ✅ Десктоп — оставляем как было
     if (openSidebar.left) {
-      // уже открыт — просто закрываем
       closeSidebar('left');
       return;
     }
 
-    // надо открыть левый
     if (openSidebar.right) {
-      // сначала закрываем правый, затем в следующий кадр открываем левый
       closeSidebar('right');
       requestAnimationFrame(() => toggleSidebar('left'));
     } else {

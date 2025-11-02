@@ -44,15 +44,13 @@
 
   --button-bg: #1B2733;
   --button-hover-bg: #223140;
-
-  --font-sans: var(--font-orbitron);
 }
 
 /* Базовые стили */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), sans-serif;
+  font-family: var(--font-azeret), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   transition:
     background 0.3s ease,
     color 0.3s ease;
@@ -154,8 +152,8 @@ input, textarea, select, button, label {
 /* ⬇️ FIX: возвращаем дефолтное сглаживание — убираем фликер при hover в списках */
 [data-templates],
 [data-cdr-selection] {
-  -webkit-font-smoothing: auto;
-  text-rendering: auto;
+   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* --- FIX: Убираем лишние will-change, которые провоцировали фликер --- */
@@ -250,3 +248,10 @@ html:not(.dark) [data-cdr-selection] {
   --accent: rgba(185, 138, 246, 0.92);
 }
 
+/* === Cross-browser mono small-caps fix === */
+.font-mono[font-variant="small-caps"],
+.font-mono.small-caps {
+  -webkit-font-smoothing: subpixel-antialiased !important;
+  text-rendering: geometricPrecision !important;
+  letter-spacing: 0.02em !important;
+}
