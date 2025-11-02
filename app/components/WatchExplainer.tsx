@@ -155,7 +155,6 @@ export default function WatchExplainer({
             <div
               className="absolute left-1/2 -translate-x-1/2 top-[164px] w-[64.35px] h-[64.35px] rounded-full border border-white/40"
               style={{
-                backgroundImage: 'url("/images/lens.png")',
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',
                 boxShadow: 'inset 0px 6.77332px 11.8533px rgba(255, 255, 255, 0.55)',
@@ -281,7 +280,6 @@ export default function WatchExplainer({
             <div
               className="absolute left-1/2 -translate-x-1/2 top-[128px] w-[44px] h-[44px] rounded-full border border-white/40"
               style={{
-                backgroundImage: 'url("/images/lens.png")',
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',
                 boxShadow: 'inset 0px 4px 8px rgba(255,255,255,0.55)',

@@ -56,12 +56,7 @@ export default function HomePage() {
           ]}
         />
 
-        <VideoShowcase
-          desktopSrc="/videos/desktop-intro.mp4"
-          mobileSrc="/videos/mobile-intro.mp4"
-          desktopPoster="/videos/desktop-intro.jpg"
-          mobilePoster="/videos/mobile-intro.jpg"
-        />
+        <VideoShowcase />
 
         <InsightsGrid />
         <PreFooterCTA onTryClick={() => setIsAuthModalOpen(true)} />
