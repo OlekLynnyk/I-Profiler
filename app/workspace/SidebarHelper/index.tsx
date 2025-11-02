@@ -193,7 +193,7 @@ export default function SidebarHelper({
         data-sidebar-root="left"
         className={`
         fixed top-12 left-0
-        w-[82.000vw] md:w-80
+        w-[84.000vw] md:w-80
         text-[var(--text-primary)] z-[60]
         p-4
         transition-transform duration-500 ease-in-out
@@ -201,7 +201,7 @@ export default function SidebarHelper({
         overflow-hidden
       `}
         style={{
-          backgroundColor: 'var(--background)',
+          backgroundColor: 'transparent',
           boxShadow: 'none',
           border: 'none',
           height: 'auto',

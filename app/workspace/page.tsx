@@ -464,6 +464,13 @@ export default function WorkspacePage() {
 
       resetInput();
 
+      if (
+        typeof window !== 'undefined' &&
+        (window.matchMedia('(pointer: coarse)').matches ||
+          window.matchMedia('(max-width: 767px)').matches)
+      )
+        closeAllSidebars();
+
       await handleGenerate(
         inputValue.trim(),
         attachments,

@@ -292,7 +292,13 @@ export default function ChatBubble({
               {/* ✅ Read Aloud Button with Voice Menu */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div ref={voiceWrapRef} className="relative ml-2">
+                  <div
+                    ref={voiceWrapRef}
+                    className="relative ml-2 sm:ml-2 mr-2"
+                    style={{
+                      marginLeft: window.innerWidth < 768 ? 'auto' : undefined,
+                    }}
+                  >
                     <button
                       aria-label={isSpeaking ? 'Stop reading' : 'Read aloud options'}
                       className="hover:text-blue-500 transition focus:outline-none focus-visible:ring focus-visible:ring-blue-300 rounded"
@@ -316,15 +322,15 @@ export default function ChatBubble({
                       {/* 🔊 иконка громкости */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
+                        width="18"
+                        height="18"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2"
+                        strokeWidth="1.8"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="lucide lucide-volume-2"
+                        className="lucide lucide-volume-2 relative top-[0.5px] opacity-80"
                       >
                         <path d="M11 5l-6 4H2v6h3l6 4V5z" />
                         <path d="M19.07 4.93a10 10 0 010 14.14" />
@@ -338,6 +344,13 @@ export default function ChatBubble({
               bg-[var(--surface)] border border-gray-200 rounded-lg shadow-md
               p-2 text-xs w-44
               bottom-full mb-2 left-1/2 -translate-x-1/2`}
+                      style={{
+                        transform: 'translateZ(0)',
+                        WebkitTransform: 'translateZ(0)',
+                        WebkitOverflowScrolling: 'touch',
+                        pointerEvents: 'auto',
+                        zIndex: 9999,
+                      }}
                     >
                       {[
                         {

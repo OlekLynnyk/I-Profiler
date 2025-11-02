@@ -158,6 +158,28 @@ export default function SaveProfileModal({
     setSelectedFolder(null);
   }, [open]);
 
+  // --- FIX: Disable mobile zoom when editing inside modal ---
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+
+    const originalContent = meta.getAttribute('content') || '';
+
+    if (open) {
+      // Временно отключаем масштабирование
+      const patched = originalContent.includes('maximum-scale')
+        ? originalContent
+        : `${originalContent}, maximum-scale=1, user-scalable=no`;
+      meta.setAttribute('content', patched);
+    }
+
+    return () => {
+      // Возвращаем meta в исходное состояние при закрытии модалки
+      meta.setAttribute('content', originalContent);
+    };
+  }, [open]);
+  // --- END FIX ---
+
   useEffect(() => {
     if (isNew) {
       setHasChanges(true);

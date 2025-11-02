@@ -39,21 +39,23 @@ export default function HeaderBar({
       (window.matchMedia('(pointer: coarse)').matches ||
         window.matchMedia('(max-width: 767px)').matches);
 
-    // ✅ На мобильных: всегда форсируем полное закрытие перед открытием
+    // ✅ На мобильных: корректное открытие/закрытие
     if (isMobile) {
+      // если уже открыт — просто закрываем
       if (openSidebar.left) {
         closeSidebar('left');
         return;
       }
-      // если открыт правый — закроем и откроем левый через кадр
+
+      // если правый открыт — закрываем и чуть позже открываем левый
       if (openSidebar.right) {
         closeSidebar('right');
-        requestAnimationFrame(() => toggleSidebar('left'));
-      } else {
-        // двойное закрытие-открытие предотвращает залипание
-        closeSidebar('left');
-        requestAnimationFrame(() => toggleSidebar('left'));
+        setTimeout(() => toggleSidebar('left'), 50);
+        return;
       }
+
+      // если оба закрыты — просто открыть левый
+      toggleSidebar('left');
       return;
     }
 
@@ -98,7 +100,7 @@ export default function HeaderBar({
   return (
     <div
       data-header-root
-      className="fixed top-0 left-0 right-0 z-30 h-14 sm:h-12 px-2 sm:px-4 flex items-center justify-between gap-2 bg-[var(--background)]/80 backdrop-blur md:overflow-x-auto whitespace-nowrap pointer-events-none"
+      className="fixed top-0 left-0 right-0 z-30 h-14 sm:h-12 px-2 sm:px-4 flex items-center justify-between gap-2 bg-[var(--background)]/80 backdrop-blur overflow-x-hidden whitespace-nowrap pointer-events-none"
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         backgroundImage:

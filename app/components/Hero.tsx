@@ -259,7 +259,14 @@ export default function Hero({
           </div>
 
           {/* Слой с символами (кольцо + осьминог) */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-30">
+          <div
+            className="absolute inset-0 flex items-center justify-center opacity-30"
+            style={{
+              willChange: 'transform',
+              transform: 'translateZ(0)',
+              backfaceVisibility: 'hidden',
+            }}
+          >
             {/* Кольцо */}
             <div className="absolute w-[380px] h-[380px]">
               <Image src="/images/octo-ring.png" alt="Ring" fill style={{ objectFit: 'contain' }} />
@@ -383,7 +390,7 @@ export default function Hero({
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-3">
+          <div className="mt-12 flex items-center justify-center gap-3">
             <button
               type="button"
               className="inline-flex items-center justify-center h-[50px] px-[13px] rounded-[8px] bg-white text-black font-mono [font-variant:small-caps] text-[15px] leading-[1.45] w-1/2 max-w-[170px]"

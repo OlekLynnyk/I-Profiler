@@ -230,7 +230,7 @@ export default function WatchExplainer({
             reduce ? undefined : { opacity: 1, y: 0, transition: { duration: 0.45, ease: easing } }
           }
           viewport={{ once: true, amount: 0.5 }}
-          className="mt-18 text-center font-mono [font-variant:small-caps] text-white text-[20px] leading-[1.45] w-[351px]"
+          className="mt-28 text-center font-mono [font-variant:small-caps] text-white text-[20px] leading-[1.45] w-[351px]"
         >
           <span className="text-white">One accessory image is all it takes.</span>{' '}
           <span className="text-white/50">No biometrics. No profiling. Just Discernment.</span>
@@ -309,7 +309,7 @@ export default function WatchExplainer({
 
           {/* Подписи & линии — те же цвета/логика что на десктопе */}
           {/* Spontaneity (право-верх) */}
-          <div className="absolute left-[290px] top-[160px] w-[110px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
+          <div className="absolute left-[270px] top-[160px] w-[110px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
             <div>[{metrics[1].label}]</div>
             <div>{metrics[1].value}</div>
           </div>
@@ -317,7 +317,7 @@ export default function WatchExplainer({
             className="absolute pointer-events-none"
             width="280"
             height="280"
-            style={{ left: 270, top: 160, color: 'rgba(255,255,255,0.5)' }}
+            style={{ left: 255, top: 160, color: 'rgba(255,255,255,0.5)' }}
           >
             <line x1="0" y1="140" x2="70" y2="40" stroke="currentColor" strokeWidth="1" />
             <circle cx="2" cy="137" r="3" fill="currentColor" />
@@ -352,14 +352,14 @@ export default function WatchExplainer({
           </svg>
 
           {/* Reliability (право-низ) */}
-          <div className="absolute left-[285px] top-[350px] w-[110px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
+          <div className="absolute left-[265px] top-[350px] w-[110px] h-[38px] text-center text-white/40 font-mono [font-variant:small-caps] text-[13px] leading-[1.45]">
             [{metrics[2].label}] {metrics[2].value}
           </div>
           <svg
             className="absolute pointer-events-none"
             width="220"
             height="90"
-            style={{ left: 215, top: 370, color: 'rgba(255,255,255,0.4)' }}
+            style={{ left: 210, top: 370, color: 'rgba(255,255,255,0.4)' }}
           >
             <line x1="0" y1="20" x2="120" y2="20" stroke="currentColor" strokeWidth="1" />
             <circle cx="3" cy="20" r="3" fill="currentColor" />

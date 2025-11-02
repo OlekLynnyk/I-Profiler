@@ -327,7 +327,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       onClick={(e) => e.stopPropagation()}
       className={`
         fixed right-0 top-12
-        w-[82.000vw] md:w-80
+        w-[84.000vw] md:w-80
         text-[var(--text-primary)]
         z-[60]
         p-4
@@ -336,7 +336,7 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
         overflow-hidden
       `}
       style={{
-        backgroundColor: 'var(--background)',
+        backgroundColor: 'transparent',
         boxShadow: 'none',
         border: 'none',
         willChange: 'transform',
