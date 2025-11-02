@@ -21,7 +21,7 @@ export default function PreFooterCTA({ onTryClick, className }: Props) {
         // размеры/отступы из фигмы: desktop pY=72 gap=40, mobile pY=24 gap=12
         'relative z-10 mx-auto w-full',
         'px-3 md:px-3',
-        'py-6 md:py-[72px]',
+        'pt-6 pb-24 md:py-[72px]',
         'flex flex-col items-center justify-center',
         'gap-3 md:gap-10',
         'bg-black',
@@ -48,6 +48,7 @@ export default function PreFooterCTA({ onTryClick, className }: Props) {
         Do better, move further
         <br className="hidden md:block" />
         <span className="md:whitespace-nowrap">
+          {' '}
           with <strong className="text-white/80">H1NTED</strong>
         </span>
       </motion.h2>

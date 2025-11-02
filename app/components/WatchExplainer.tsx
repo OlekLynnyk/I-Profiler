@@ -368,7 +368,7 @@ export default function WatchExplainer({
           <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-0 w-[375px] h-[56px] bg-gradient-to-t from-black to-transparent" />
         </motion.div>
 
-        <p className="mt-6 text-center w-[351px] text-white/50 font-mono [font-variant:small-caps] text-[16px] leading-[1.45]">
+        <p className="mt-6 text-center w-[351px] text-white font-mono [font-variant:small-caps] text-[16px] leading-[1.45] whitespace-pre-line">
           {captionMobile}
         </p>
       </div>

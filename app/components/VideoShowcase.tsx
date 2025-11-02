@@ -68,7 +68,7 @@ export default function VideoShowcase({
 
       {/* MOBILE */}
       <motion.div
-        className="md:hidden"
+        className="md:hidden mb-12"
         initial={reduce ? undefined : { opacity: 0, y: 8 }}
         whileInView={
           reduce
@@ -94,11 +94,6 @@ export default function VideoShowcase({
             preload="metadata"
           />
         </div>
-
-        {/* Caption под видео */}
-        <p className="mt-4 mx-auto w-[371px] max-w-[95vw] text-center text-white/50 font-mono [font-variant:small-caps] text-[16px] leading-[1.45]">
-          {mobileCaption}
-        </p>
       </motion.div>
     </section>
   );

@@ -24,12 +24,12 @@ export default function InsightsGrid() {
   return (
     <section
       aria-labelledby="insights-grid-title"
-      className="relative z-10 mx-auto w-full max-w-7xl px-3 md:px-6 pt-6 md:pt-12 pb-[60px] md:pb-[120px]"
+      className="relative z-10 mx-auto w-full max-w-7xl px-3 md:px-6 pt-6 md:pt-12 pb-[90px] md:pb-[120px]"
     >
       {/* Заголовок — только мобильный (как в фигме) */}
       <motion.h2
         id="insights-grid-title"
-        className="md:hidden text-center font-mono [font-variant:small-caps] text-white text-[18px] leading-[1.45]"
+        className="md:hidden text-center font-mono [font-variant:small-caps] text-white text-[16px] leading-[1.45]"
         initial={reduce ? undefined : { opacity: 0, y: 8 }}
         whileInView={
           reduce ? undefined : { opacity: 1, y: 0, transition: { duration: 0.45, ease: easing } }

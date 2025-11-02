@@ -318,11 +318,14 @@ export default function Hero({
 
         {/* Центрированный знак */}
         {logoSrc ? (
-          <div className="absolute inset-0 flex items-center justify-center opacity-[0.15]">
+          <div
+            className="absolute inset-0 flex justify-center opacity-[0.15]"
+            style={{ top: '60px' }}
+          >
             <div className="relative" style={{ width: 320, height: 320 }}>
               <Image src="/images/octo-ring.png" alt="ring" fill style={{ objectFit: 'contain' }} />
             </div>
-            <div className="absolute" style={{ width: 270, height: 270 }}>
+            <div className="absolute" style={{ width: 270, height: 270, top: '25px' }}>
               <Image
                 src="/images/octo-symbol.png"
                 alt="octopus"
@@ -334,7 +337,7 @@ export default function Hero({
         ) : null}
 
         {/* Текст + кнопки (внизу, как на макете) */}
-        <div className="absolute left-0 right-0 px-5" style={{ bottom: 40 }}>
+        <div className="absolute left-0 right-0 px-5" style={{ bottom: 0 }}>
           {/* Разбито по строкам и цветам как в фигме */}
           <div
             className="font-monoBrand small-caps text-center"
@@ -386,14 +389,14 @@ export default function Hero({
           <div className="mt-4 flex items-center justify-center gap-3">
             <button
               type="button"
-              className="h-14 px-[15px] rounded-[8px] bg-white text-black font-monoBrand small-caps text-[20px] leading-[145%] min-w-[169px]"
+              className="inline-flex items-center justify-center h-[50px] px-[13px] rounded-[8px] bg-white text-black font-mono [font-variant:small-caps] text-[15px] leading-[1.45] w-1/2 max-w-[170px]"
               onClick={() => onTryClick(false)}
             >
               Workspace
             </button>
             <button
               type="button"
-              className="h-14 px-[15px] rounded-[8px] bg-white/15 text-white font-monoBrand small-caps text-[20px] leading-[145%] min-w-[169px]"
+              className="inline-flex items-center justify-center h-[50px] px-[13px] rounded-[8px] bg-white/15 text-white font-mono [font-variant:small-caps] text-[15px] leading-[1.45] w-1/2 max-w-[170px]"
               onClick={() => {
                 window.location.href = '/gallery';
               }}
