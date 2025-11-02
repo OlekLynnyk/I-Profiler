@@ -353,7 +353,7 @@ export default function ChatBubble({
                             v.lang === 'en-US' && /Alex|Male/i.test(v.name),
                         },
                         {
-                          id: 'ru',
+                          id: 'ru-female',
                           label: '🇷🇺 Russian',
                           filter: (v: SpeechSynthesisVoice) => v.lang === 'ru-RU',
                         },
