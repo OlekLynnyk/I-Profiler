@@ -10,9 +10,11 @@ import { logUserAction } from '@/lib/logger';
 export function useUserPlan(refreshToken?: number) {
   const [plan, setPlan] = useState<ValidPackageType>('Freemium');
   const [usedDaily, setUsedDaily] = useState(0);
-  const [dailyLimit, setDailyLimit] = useState(PACKAGE_LIMITS.Freemium.dailyGenerations);
+  const [dailyLimit, setDailyLimit] = useState<number>(PACKAGE_LIMITS.Freemium.dailyGenerations);
   const [usedMonthly, setUsedMonthly] = useState(0);
-  const [monthlyLimit, setMonthlyLimit] = useState(PACKAGE_LIMITS.Freemium.requestsPerMonth);
+  const [monthlyLimit, setMonthlyLimit] = useState<number>(
+    PACKAGE_LIMITS.Freemium.requestsPerMonth
+  );
   const [limitResetAt, setLimitResetAt] = useState<Date | null>(null);
 
   const fetchPlan = useCallback(async () => {
