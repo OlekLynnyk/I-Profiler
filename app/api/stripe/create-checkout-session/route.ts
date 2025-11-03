@@ -5,6 +5,9 @@ import { stripe } from '@/lib/stripe';
 import { env } from '@/env.server';
 import { logUserAction } from '@/lib/logger';
 import type Stripe from 'stripe';
+import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '@/types/supabase';
 
 const appUrl = env.NEXT_PUBLIC_APP_URL;
 if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not defined');
@@ -15,16 +18,38 @@ type InvoiceWithPI = Stripe.Invoice & {
 };
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get('authorization')?.replace('Bearer ', '').trim();
-  if (!token) return NextResponse.json({ error: 'Missing access token' }, { status: 401 });
+  // --- Аутентификация: сначала Bearer, если не сработал — fallback к cookie-сессии ---
+  const hdr = req.headers.get('authorization');
+  const bearer = hdr?.startsWith('Bearer ') ? hdr.slice(7).trim() : '';
 
-  const supabase = await createServerClientForApi();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser(token);
+  const supabaseSvc = await createServerClientForApi(); // серверный клиент для работы с БД
+  let user: { id: string; email?: string | null } | null = null;
 
-  if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // 1) Пытаемся удостовериться по переданному access_token
+  if (bearer) {
+    try {
+      const { data, error } = await supabaseSvc.auth.getUser(bearer);
+      if (!error && data?.user) user = data.user as any;
+    } catch (e) {
+      console.warn('auth.getUser(bearer) failed', e);
+    }
+  }
+
+  // 2) Фоллбек: если токен не прошёл (или отсутствует) — читаем юзера из куков
+  if (!user) {
+    try {
+      const cookieStore = await cookies();
+      const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore as any });
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) user = data.user as any;
+    } catch (e) {
+      console.warn('auth.getUser(cookies) failed', e);
+    }
+  }
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const { priceId, confirm } = await req.json().catch(() => ({}));
   console.log('🧾 Received priceId:', priceId);
@@ -33,7 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 1) читаем статус и customer_id
-  const { data: subData, error: subCheckError } = await supabase
+  const { data: subData, error: subCheckError } = await supabaseSvc
     .from('user_subscription')
     .select('status, plan, stripe_customer_id, stripe_subscription_id, stripe_price_id')
     .eq('user_id', user.id)
@@ -76,7 +101,7 @@ export async function POST(req: NextRequest) {
         customerId = customer.id;
       }
 
-      const { error: upsertError } = await supabase.from('user_subscription').upsert(
+      const { error: upsertError } = await supabaseSvc.from('user_subscription').upsert(
         {
           user_id: user.id,
           stripe_customer_id: customerId,

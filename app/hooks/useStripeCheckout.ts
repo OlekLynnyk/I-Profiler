@@ -26,6 +26,7 @@ export function useStripeCheckout() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'same-origin',
       });
 
       let json: any = null;
@@ -64,6 +65,7 @@ export function useStripeCheckout() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
+          credentials: 'same-origin',
         });
 
         try {

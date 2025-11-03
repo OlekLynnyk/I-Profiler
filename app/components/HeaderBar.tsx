@@ -122,7 +122,7 @@ export default function HeaderBar({
         </button>
 
         <button
-          className="flex items-center gap-1 text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)] opacity-50 pointer-events-none"
+          className="hidden sm:flex items-center gap-1 text-xs sm:text-sm font-inter px-3 py-1 rounded-md transition hover:bg-[var(--surface)] opacity-50 pointer-events-none"
           type="button"
           tabIndex={-1}
           aria-hidden="true"

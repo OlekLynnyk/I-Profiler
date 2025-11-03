@@ -264,7 +264,10 @@ export default function ChatBubble({
 
         {/* ✅ CONTROLS */}
         {!isUser && (
-          <div className="flex gap-2 mt-1 ml-4 text-[var(--text-secondary)] text-xs items-center">
+          <div
+            className="flex items-center justify-start space-x-[10px] mt-2 pl-4 text-[var(--text-secondary)] text-[13px] flex-nowrap"
+            style={{ alignSelf: 'flex-start', lineHeight: '1' }}
+          >
             {status === 'pending' && <span className="animate-pulse">...</span>}
             {status === 'error' && <span className="text-[var(--danger)]">Error</span>}
 
@@ -341,9 +344,11 @@ export default function ChatBubble({
                     {/* 🗣️ Voice Selection Menu */}
                     <div
                       className={`absolute ${voiceOpen ? '' : 'hidden'} z-50
-              bg-[var(--surface)] border border-gray-200 rounded-lg shadow-md
-              p-2 text-xs w-44
-              bottom-full mb-2 left-1/2 -translate-x-1/2`}
+                        bg-[var(--surface)] border border-gray-200 rounded-lg shadow-md
+                        p-2 text-xs w-44
+                        bottom-full mb-2 left-0 translate-x-0`}
+                      role="menu"
+                      aria-label="Voice options"
                       style={{
                         transform: 'translateZ(0)',
                         WebkitTransform: 'translateZ(0)',
@@ -373,7 +378,7 @@ export default function ChatBubble({
                       ].map((opt) => (
                         <button
                           key={opt.id}
-                          className="block w-full text-left px-2 py-1 hover:bg-[var(--accent-faint)] rounded transition"
+                          className="block w-full text-left px-3 py-[10px] sm:py-1.5 hover:bg-[var(--accent-faint)] rounded transition active:scale-[0.98] touch-manipulation"
                           onClick={() => {
                             try {
                               if (typeof window.speechSynthesis === 'undefined') {

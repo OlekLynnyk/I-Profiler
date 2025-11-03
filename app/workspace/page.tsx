@@ -240,7 +240,28 @@ export default function WorkspacePage() {
   }, [attachedFiles]);
 
   const [attachmentError, setAttachmentError] = useState('');
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!showConfirm) return;
+
+    const isMobile =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(max-width: 767px)').matches);
+
+    if (isMobile) {
+      // Выполним закрытие только один раз при показе окна
+      requestAnimationFrame(() => {
+        try {
+          closeAllSidebars();
+        } catch (err) {
+          console.warn('Sidebar close failed (safe ignore):', err);
+        }
+      });
+    }
+  }, [showConfirm]);
+
   const [confirmMode, setConfirmMode] = useState<'manual' | 'pregenerate'>('manual');
   const pendingInputRef = useRef<string>('');
   const pendingFilesRef = useRef<File[]>([]);
@@ -1075,10 +1096,14 @@ export default function WorkspacePage() {
           )}
 
           {showConfirm && (
-            <div className="absolute inset-0 flex items-center justify-center z-50">
+            <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/40 backdrop-blur-sm">
               <div
                 ref={confirmRef}
-                className="bg-[var(--card-bg)] text-[var(--text-primary)] rounded-xl px-5 py-3 shadow-md border border-[var(--card-border)] max-w-[350px] w-full text-sm"
+                style={{
+                  backgroundColor: 'rgba(18, 25, 36, 0.9)', // прозрачность окна
+                  borderColor: 'rgba(185, 138, 246, 0.5)', // цвет и прозрачность рамки
+                }}
+                className="relative bg-[var(--card-bg)] text-[var(--text-primary)] rounded-xl px-5 py-3 shadow-md border border-[var(--card-border)] max-w-[350px] w-[90%] sm:w-full text-sm"
               >
                 <p className="text-left mb-3">
                   {confirmMode === 'manual'

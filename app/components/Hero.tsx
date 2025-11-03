@@ -226,7 +226,7 @@ export default function Hero({
           aria-hidden
         >
           {/* Чёрный фон */}
-          <div className="absolute inset-0 bg-black" />
+          <div className="absolute inset-0 bg-black pointer-events-none" />
 
           {/* Градиентные слои */}
           <div className="absolute inset-0">
@@ -262,9 +262,10 @@ export default function Hero({
           <div
             className="absolute inset-0 flex items-center justify-center opacity-30"
             style={{
-              willChange: 'transform',
+              willChange: 'transform, opacity',
               transform: 'translateZ(0)',
               backfaceVisibility: 'hidden',
+              isolation: 'isolate',
             }}
           >
             {/* Кольцо */}
@@ -287,11 +288,11 @@ export default function Hero({
       {/* ==== MOBILE (< md) ==== */}
       <div className="md:hidden relative" style={{ width: 375, height: 600, margin: '0 auto' }}>
         {/* Фон блока */}
-        <div className="absolute inset-0 bg-black" />
+        <div className="absolute inset-0 bg-black pointer-events-none" />
 
         {/* Верхний блик/градиенты */}
         <div
-          className="absolute"
+          className="absolute pointer-events-none"
           style={{ width: 335, height: 376, left: 15, top: -13, opacity: 0.3 }}
         >
           <div
@@ -323,7 +324,7 @@ export default function Hero({
         {/* Центрированный знак */}
         {logoSrc ? (
           <div
-            className="absolute inset-0 flex justify-center opacity-[0.15]"
+            className="absolute inset-0 flex justify-center opacity-[0.15] pointer-events-none"
             style={{ top: '100px' }}
           >
             <div className="relative" style={{ width: 320, height: 320 }}>
