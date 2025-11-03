@@ -25,6 +25,12 @@ export async function middleware(req: NextRequest) {
     return redirectRes;
   }
 
+  if (url.searchParams.has('checkout')) {
+    const clean = url.clone();
+    clean.searchParams.delete('checkout');
+    return NextResponse.redirect(clean, 307);
+  }
+
   // ✅ 1) Нормальный поток
   const res = NextResponse.next({ request: { headers: req.headers } });
   res.headers.set('x-trace-id', traceId);
@@ -61,8 +67,8 @@ export async function middleware(req: NextRequest) {
   console.log('🧩 [middleware] Session ID:', session?.user?.id || 'No session');
 
   if (!session && isReturningFromCheckout) {
-    for (let i = 0; i < 5; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    for (let i = 0; i < 1; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
       ({
         data: { session },
       } = await supabase.auth.getSession().catch(() => ({ data: { session: null } as any })));

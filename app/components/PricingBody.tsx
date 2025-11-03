@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const FONT = { family: 'Azeret Mono, monospace' } as const;
 
@@ -179,7 +180,10 @@ export default function PricingBody({ onLoginClick }: { onLoginClick: () => void
                 'Standard support',
               ]}
               buttonLabel="Start Free"
-              onButtonClick={onLoginClick}
+              onButtonClick={() => {
+                sessionStorage.setItem('loginRedirectTo', window.location.pathname);
+                onLoginClick();
+              }}
             />
 
             <div className="h-px w-full bg-white/20 opacity-20 md:h-[637px] md:w-px" aria-hidden />
@@ -199,11 +203,23 @@ export default function PricingBody({ onLoginClick }: { onLoginClick: () => void
               buttonLabel="Upgrade to Premium"
               onButtonClick={async () => {
                 try {
-                  const res = await fetch('/api/stripe/create-checkout-session', {
+                  // Проверяем, залогинен ли пользователь
+                  const supabase = createClientComponentClient();
+                  const {
+                    data: { session },
+                  } = await supabase.auth.getSession();
+
+                  if (!session || !session.user) {
+                    sessionStorage.setItem('loginRedirectTo', window.location.pathname);
+                    onLoginClick();
+                    return;
+                  }
+                  // Пользователь есть → создаём Checkout
+                  const res = await fetch('/api/stripe/session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      priceId: 'price_1SPNLPAGnqjZyhfADwO1uY3l',
+                      priceId: 'price_1SOHlgAGnqjZyhfA7Z9fMlSl',
                     }),
                   });
 

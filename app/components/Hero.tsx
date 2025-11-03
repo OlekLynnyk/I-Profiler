@@ -7,7 +7,7 @@ type Props = {
   /** Лого/знак для правой панели (desktop) и центрального блика (mobile) */
   logoSrc?: string; // напр.: "/images/logo-mark.png" или svg
   logoAlt?: string;
-  onTryClick: (isLoggedIn: boolean) => void;
+  onTryClick: () => void | boolean | Promise<boolean>;
 };
 
 /** Настройки анимации */
@@ -80,6 +80,15 @@ export default function Hero({
   onTryClick,
 }: Props) {
   const typed = useTypewriter(PHRASES);
+
+  // --- локальный стейт и обработчик для кнопки Workspace ---
+  const [loadingWorkspace, setLoadingWorkspace] = useState(false);
+
+  async function handleWorkspaceClick() {
+    if (loadingWorkspace) return; // защита от повторных нажатий
+    const r = await Promise.resolve(onTryClick?.());
+    if (r === true) setLoadingWorkspace(true); // включаем лоадер, если редирект действительно пошёл
+  }
 
   return (
     <section className="relative z-0 w-full text-white">
@@ -199,9 +208,11 @@ export default function Hero({
               className="flex-1 h-[50px] px-[13px] rounded-[8px] bg-white text-black font-monoBrand small-caps text-[18px] leading-[145%]"
               style={{ width: 152 }}
               data-figma="Workspace"
-              onClick={() => onTryClick(false)} // временно, позже ты подставишь значение
+              onClick={handleWorkspaceClick}
+              disabled={loadingWorkspace}
+              aria-busy={loadingWorkspace}
             >
-              Workspace
+              {loadingWorkspace ? 'Opening…' : 'Workspace'}
             </button>
 
             <button
@@ -398,9 +409,11 @@ export default function Hero({
             <button
               type="button"
               className="inline-flex items-center justify-center h-[50px] px-[13px] rounded-[8px] bg-white text-black font-mono [font-variant:small-caps] text-[15px] leading-[1.45] w-1/2 max-w-[170px]"
-              onClick={() => onTryClick(false)}
+              onClick={handleWorkspaceClick}
+              disabled={loadingWorkspace}
+              aria-busy={loadingWorkspace}
             >
-              Workspace
+              {loadingWorkspace ? 'Opening…' : 'Workspace'}
             </button>
             <button
               type="button"

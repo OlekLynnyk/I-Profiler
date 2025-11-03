@@ -66,14 +66,28 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         onClose();
-        router.refresh();
+        const redirectTo = sessionStorage.getItem('loginRedirectTo');
+        sessionStorage.removeItem('loginRedirectTo');
+
+        if (!redirectTo || redirectTo === '/') {
+          router.push('/workspace');
+        } else {
+          router.push(redirectTo);
+        }
       }
     });
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         onClose();
-        router.refresh();
+        const redirectTo = sessionStorage.getItem('loginRedirectTo');
+        sessionStorage.removeItem('loginRedirectTo');
+
+        if (!redirectTo || redirectTo === '/') {
+          router.push('/workspace');
+        } else {
+          router.push(redirectTo);
+        }
       }
     });
     unsub = data.subscription;
@@ -203,7 +217,14 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         }
       } else {
         onClose();
-        router.refresh();
+        const redirectTo = sessionStorage.getItem('loginRedirectTo');
+        sessionStorage.removeItem('loginRedirectTo');
+
+        if (!redirectTo || redirectTo === '/') {
+          router.push('/workspace');
+        } else {
+          router.push(redirectTo);
+        }
       }
     } else {
       const { error } = await supabase.auth.signUp({

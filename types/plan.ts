@@ -24,11 +24,11 @@ export function isValidPackageType(pkg: string): pkg is ValidPackageType {
 }
 
 export const PRICE_TO_PACKAGE: Record<string, ValidPackageType> = {
-  price_1SPNLPAGnqjZyhfADwO1uY3l: 'Premium',
+  price_1SOHlgAGnqjZyhfA7Z9fMlSl: 'Premium',
 };
 
 export const PACKAGE_TO_PRICE: Partial<Record<ValidPackageType, string>> = {
-  Premium: 'price_1SPNLPAGnqjZyhfADwO1uY3l',
+  Premium: 'price_1SOHlgAGnqjZyhfA7Z9fMlSl',
 };
 
 export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';

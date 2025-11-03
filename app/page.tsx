@@ -33,14 +33,22 @@ export default function HomePage() {
           onTryClick={() => {
             if (session) {
               router.push('/workspace');
+              return true; // ✅ редирект
             } else {
+              sessionStorage.setItem('loginRedirectTo', window.location.pathname);
               setIsAuthModalOpen(true);
+              return false; // ❌ логин без перехода
             }
           }}
         />
 
         <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none">
-          <Header onLoginClick={() => setIsAuthModalOpen(true)} />
+          <Header
+            onLoginClick={() => {
+              sessionStorage.setItem('loginRedirectTo', window.location.pathname);
+              setIsAuthModalOpen(true);
+            }}
+          />
         </div>
 
         {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} />}
