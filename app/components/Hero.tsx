@@ -286,7 +286,10 @@ export default function Hero({
       </div>
 
       {/* ==== MOBILE (< md) ==== */}
-      <div className="md:hidden relative" style={{ width: 375, height: 600, margin: '0 auto' }}>
+      <div
+        className="md:hidden relative z-[1]"
+        style={{ width: 375, minHeight: 600, margin: '0 auto' }}
+      >
         {/* Фон блока */}
         <div className="absolute inset-0 bg-black pointer-events-none" />
 
@@ -342,7 +345,7 @@ export default function Hero({
         ) : null}
 
         {/* Текст + кнопки (внизу, как на макете) */}
-        <div className="absolute left-0 right-0 px-5" style={{ bottom: -40 }}>
+        <div className="absolute left-0 right-0 px-5 z-[10]" style={{ bottom: 0 }}>
           {/* Разбито по строкам и цветам как в фигме */}
           <div
             className="font-monoBrand small-caps text-center"

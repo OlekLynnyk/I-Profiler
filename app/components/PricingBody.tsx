@@ -203,7 +203,7 @@ export default function PricingBody({ onLoginClick }: { onLoginClick: () => void
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      priceId: 'price_1SOHlgAGnqjZyhfA7Z9fMlSl',
+                      priceId: 'price_1SPNLPAGnqjZyhfADwO1uY3l',
                     }),
                   });
 
