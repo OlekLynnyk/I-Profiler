@@ -66,28 +66,24 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         onClose();
-        const redirectTo = sessionStorage.getItem('loginRedirectTo');
-        sessionStorage.removeItem('loginRedirectTo');
+        const redirectTo =
+          sessionStorage.getItem('loginRedirectTo') ||
+          (window.location.pathname === '/' ? '/workspace' : window.location.pathname);
 
-        if (!redirectTo || redirectTo === '/') {
-          router.push('/workspace');
-        } else {
-          router.push(redirectTo);
-        }
+        sessionStorage.removeItem('loginRedirectTo');
+        router.push(redirectTo);
       }
     });
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         onClose();
-        const redirectTo = sessionStorage.getItem('loginRedirectTo');
-        sessionStorage.removeItem('loginRedirectTo');
+        const redirectTo =
+          sessionStorage.getItem('loginRedirectTo') ||
+          (window.location.pathname === '/' ? '/workspace' : window.location.pathname);
 
-        if (!redirectTo || redirectTo === '/') {
-          router.push('/workspace');
-        } else {
-          router.push(redirectTo);
-        }
+        sessionStorage.removeItem('loginRedirectTo');
+        router.push(redirectTo);
       }
     });
     unsub = data.subscription;

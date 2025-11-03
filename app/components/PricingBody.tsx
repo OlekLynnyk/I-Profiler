@@ -215,7 +215,7 @@ export default function PricingBody({ onLoginClick }: { onLoginClick: () => void
                     return;
                   }
                   // Пользователь есть → создаём Checkout
-                  const res = await fetch('/api/stripe/session', {
+                  const res = await fetch('/api/stripe/create-checkout-session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
