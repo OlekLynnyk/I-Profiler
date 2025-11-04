@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
-  title: 'H1NTED Gallery',
+  title: 'Life Gallery',
   description: 'Premium mosaic gallery in H1NTED',
 };
 
