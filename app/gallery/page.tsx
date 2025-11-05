@@ -2147,9 +2147,138 @@ Boldness vs. Subtlety — the individual balances the desire to be noticed with 
   {
     id: '31',
     src: '/gallery/gallery31.jpg',
-    title: 'Linea 20',
-    description: 'Discernment Report',
+    title: 'Appearance-Based Psychographics Marketing Research',
+    description: `
+  
+This study is based on observational data of clothing-store visitors (Massimo Dutti). It is research-oriented, contains no personal data, and does not claim absolute truth. It is a consultative opinion by specialists in Human Risk Analytics and Urban Behaviour Artists.
+
+Introduction
+
+The data below are intrinsically valuable because they are observed, operationalisable markers (clothing, accessories) that do not depend on self-report. Across the items, the same psychometric axes recur, enabling a typology without questionnaires directly “on the shop floor”.
+
+Direct applications (without surveys):
+
+A tag ontology for visitor tagging and rapid in-store segmentation.
+A creativity/copy matrix by poles (e.g., “comfort/practicality” vs “drama/uniqueness”).
+Micro-merchandising/planograms or window displays aligned with prevailing traffic poles.
+Sales scripts by poles.
+Minimum to activate: unified tag glossary → observation/annotation guideline → simple decision map “tag → display/creative/script”.
+
+Observational Data
+
+The group is wearing mainly dark clothing items, combined with casual and comfortable pieces. Most individuals wear coats, jackets, or hoodies, paired with trousers or jeans, and casual shoes such as sneakers, boots, or loafers and accessories like bags, shopping bags, umbrellas.
+Based on the observation, a working assumption about average qualities was made and these data are used further to refine towards a concrete marketing proposition.
+
+Main psychological qualities:
+
+Comfort, practicality, freedom, simplicity, sophistication, elegance, modernity, preparedness, style, neutrality, groundedness, detail, warmth, brand awareness, cohesion, drama.
+
+Main shadow qualities (leading):
+
+Desire for challenge, need for structure, hidden uniqueness, fear of chaos, discomfort beneath comfort, suppressed spontaneity, wish for formality, unpreparedness, rebellion, depth, playfulness, indulgence, impracticality, conformity, sensitivity, nurturing, control, independence, reliability, escapism.
+
+From this, the narrowed spectrum of relevant qualities for focus is:
+
+Comfortable, casual, practical, challenging, structured, elegant, sophisticated, dramatic, stylish, simple, spontaneous, classic, modern, unique.
+
+
+
+Metaphors describing the group and their balance (explicit ↔ shadow):
+
+Relaxed tech-savvy ↔ structured innovator; 
+Balance of comfort and practicality ↔ desire for change; 
+Comfort ↔ challenge; 
+Sophisticated and modern ↔ personal comfort; 
+Sophisticated exterior ↔ dramatic expression; 
+Practical and stylish ↔ occasional spontaneity; 
+Harmony and control ↔ independence and reliability; 
+
+Conclusion: Balanced freedom and structure.
+
+Hidden command (how they wish to be seen/treated):
+
+“I am comfortable and in control, but challenge me to grow.”
+“I am comfortable and practical, but allow me to explore beyond my comfort zone.”
+“I am elegant and practical, but allow me to be spontaneous and simple.”
+“I am sophisticated yet approachable. Respect my professionalism but acknowledge my personal style.”
+“I value sophistication but also drama; respect both.”
+“I am practical and stylish, but allow me spontaneity.”
+“Maintain control while nurturing goals.”
+“Focus on independence with reliability.”
+“Allow me to be free, but provide structure when needed.”
+
+Intrinsic motivation (balancing inner drives):
+
+Comfort ↔ growth; 
+Control ↔ spontaneity; 
+Comfort ↔ new experience; 
+Practicality; comfort ↔ challenge; 
+Authenticity between professionalism and identity; 
+Sophistication ↔ individuality; 
+Routine ↔ spontaneity; 
+Harmony of control and nurture; autonomy ↔ responsibility;
+Freedom ↔ structure.
+
+Creativity/innovation potential (average): 5.6/10.
+
+
+
+Marketing-Ready: Segmented & Summarised Data
+
+What the group wears:
+
+Dark clothing elements (shoes/trousers): 89%
+Outerwear present (jacket/coat/overcoat/hoodie/cardigan): 100%
+Items carried (observed): shopping bags, umbrella, bag, flowers, keys, etc.
+
+What the group gravitates to
+
+Comfort: 67%
+Practicality: 56%
+Style/Elegance present: 44%
+
+Dualities and readiness for polar decisions
+
+Comfort as leading via contradiction: 44%
+Practicality with hidden opposite (spontaneity/indulgence/whimsy): 44%
+Hidden drive toward uniqueness: 33%
+Control/structure as inner theme: 33%
+Formal vs informal duality: 33%
+Comfort opposed to Challenge/Discomfort: 44%
+Practicality opposed to Spontaneity/Impracticality: 33%
+Structure/Control vs Freedom/Spontaneity (recurring): 44%
+
+Expressed style carriers
+
+Explicit comfort/casual/practical line: 33%
+“Casual” explicitly present: 44%
+Elegant/Sophisticated/Classic/Modern/Drama (explicit): 44%
+
+
+
+Strategy starting point (from observed data)
+
+Comfort/Practical/“Practical & stylish”: 44% ↔ Challenge/Explore/Spontaneity/Freedom: 56%
+
+Unconscious decision-making (aggregated)
+
+Intuitive as baseline style: 78%
+Confirmation bias: 44%
+Status quo bias / avoidance of change: 33%
+Risk aversion: 33%
+Compromise/Routine/Avoid risk: 33%
+
+Drivers (aggregated)
+
+Frequent “comfort/practical/practicality”: 67%
+Balance / opposites noted: 44%
+Control/Structure/Order: 44%
+Growth/Freedom/Development (inner vector): 22%
+
+Conclusion
+On the basis of this study and the brand’s positioning (Massimo Dutti https://www.massimodutti.com/ie/ ), we have grounds to trust appearance-based psychographics as an input to marketing analysis, provided observations or photographs that respect local regulations at the place of study. With iterative collaboration and method improvement, such observations can be used not only as a supporting factor but, where appropriate, as a leading factor, because the decisions described are independent of self-report.`,
   },
+
   {
     id: '32',
     src: '/gallery/gallery32.jpg',
@@ -2804,14 +2933,29 @@ function Sidebar({
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (_e: MouseEvent) => {};
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [open]);
+
+    function handleOutside(e: MouseEvent | TouchEvent) {
+      // Только мобильные (< 1024px, т.е. < lg)
+      if (typeof window !== 'undefined' && window.innerWidth >= 1024) return;
+
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [open, onClose]);
 
   return (
     <>
       <div
+        onClick={onClose}
         className={[
           'fixed inset-0 z-40 bg-black/30 lg:hidden',
           open ? 'opacity-100' : 'pointer-events-none opacity-0',
