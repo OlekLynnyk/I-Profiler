@@ -2706,10 +2706,18 @@ export default function Page() {
     return () => window.removeEventListener('keydown', onKey);
   }, [closeSidebar]);
 
-  // Клик по карточке
   const onCardClick = (id: string) => {
-    if (sidebarId) {
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+
+    if (isDesktop) {
+      // Desktop: открыть (или переключить) сайдбар с первого клика
       openSidebar(id);
+      setElevatedId(null);
+      return;
+    }
+
+    // Mobile: поведение без изменений
+    if (sidebarId) {
       setElevatedId(null);
       return;
     }
@@ -2721,8 +2729,18 @@ export default function Page() {
   const onCardKey = (e: React.KeyboardEvent, id: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
+      const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+
+      if (isDesktop) {
+        // Desktop: открыть сразу
+        openSidebar(id);
+        setElevatedId(null);
+        return;
+      }
+      // Mobile: оставить текущую логику через onCardClick
       onCardClick(id);
     }
+
     if (e.key.toLowerCase() === 'i') {
       e.preventDefault();
       openSidebar(id);

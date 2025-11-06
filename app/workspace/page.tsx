@@ -1099,11 +1099,13 @@ export default function WorkspacePage() {
             <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/40 backdrop-blur-sm">
               <div
                 ref={confirmRef}
-                style={{
-                  backgroundColor: 'rgba(18, 25, 36, 0.9)', // прозрачность окна
-                  borderColor: 'rgba(185, 138, 246, 0.5)', // цвет и прозрачность рамки
-                }}
-                className="relative bg-[var(--card-bg)] text-[var(--text-primary)] rounded-xl px-5 py-3 shadow-md border border-[var(--card-border)] max-w-[350px] w-[90%] sm:w-full text-sm"
+                className="
+    relative
+    rounded-xl px-5 py-3 shadow-md
+    max-w-[350px] w-[90%] sm:w-full text-sm
+    bg-[var(--card-bg)] border border-[var(--card-border)] text-[var(--text-primary)]
+    dark:bg-[var(--card-bg)] dark:border-[var(--card-border)] dark:text-[var(--text-primary)]
+  "
               >
                 <p className="text-left mb-3">
                   {confirmMode === 'manual'

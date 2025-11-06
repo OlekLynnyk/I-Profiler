@@ -34,9 +34,9 @@ export default function WatchExplainer({
     { label: 'Reliability', value: '88%' },
     { label: 'Strictness', value: '17%' },
   ],
-  titleDesktop = 'One accessory image is all it takes. No biometrics.\nNo profiling. Just Discernment.',
+  titleDesktop = 'One accessory image is all it takes to catch psych patterns.\nNo profiling. Just Discernment.',
   captionDesktop = 'Built for clear judgement.\nPrivacy-minded by design.',
-  titleMobile = 'One accessory image is all it takes. No biometrics. No profiling. Just Discernment.',
+  titleMobile = 'One accessory image is all it takes to catch psych patterns. No profiling. Just Discernment.',
   captionMobile = 'Built for clear judgement.\nPrivacy-minded by design.',
   className,
 }: Props) {
@@ -232,8 +232,10 @@ export default function WatchExplainer({
           viewport={{ once: true, amount: 0.5 }}
           className="mt-28 text-center font-mono [font-variant:small-caps] text-white text-[20px] leading-[1.45] w-[351px]"
         >
-          <span className="text-white">One accessory image is all it takes.</span>{' '}
-          <span className="text-white/50">No biometrics. No profiling. Just Discernment.</span>
+          <span className="text-white">
+            One accessory image is all it takes to catch psych patterns.
+          </span>{' '}
+          <span className="text-white/50"> No profiling. Just Discernment.</span>
         </motion.h2>
 
         {/* ===== ГРУППА ЧАСОВ (MOBILE) — 1-в-1 визуально с десктопом, пропорционально ===== */}

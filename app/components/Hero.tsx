@@ -135,7 +135,7 @@ export default function Hero({
                 color: 'rgba(255,255,255,0.5)',
               }}
             >
-              Catch tiny cues
+              Read tiny cues from outfits
             </span>
             {/* 3-я — серая */}
             <span
@@ -365,7 +365,7 @@ export default function Hero({
             {/* 1-я строка — белая */}
             <div>Human insight, instantly.</div>
             {/* 2-4 — серые */}
-            <div style={{ color: 'rgba(255,255,255,0.5)' }}>Catch tiny cues</div>
+            <div style={{ color: 'rgba(255,255,255,0.5)' }}>Read tiny cues from outfits</div>
             <div style={{ color: 'rgba(255,255,255,0.5)' }}>to understand people</div>
             <div style={{ color: 'rgba(255,255,255,0.5)' }}>with uncommon clarity —</div>
             {/* 5-я: and (серый) + typed (белый) + каретка */}
