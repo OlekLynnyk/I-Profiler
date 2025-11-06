@@ -160,29 +160,25 @@ export default function SidebarHelper({
   return (
     <>
       {openSidebar.left && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
+        <div
+          aria-hidden="true"
           className="fixed inset-0 z-[55] bg-transparent"
           onPointerDown={(e) => {
-            // важен 'pointerdown': гасим жест ДО клика, исключая ретаргетинг iOS
-            e.preventDefault();
+            // Важно: не вызываем preventDefault, чтобы не блокировать последующие клики на iOS
             e.stopPropagation();
             closeSidebar('left');
           }}
-          // safety: дублируем на случай отсутствия pointer событий
+          // резерв на случай устаревших браузеров
           onClick={(e) => {
-            e.preventDefault();
             e.stopPropagation();
             closeSidebar('left');
           }}
           style={{
-            touchAction: 'manipulation',
+            pointerEvents: 'auto',
+            touchAction: 'none',
             WebkitTapHighlightColor: 'transparent',
             userSelect: 'none' as any,
             WebkitUserSelect: 'none' as any,
-            pointerEvents: openSidebar.left ? 'auto' : 'none',
-            willChange: 'opacity, transform',
           }}
         />
       )}
