@@ -2978,31 +2978,17 @@ function Sidebar({
   const open = Boolean(item);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handleOutside(e: MouseEvent | TouchEvent) {
-      // Только мобильные (< 1024px, т.е. < lg)
-      if (typeof window !== 'undefined' && window.innerWidth >= 1024) return;
-
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-
-    document.addEventListener('mousedown', handleOutside);
-    document.addEventListener('touchstart', handleOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleOutside);
-      document.removeEventListener('touchstart', handleOutside);
-    };
-  }, [open, onClose]);
-
   return (
     <>
       <div
-        onClick={onClose}
+        onMouseDown={(e) => {
+          e.stopPropagation(); // не даём событию подняться до карточек
+          onClose();
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation(); // мобильный тап перехвачен оверлеем
+          onClose();
+        }}
         className={[
           'fixed inset-0 z-40 bg-black/30 lg:hidden',
           open ? 'opacity-100' : 'pointer-events-none opacity-0',
