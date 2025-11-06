@@ -20,6 +20,7 @@ const easing: any = [0.22, 1, 0.36, 1];
 
 export default function InsightsGrid() {
   const reduce = useReducedMotion();
+  const [openingGallery, setOpeningGallery] = React.useState(false);
 
   return (
     <section
@@ -121,21 +122,22 @@ export default function InsightsGrid() {
 
       {/* CTA — “See 11 more in Gallery” */}
       <div className="mt-4 md:mt-6 flex justify-center">
-        {/* Desktop размер: 360x56; Mobile: 353x56 */}
         <Link
           href="/gallery"
+          onMouseDown={() => setOpeningGallery(true)} // показать "Opening…" до перехода
+          aria-busy={openingGallery}
           className="
-            inline-flex items-center justify-center
-            h-14 md:h-[50px] rounded-[8px] bg-white/15 text-white
-            font-mono [font-variant:small-caps]
-            text-[15px] md:text-[18px] leading-[1.45]
-            px-[15px] md:px-[30px]
-            w-[353px] md:w-[325px]
-            ring-1 ring-white/10 hover:ring-white/20 transition
-            text-center
-          "
+              inline-flex items-center justify-center
+              h-14 md:h-[50px] rounded-[8px] bg-white/15 text-white
+              font-mono [font-variant:small-caps]
+              text-[15px] md:text-[18px] leading-[1.45]
+              px-[15px] md:px-[30px]
+              w-[353px] md:w-[325px]
+              ring-1 ring-white/10 hover:ring-white/20 transition
+              text-center
+             "
         >
-          See 11 more in Gallery
+          {openingGallery ? 'Opening…' : 'See 11 more in Gallery'}
         </Link>
       </div>
     </section>

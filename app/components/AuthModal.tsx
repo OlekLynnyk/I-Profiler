@@ -66,11 +66,13 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         onClose();
-        const redirectTo =
-          sessionStorage.getItem('loginRedirectTo') ||
-          (window.location.pathname === '/' ? '/workspace' : window.location.pathname);
+        let redirectTo: string;
+        if (window.location.pathname === '/' || window.location.pathname === '/login') {
+          redirectTo = '/workspace';
+        } else {
+          redirectTo = window.location.pathname;
+        }
 
-        sessionStorage.removeItem('loginRedirectTo');
         router.push(redirectTo);
       }
     });
@@ -78,11 +80,12 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         onClose();
-        const redirectTo =
-          sessionStorage.getItem('loginRedirectTo') ||
-          (window.location.pathname === '/' ? '/workspace' : window.location.pathname);
-
-        sessionStorage.removeItem('loginRedirectTo');
+        let redirectTo: string;
+        if (window.location.pathname === '/' || window.location.pathname === '/login') {
+          redirectTo = '/workspace';
+        } else {
+          redirectTo = window.location.pathname;
+        }
         router.push(redirectTo);
       }
     });
@@ -179,6 +182,9 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   }
 
   const handleAuth = async () => {
+    try {
+      sessionStorage.setItem('loginRedirectTo', window.location.pathname);
+    } catch {}
     setError('');
     setInfo('');
     if (!agree) {
@@ -215,12 +221,9 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         onClose();
         const redirectTo = sessionStorage.getItem('loginRedirectTo');
         sessionStorage.removeItem('loginRedirectTo');
-
-        if (!redirectTo || redirectTo === '/') {
-          router.push('/workspace');
-        } else {
-          router.push(redirectTo);
-        }
+        router.push(
+          !redirectTo || redirectTo === '/' || redirectTo === '/login' ? '/workspace' : redirectTo
+        );
       }
     } else {
       const { error } = await supabase.auth.signUp({

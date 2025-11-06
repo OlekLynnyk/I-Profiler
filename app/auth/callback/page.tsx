@@ -66,7 +66,26 @@ export default function CallbackPage() {
           localStorage.setItem('h1nted_auth_ping', String(Date.now()));
         } catch {}
 
-        router.replace('/');
+        // ✅ ЕДИНСТВЕННАЯ ПРАВКА: корректный финальный редирект
+        // ✅ Корректный финальный редирект (без регрессий)
+        try {
+          const url = new URL(window.location.href);
+          const qRedirect = url.searchParams.get('redirect');
+          const ssRedirect = sessionStorage.getItem('loginRedirectTo') || '';
+
+          let redirectTo = '/workspace';
+
+          if (qRedirect && qRedirect.startsWith('/')) {
+            redirectTo = qRedirect;
+          } else if (ssRedirect && ssRedirect.startsWith('/')) {
+            redirectTo = ssRedirect === '/' || ssRedirect === '/login' ? '/workspace' : ssRedirect;
+          }
+
+          if (ssRedirect) sessionStorage.removeItem('loginRedirectTo');
+          router.replace(redirectTo);
+        } catch {
+          router.replace('/workspace');
+        }
       } catch (err) {
         console.error('Callback error:', err);
         setError(true);

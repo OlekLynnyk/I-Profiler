@@ -83,6 +83,7 @@ export default function Hero({
 
   // --- локальный стейт и обработчик для кнопки Workspace ---
   const [loadingWorkspace, setLoadingWorkspace] = useState(false);
+  const [loadingGallery, setLoadingGallery] = useState(false);
 
   async function handleWorkspaceClick() {
     if (loadingWorkspace) return; // защита от повторных нажатий
@@ -221,10 +222,14 @@ export default function Hero({
               style={{ width: 152 }}
               data-figma="Gallery"
               onClick={() => {
-                window.location.href = '/gallery';
+                setLoadingGallery(true); // показать “Opening…”
+                setTimeout(() => {
+                  // дать UI перерисоваться и уйти
+                  window.location.href = '/gallery';
+                }, 0);
               }}
             >
-              Gallery
+              {loadingGallery ? 'Opening…' : 'Gallery'}
             </button>
           </div>
         </div>
@@ -419,10 +424,14 @@ export default function Hero({
               type="button"
               className="inline-flex items-center justify-center h-[50px] px-[13px] rounded-[8px] bg-white/15 text-white font-mono [font-variant:small-caps] text-[15px] leading-[1.45] w-1/2 max-w-[170px]"
               onClick={() => {
-                window.location.href = '/gallery';
+                setLoadingGallery(true); // показать “Opening…”
+                setTimeout(() => {
+                  // дать UI перерисоваться и уйти
+                  window.location.href = '/gallery';
+                }, 0);
               }}
             >
-              Gallery
+              {loadingGallery ? 'Opening…' : 'Gallery'}
             </button>
           </div>
         </div>
