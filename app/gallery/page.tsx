@@ -2693,9 +2693,21 @@ export default function Page() {
 
   const [elevatedId, setElevatedId] = useState<string | null>(null);
   const [sidebarId, setSidebarId] = useState<string | null>(null);
+  const tapLockRef = useRef(false); // ← защита от пере-открытия после клика по оверлею
 
-  const openSidebar = useCallback((id: string) => setSidebarId(id), []);
-  const closeSidebar = useCallback(() => setSidebarId(null), []);
+  const openSidebar = useCallback((id: string) => {
+    if (tapLockRef.current) return; // если только что закрывали — не открываем заново
+    setSidebarId(id);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setSidebarId(null);
+    // короткая блокировка, чтобы «тап по оверлею» не переоткрыл карточку тем же событием
+    tapLockRef.current = true;
+    setTimeout(() => {
+      tapLockRef.current = false;
+    }, 250);
+  }, []);
 
   // Esc → закрыть
   useEffect(() => {
@@ -2710,19 +2722,19 @@ export default function Page() {
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
 
     if (isDesktop) {
-      // Desktop: открыть (или переключить) сайдбар с первого клика
+      // Desktop — как у тебя сейчас (не трогаем)
       openSidebar(id);
       setElevatedId(null);
       return;
     }
 
-    // Mobile: поведение без изменений
+    // Mobile — открыть с ПЕРВОГО тапа; если панель уже открыта, просто игнорируем (оверлей закроет)
     if (sidebarId) {
       setElevatedId(null);
       return;
     }
-    if (elevatedId === id) openSidebar(id);
-    else setElevatedId(id);
+    openSidebar(id); // ← сразу открываем
+    setElevatedId(null);
   };
 
   // Клавиатура
