@@ -157,6 +157,36 @@ export default function SidebarHelper({
     return () => window.removeEventListener('click', onClick, true);
   }, [openSidebar.left, closeSidebar]);
 
+  // --- FIX: reset pointer-capture leaks after sidebar close (mobile safe) ---
+  useEffect(() => {
+    if (!openSidebar.left) {
+      // отложенный сброс — после завершения transition (500ms)
+      const timeout = setTimeout(() => {
+        try {
+          // 1️⃣ Снять pointer-capture с любых элементов, которые его держат
+          const all = document.querySelectorAll('*');
+          all.forEach((el: any) => {
+            try {
+              el.releasePointerCapture?.(0);
+            } catch {}
+          });
+
+          // 2️⃣ Снять фокус, если браузер "держит" его на offscreen элементе
+          if (document.activeElement instanceof HTMLElement) {
+            (document.activeElement as HTMLElement).blur();
+          }
+
+          // 3️⃣ Принудительно вернуть pointer-events модалкам (safety)
+          const stuck = document.querySelectorAll('[data-modal="open"], [aria-modal="true"]');
+          stuck.forEach((el) => ((el as HTMLElement).style.pointerEvents = 'auto'));
+        } catch (err) {
+          console.warn('⚠️ pointer-reset failed:', err);
+        }
+      }, 550); // немного больше чем transition duration-500
+      return () => clearTimeout(timeout);
+    }
+  }, [openSidebar.left]);
+
   return (
     <>
       {openSidebar.left && (
@@ -210,7 +240,12 @@ export default function SidebarHelper({
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
-          onTouchEnd={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            try {
+              (e.currentTarget as HTMLElement).releasePointerCapture?.(0);
+            } catch {}
+          }}
           style={
             isMobile
               ? { scrollbarGutter: 'stable both-edges', maxHeight: 'inherit' }
