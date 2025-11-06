@@ -124,39 +124,6 @@ export default function SidebarHelper({
     if (isCdrMode) setActiveBox('saved-messages');
   }, [isCdrMode]);
 
-  // УСТОЙЧИВОЕ «КЛИК-ВНЕ» ДЛЯ iOS: закрываем ПОСЛЕ клика по целевому элементу
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (!openSidebar.left) return;
-
-      // активная модалка — не закрываем глобально
-      const hasOpenModal = !!document.querySelector(
-        '[role="dialog"][aria-modal="true"], [data-modal="open"]'
-      );
-      if (hasOpenModal) return;
-
-      const t = e.target as Element | null;
-
-      // клики внутри левого сайдбара/служебных зон — игнорим
-      if (
-        t?.closest?.('[data-sidebar-root="left"]') ||
-        t?.closest?.('[data-sidebar="left"]') ||
-        t?.closest?.('[data-header-root]') ||
-        t?.closest?.('[data-composer-root]') ||
-        t?.closest?.('[data-ignore-sidebar-close="true"]')
-      ) {
-        return;
-      }
-
-      // Важно: закрываем ПОСЛЕ того, как таргет получил свой click (iOS)
-      requestAnimationFrame(() => closeSidebar('left'));
-    };
-
-    // capture=true — чтобы гарантированно сработать после таргета, но до bubbling-обработчиков документа
-    window.addEventListener('click', onClick, true);
-    return () => window.removeEventListener('click', onClick, true);
-  }, [openSidebar.left, closeSidebar]);
-
   return (
     <>
       {openSidebar.left && (
@@ -165,28 +132,21 @@ export default function SidebarHelper({
           aria-label="Close sidebar"
           className="fixed inset-0 z-[55] bg-transparent"
           onPointerDown={(e) => {
-            // важен 'pointerdown': гасим жест ДО клика, исключая ретаргетинг iOS
-            e.preventDefault();
+            // закрываем «мягко»: не блокируем default, но гасим всплытие внутри React
             e.stopPropagation();
             closeSidebar('left');
           }}
-          // safety: дублируем на случай отсутствия pointer событий
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            closeSidebar('left');
-          }}
+          // onClick убрать — не нужен (исключаем двойные срабатывания)
           style={{
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
             userSelect: 'none' as any,
             WebkitUserSelect: 'none' as any,
             pointerEvents: openSidebar.left ? 'auto' : 'none',
-            willChange: 'opacity, transform',
           }}
+          data-interactive="true"
         />
       )}
-
       <aside
         ref={sidebarRef}
         data-sidebar="left"

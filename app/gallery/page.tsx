@@ -2693,21 +2693,34 @@ export default function Page() {
 
   const [elevatedId, setElevatedId] = useState<string | null>(null);
   const [sidebarId, setSidebarId] = useState<string | null>(null);
-  const tapLockRef = useRef(false); // ← защита от пере-открытия после клика по оверлею
+
+  const tapLockRef = useRef(false);
+  const suppressTapRef = useRef(false);
 
   const openSidebar = useCallback((id: string) => {
-    if (tapLockRef.current) return; // если только что закрывали — не открываем заново
+    if (tapLockRef.current) return;
     setSidebarId(id);
   }, []);
 
   const closeSidebar = useCallback(() => {
     setSidebarId(null);
-    // короткая блокировка, чтобы «тап по оверлею» не переоткрыл карточку тем же событием
     tapLockRef.current = true;
     setTimeout(() => {
       tapLockRef.current = false;
     }, 250);
   }, []);
+
+  // ДОБАВЛЕНО: безопасное закрытие, которое ставит suppress-флаг на мобильном
+  const closeSidebarSafe = useCallback(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+    if (isMobile) {
+      suppressTapRef.current = true; // глушим следующий «просочившийся» тап
+      setTimeout(() => {
+        suppressTapRef.current = false;
+      }, 300);
+    }
+    closeSidebar();
+  }, [closeSidebar]);
 
   // Esc → закрыть
   useEffect(() => {
@@ -2722,18 +2735,22 @@ export default function Page() {
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
 
     if (isDesktop) {
-      // Desktop — как у тебя сейчас (не трогаем)
+      // Десктоп НЕ трогаем
       openSidebar(id);
       setElevatedId(null);
       return;
     }
 
-    // Mobile — открыть с ПЕРВОГО тапа; если панель уже открыта, просто игнорируем (оверлей закроет)
+    if (suppressTapRef.current) {
+      return;
+    }
+
     if (sidebarId) {
       setElevatedId(null);
       return;
     }
-    openSidebar(id); // ← сразу открываем
+
+    openSidebar(id);
     setElevatedId(null);
   };
 
@@ -2787,7 +2804,7 @@ export default function Page() {
       {/* SIDEBAR */}
       <Sidebar
         item={images.find((i) => i.id === sidebarId) || null}
-        onClose={closeSidebar}
+        onClose={closeSidebarSafe}
         widthClass={sidebarWidthClass}
       />
 
