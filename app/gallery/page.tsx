@@ -2710,14 +2710,13 @@ export default function Page() {
     }, 250);
   }, []);
 
-  // ДОБАВЛЕНО: безопасное закрытие, которое ставит suppress-флаг на мобильном
   const closeSidebarSafe = useCallback(() => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
     if (isMobile) {
-      suppressTapRef.current = true; // глушим следующий «просочившийся» тап
+      suppressTapRef.current = true;
       setTimeout(() => {
         suppressTapRef.current = false;
-      }, 300);
+      }, 550); // окно больше, чтобы синтетический click не пробился
     }
     closeSidebar();
   }, [closeSidebar]);
@@ -2741,15 +2740,18 @@ export default function Page() {
       return;
     }
 
+    // если сайдбар ОТКРЫТ — закрываем и выходим (ничего не открываем этим же тапом)
+    if (sidebarId) {
+      closeSidebarSafe();
+      return;
+    }
+
+    // если только что закрывали — глушим «пролетевший» клик
     if (suppressTapRef.current) {
       return;
     }
 
-    if (sidebarId) {
-      setElevatedId(null);
-      return;
-    }
-
+    // сайдбар закрыт — открываем карточку
     openSidebar(id);
     setElevatedId(null);
   };
@@ -2981,13 +2983,11 @@ function Sidebar({
   return (
     <>
       <div
-        onMouseDown={(e) => {
-          e.stopPropagation(); // не даём событию подняться до карточек
-          onClose();
-        }}
-        onTouchStart={(e) => {
-          e.stopPropagation(); // мобильный тап перехвачен оверлеем
-          onClose();
+        onPointerDown={(e) => {
+          // только мобила; десктоп НЕ трогаем
+          if (typeof window !== 'undefined' && window.innerWidth >= 1024) return;
+          e.stopPropagation(); // не даём событию пройти в карточки
+          onClose(); // закрываем сайдбар (через closeSidebarSafe)
         }}
         className={[
           'fixed inset-0 z-40 bg-black/30 lg:hidden',
