@@ -126,66 +126,46 @@ export default function SidebarHelper({
 
   // УСТОЙЧИВОЕ «КЛИК-ВНЕ» ДЛЯ iOS: закрываем ПОСЛЕ клика по целевому элементу
   useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (!openSidebar.left) return;
+    if (!openSidebar.left) return;
 
-      // активная модалка — не закрываем глобально
-      const hasOpenModal = !!document.querySelector(
-        '[role="dialog"][aria-modal="true"], [data-modal="open"]'
-      );
-      if (hasOpenModal) return;
+    const handler = (e: PointerEvent | MouseEvent) => {
+      // если открыта модалка — ничего не делаем
+      if (document.querySelector('[role="dialog"][aria-modal="true"], [data-modal="open"]')) return;
 
       const t = e.target as Element | null;
-
-      // клики внутри левого сайдбара/служебных зон — игнорим
+      // клики внутри левого сайдбара/служебных зон игнорим
       if (
-        t?.closest?.('[data-sidebar-root="left"]') ||
-        t?.closest?.('[data-sidebar="left"]') ||
-        t?.closest?.('[data-header-root]') ||
-        t?.closest?.('[data-composer-root]') ||
-        t?.closest?.('[data-ignore-sidebar-close="true"]')
-      ) {
+        t?.closest?.(
+          '[data-sidebar-root="left"], [data-sidebar="left"], [data-ignore-sidebar-close="true"]'
+        )
+      )
+        return;
+
+      // интерактивным элементам даём закончить default-действие (фокус), потом закрываем
+      const isFocusable =
+        t instanceof HTMLElement &&
+        t.matches('input, textarea, select, [contenteditable="true"], button, a, [role="button"]');
+
+      if (isFocusable) {
+        setTimeout(() => closeSidebar('left'), 0); // фокус уже поставится к этому моменту
         return;
       }
 
-      // Важно: закрываем ПОСЛЕ того, как таргет получил свой click (iOS)
-      requestAnimationFrame(() => closeSidebar('left'));
+      // прочие случаи — закрыть сразу
+      closeSidebar('left');
     };
 
-    // capture=true — чтобы гарантированно сработать после таргета, но до bubbling-обработчиков документа
-    window.addEventListener('click', onClick, true);
-    return () => window.removeEventListener('click', onClick, true);
+    // ➊ Ставим на pointerup в bubble-фазе
+    window.addEventListener('pointerup', handler as any, { passive: true });
+
+    // ➋ Небольшой бэкап — обычный click (bubble), НО не в capture
+    window.addEventListener('click', handler as any, { passive: true });
+
+    return () => {
+      window.removeEventListener('pointerup', handler as any);
+      window.removeEventListener('click', handler as any);
+    };
   }, [openSidebar.left, closeSidebar]);
-
-  // --- FIX: reset pointer-capture leaks after sidebar close (mobile safe) ---
-  useEffect(() => {
-    if (!openSidebar.left) {
-      // отложенный сброс — после завершения transition (500ms)
-      const timeout = setTimeout(() => {
-        try {
-          // 1️⃣ Снять pointer-capture с любых элементов, которые его держат
-          const all = document.querySelectorAll('*');
-          all.forEach((el: any) => {
-            try {
-              el.releasePointerCapture?.(0);
-            } catch {}
-          });
-
-          // 2️⃣ Снять фокус, если браузер "держит" его на offscreen элементе
-          if (document.activeElement instanceof HTMLElement) {
-            (document.activeElement as HTMLElement).blur();
-          }
-
-          // 3️⃣ Принудительно вернуть pointer-events модалкам (safety)
-          const stuck = document.querySelectorAll('[data-modal="open"], [aria-modal="true"]');
-          stuck.forEach((el) => ((el as HTMLElement).style.pointerEvents = 'auto'));
-        } catch (err) {
-          console.warn('⚠️ pointer-reset failed:', err);
-        }
-      }, 550); // немного больше чем transition duration-500
-      return () => clearTimeout(timeout);
-    }
-  }, [openSidebar.left]);
 
   return (
     <>
