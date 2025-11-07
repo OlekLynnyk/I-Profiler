@@ -35,6 +35,9 @@ export default function GlobalLoading() {
         height={96}
         priority
         className={`${allowAnimation && !reducedMotion ? 'animate-octo-pulse-soft' : ''} drop-shadow-md select-none`}
+        style={{
+          filter: 'drop-shadow(0px 6px 8px rgba(0, 0, 0, 0.75))',
+        }}
       />
       {!allowAnimation || reducedMotion ? <span className="sr-only">Loading…</span> : null}
     </div>

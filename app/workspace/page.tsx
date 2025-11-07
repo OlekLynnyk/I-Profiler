@@ -639,7 +639,10 @@ export default function WorkspacePage() {
                     <img
                       src="/images/logo.png"
                       alt="Logo"
-                      className="w-10 h-10 mb-1 drop-shadow-md"
+                      className="w-10 h-10 mb-1"
+                      style={{
+                        filter: 'drop-shadow(0px 6px 8px rgba(0, 0, 0, 0.75))',
+                      }}
                     />
 
                     {/* Основной текст */}
