@@ -193,23 +193,10 @@ export default function SidebarHelper({
         <div
           aria-hidden="true"
           className="fixed inset-0 z-[55] bg-transparent"
-          onPointerDown={(e) => {
-            // Важно: не вызываем preventDefault, чтобы не блокировать последующие клики на iOS
-            e.stopPropagation();
-            closeSidebar('left');
-          }}
-          // резерв на случай устаревших браузеров
-          onClick={(e) => {
-            e.stopPropagation();
-            closeSidebar('left');
-          }}
-          style={{
-            pointerEvents: 'auto',
-            touchAction: 'none',
-            WebkitTapHighlightColor: 'transparent',
-            userSelect: 'none' as any,
-            WebkitUserSelect: 'none' as any,
-          }}
+          data-overlay
+          /* НЕ перехватываем события: клики доходят до цели,
+        а закрытие выполнит глобальный window click (capture) */
+          style={{ pointerEvents: 'none' }}
         />
       )}
 

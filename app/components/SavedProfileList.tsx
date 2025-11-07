@@ -385,11 +385,8 @@ export default function SavedProfileList({
           toggleExpanded(id);
         }}
         onClickCapture={(e) => {
-          // ⬅️ NEW: глотаем click после скролла
-          if (movedRef.current || didScrollRef.current) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
+          if (!(e.currentTarget as HTMLElement).contains(e.target as Node)) return;
+          if (movedRef.current || didScrollRef.current) e.preventDefault();
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -491,11 +488,8 @@ export default function SavedProfileList({
           setTimeout(() => setSelectedProfile(profile), 0);
         }}
         onClickCapture={(e) => {
-          // ⬅️ NEW
-          if (movedRef.current || didScrollRef.current) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
+          if (!(e.currentTarget as HTMLElement).contains(e.target as Node)) return;
+          if (movedRef.current || didScrollRef.current) e.preventDefault();
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -611,8 +605,10 @@ export default function SavedProfileList({
           data-interactive="true"
         >
           <div
+            data-overlay
+            data-interactive="true"
             className="absolute inset-0 bg-black/40"
-            onMouseDown={() => {
+            onPointerDown={() => {
               setCreateModalOpen(false);
               setNewBlockName('');
               setCreateErr(null);

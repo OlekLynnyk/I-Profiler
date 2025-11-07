@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     default: 'H1NTED',
     template: 'H1NTED · %s',
   },
-  description: 'A scalable AI profiling assistant',
+  description: 'A scalable Human Risk Analytics assistant',
   metadataBase: new URL(BASE_URL),
 
   // ✅ ДОБАВЛЕНИЯ ТОЛЬКО ПО ПУНКТАМ (ничего не удалено)
