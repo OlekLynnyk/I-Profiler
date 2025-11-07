@@ -318,6 +318,7 @@ export default function SavedProfileList({
     const startRef = useRef<{ x: number; y: number } | null>(null);
     const movedRef = useRef(false);
     const didScrollRef = useRef(false); // ⬅️ NEW
+    const cleanupRef = useRef<(() => void) | null>(null); // ⬅️ NEW
     const panelId = `saved-sec-${id}`;
 
     // ⬇️ Новое: учитываем прокрутку реального скролл-контейнера
@@ -342,6 +343,13 @@ export default function SavedProfileList({
           const sc = getScrollableAncestor(e.currentTarget as HTMLElement);
           scrollElRef.current = sc;
           scrollStartRef.current = sc?.scrollTop ?? 0;
+
+          const onScroll = () => {
+            const cur = sc?.scrollTop ?? 0;
+            if (Math.abs(cur - scrollStartRef.current) > 2) didScrollRef.current = true;
+          };
+          sc?.addEventListener('scroll', onScroll, { passive: true });
+          cleanupRef.current = () => sc?.removeEventListener('scroll', onScroll);
         }}
         onPointerMove={(e) => {
           if (!startRef.current) return;
@@ -354,16 +362,25 @@ export default function SavedProfileList({
         onPointerCancel={() => {
           startRef.current = null;
           movedRef.current = true;
+          cleanupRef.current?.(); // ⬅️ NEW
+          cleanupRef.current = null; // ⬅️ NEW
         }}
         onPointerUp={(e) => {
           e.stopPropagation();
 
-          const delta = Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current);
-          const scrolledContainer = delta > SCROLL_DELTA_TOL;
-          if (delta > 2) didScrollRef.current = true;
+          const scrolledContainer =
+            Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) >
+            SCROLL_DELTA_TOL;
+
+          // финальная фиксация факта скролла и очистка
+          if (Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) > 2) {
+            didScrollRef.current = true; // ⬅️ NEW
+          }
+          cleanupRef.current?.(); // ⬅️ NEW
+          cleanupRef.current = null; // ⬅️ NEW
 
           startRef.current = null;
-          if (movedRef.current || didScrollRef.current || scrolledContainer) return;
+          if (movedRef.current || didScrollRef.current || scrolledContainer) return; // ⬅️ NEW
 
           toggleExpanded(id);
         }}
@@ -402,6 +419,7 @@ export default function SavedProfileList({
     const startRef = useRef<{ x: number; y: number } | null>(null);
     const movedRef = useRef(false);
     const didScrollRef = useRef(false); // ⬅️ NEW
+    const cleanupRef = useRef<(() => void) | null>(null); // ⬅️ NEW
 
     // ⬇️ Новое: учитываем прокрутку ближайшего скролл-контейнера
     const scrollElRef = useRef<HTMLElement | null>(null);
@@ -425,6 +443,13 @@ export default function SavedProfileList({
           const sc = getScrollableAncestor(e.currentTarget as HTMLElement);
           scrollElRef.current = sc;
           scrollStartRef.current = sc?.scrollTop ?? 0;
+
+          const onScroll = () => {
+            const cur = sc?.scrollTop ?? 0;
+            if (Math.abs(cur - scrollStartRef.current) > 2) didScrollRef.current = true;
+          };
+          sc?.addEventListener('scroll', onScroll, { passive: true });
+          cleanupRef.current = () => sc?.removeEventListener('scroll', onScroll);
         }}
         onPointerMove={(e) => {
           if (selectionMode && isFromCheckbox(e.target)) return;
@@ -438,17 +463,26 @@ export default function SavedProfileList({
         onPointerCancel={() => {
           startRef.current = null;
           movedRef.current = true;
+          cleanupRef.current?.(); // ⬅️ NEW
+          cleanupRef.current = null; // ⬅️ NEW
         }}
         onPointerUp={(e) => {
           if (selectionMode && isFromCheckbox(e.target)) return;
           e.stopPropagation();
 
-          const delta = Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current);
-          const scrolledContainer = delta > SCROLL_DELTA_TOL;
-          if (delta > 2) didScrollRef.current = true;
+          const scrolledContainer =
+            Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) >
+            SCROLL_DELTA_TOL;
+
+          // финальная фиксация факта скролла и очистка
+          if (Math.abs((scrollElRef.current?.scrollTop ?? 0) - scrollStartRef.current) > 2) {
+            didScrollRef.current = true; // ⬅️ NEW
+          }
+          cleanupRef.current?.(); // ⬅️ NEW
+          cleanupRef.current = null; // ⬅️ NEW
 
           startRef.current = null;
-          if (movedRef.current || didScrollRef.current || scrolledContainer) return;
+          if (movedRef.current || didScrollRef.current || scrolledContainer) return; // ⬅️ NEW
           if (selectionMode) return;
 
           setTimeout(() => setSelectedProfile(profile), 0);
