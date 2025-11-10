@@ -35,9 +35,9 @@ export default function WatchExplainer({
     { label: 'Strictness', value: '17%' },
   ],
   titleDesktop = 'One accessory image is all it takes to catch psych patterns.\nNo profiling. Just Discernment.',
-  captionDesktop = 'Built for clear judgement.\nPrivacy-minded by design.',
+  captionDesktop = 'Built for clear scientific reads.\nPrivacy-minded by design.',
   titleMobile = 'One accessory image is all it takes to catch psych patterns. No profiling. Just Discernment.',
-  captionMobile = 'Built for clear judgement.\nPrivacy-minded by design.',
+  captionMobile = 'Built for clear scientific reads.\nPrivacy-minded by design.',
   className,
 }: Props) {
   const reduce = useReducedMotion();
@@ -79,7 +79,7 @@ export default function WatchExplainer({
               whitespace-pre-line text-white/50
               font-mono small-caps mono-sc-fix
 
-              text-[18px] leading-[1.45] max-w-[351px]
+              text-[18px] leading-[1.45] max-w-[480px]
             "
           >
             {captionDesktop}

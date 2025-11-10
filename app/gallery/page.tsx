@@ -18,6 +18,8 @@ const BASE_IMAGES: ImageItem[] = [
     title: 'Elegant Free Spirit',
     description: `
 
+[Real person - fractional read]
+
 A. PROFILING RESULTS
 
 The individual is wearing a black one-shoulder bodysuit paired with fishnet stockings, standing under an archway with arms raised gracefully. The body language conveys confidence and openness, while the dark color palette emphasizes sophistication and control. The combination of bold style and poised demeanor suggests a harmony between elegance and freedom.
@@ -97,6 +99,8 @@ Core Statement:
     title: 'Calm x Impulse',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The individual is wearing a blue shirt, a maroon jacket, and a black cap with a logo. The jacket is open, suggesting a relaxed and confident posture. The color combination of blue and maroon projects both calmness and emotional warmth, while the cap introduces a practical, casual tone. The overall impression is of someone who appears composed but carries a latent readiness for action or change.
@@ -164,6 +168,8 @@ Core Statement:
     title: 'Casual & Ready',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The individual is dressed in a white sleeveless shirt and light blue jeans, photographed from a low angle with a modern building and cloudy sky in the background. The overall impression communicates grounded confidence — casual, simple, yet prepared for action. The composition evokes freedom, readiness, and a quiet assertiveness rooted in comfort.
@@ -203,7 +209,7 @@ Hidden Command — "I am casual and calm, but always ready to take on the next c
 
 B. JOB SUITABILITY
 
-Best Fit Jobs:
+Best Vibe Fit:
 Outdoor Adventure Guide — natural alignment with physicality, flexibility, and challenge-seeking.
 Creative Freelancer (Designer, Photographer, Writer) — combines relaxed autonomy with hidden complexity and refined self-discipline.
 Fitness Trainer or Coach — integrates physical readiness and motivation, transforming simplicity into focused energy.
@@ -212,7 +218,7 @@ Moderate Fit Jobs:
 Startup Team Member — adaptability and action-oriented mindset fit dynamic, less formal work environments.
 Content Creator — authenticity and relatability expressed through simple yet meaningful presentation.
 
-Unsuitable Jobs:
+Unsuitable Vibe Fit:
 Corporate Lawyer — rigid structure conflicts with freedom-oriented nature.
 Banker — formal constraints and repetitiveness clash with creative drive.
 Office Administrator — lack of variety and challenge may stifle growth potential.
@@ -234,6 +240,8 @@ Core Statement:
     src: '/gallery/gallery4.jpg',
     title: 'Elegant Bold',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -314,6 +322,8 @@ Core Statement:
     src: '/gallery/gallery5.jpg',
     title: 'Ethereal Elegance',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -460,6 +470,8 @@ Core Statement:
     title: 'Structured Edge',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The person is wearing an all-black outfit composed of a fitted blazer and fishnet stockings. The contrast of structured tailoring with provocative texture conveys duality — discipline blended with expressive confidence. The lighting is dramatic, highlighting the face and upper body, reinforcing a sense of control and intensity.
@@ -532,6 +544,8 @@ The balance between maintaining a professional demeanor and expressing creativit
     src: '/gallery/gallery8.jpg',
     title: 'Tough & Tender',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -619,6 +633,8 @@ Core Statement:
     title: 'Gentleman Scholar',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The individual is wearing a white shirt paired with a brown tweed blazer, holding a cocktail glass in a social environment. This combination projects both intellect and sociability, suggesting a person who bridges the gap between formality and comfort — someone who appreciates refinement without rigidity.
@@ -705,6 +721,8 @@ Core Statement:
     title: 'Calm & Bold',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The individual is wearing a light, loose-fitting beige shirt layered over a darker, fitted t-shirt. The choice of neutral tones conveys restraint and composure, while the contrasting dark inner layer introduces quiet strength. The combination suggests a person who values calm balance but possesses an inner readiness for bold action when needed.
@@ -787,6 +805,8 @@ Core Statement:
     src: '/gallery/gallery11.jpg',
     title: 'Clean & Private',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -873,6 +893,8 @@ Core Statement:
     src: '/gallery/gallery12.jpg',
     title: 'Relaxed & Focused',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -1011,6 +1033,7 @@ Core Statement:
     src: '/gallery/gallery14.jpg',
     title: 'Versatile Steps',
     description: `
+
 
 A. OBSERVATION
 
@@ -1168,6 +1191,8 @@ Core Statement:
     title: 'Grounded Depth',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The person is seated on a rock by the ocean, wearing a white t-shirt and dark pants. The visible tattoo on the left arm adds individuality and narrative depth to the overall simplicity of the attire. The surrounding environment — natural, open, and raw — amplifies the sense of calm introspection.
@@ -1245,6 +1270,8 @@ Core Statement:
     title: 'Strength & Trust',
     description: `
 
+[Real people - fractional reads]
+
 A. OBSERVATION
 
 Person 1 (left): Wearing swim trunks, muscular build, in water, supporting another person.
@@ -1305,6 +1332,8 @@ Person 2 (right): "Let me lead, but provide me with stability."
     src: '/gallery/gallery18.jpg',
     title: 'Comfort x Style',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -1375,6 +1404,8 @@ The individual balances comfort and individuality, practicality and style — a 
     title: 'Natural Elegance',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The person is wearing a black top and has long, wavy blonde hair. The background features a historical building, which is excluded from analysis for focus on personal presentation.
@@ -1442,6 +1473,8 @@ Natural Elegance — merging authenticity, grace, and quiet glamour with an unde
     title: 'Comfort & Intellect',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 Appearance Analysis:
@@ -1506,6 +1539,8 @@ Seeking a balance between physical relaxation and mental stimulation, valuing bo
     src: '/gallery/gallery21.jpg',
     title: 'Free within Form',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -1580,6 +1615,8 @@ Core Statement:
     title: 'Graceful Simplicity',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The person is wearing a white, strapless, fitted top and white, wide-legged pants. The outfit is simple and elegant, suggesting a preference for minimalism and purity.
@@ -1615,12 +1652,12 @@ Synthesized Role:
 
 B. JOB SUITABILITY
 
-Best Fit Jobs:
+Best Vibe Fit:
 Art Curator — aligns with elegance and minimalism, allowing for nuanced exploration of creative depth.
 Yoga Instructor — merges comfort, purity, and graceful movement, expressing harmony between body and mind.
 Fashion Designer — channels simplicity and elegance into structured creativity with room for deeper conceptual exploration.
 
-Unsuitable Jobs:
+Unsuitable Vibe Fit:
 Heavy Machinery Operator — lacks refinement, comfort, and aesthetic sensitivity.
 Sales Representative — demands extroversion and informality, conflicting with poised presentation.
 Corporate Lawyer — environment may feel overly rigid and complex, contrary to their preference for clarity and serenity.
@@ -1638,6 +1675,8 @@ Synthesized Role:
     src: '/gallery/gallery23.jpg',
     title: 'Minimalist Poise',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -1679,6 +1718,8 @@ Synthesized Role: The Iceberg — what you see is just the tip, with much more b
     src: '/gallery/gallery24.jpg',
     title: 'Edge & Whimsy',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -1758,6 +1799,8 @@ C. CONCLUSION
     title: 'Casual Boldness',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The person is wearing a white, loose-fitting outfit — shirt and pants — paired with a bright pink scarf. The overall composition reflects comfort, elegance, and a conscious statement of individuality.
@@ -1828,6 +1871,8 @@ Casual elegance with a touch of boldness — the embodiment of comfort, individu
     title: 'Cozy Explorer',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The person is wearing a green puffer vest over a white sweatshirt, paired with grey sweatpants. They are seated in a convertible car, holding a coffee cup, with a scenic background of mountains and trees.
@@ -1855,12 +1900,12 @@ Role: Adventurous Explorer — combining comfort, practicality, and a love for n
 
 B. JOB SUITABILITY
 
-Best Fit Jobs:
+Best Vibe Fit:
 Outdoor Adventure Guide: Aligns with the nature appreciation and practical, comfortable attire.
 Travel Blogger or Vlogger: Combines the relaxed style with the potential for adventure and sharing experiences.
 Environmental Consultant: Fits the nature appreciation and practical approach, focusing on environmental issues.
 
-Unsuitable Jobs:
+Unsuitable Vibe Fit:
 Corporate Lawyer: Requires a formal, intense environment which contrasts with the person’s relaxed and practical nature.
 Stockbroker: High-stress, fast-paced environment that might not suit the comfort and relaxed demeanor.
 Factory Worker: Typically involves repetitive, structured tasks that might not align with the desire for spontaneity and nature.
@@ -1877,6 +1922,8 @@ Role: Adventurous Explorer — combining comfort, practicality, and a love for n
     src: '/gallery/gallery27.jpg',
     title: 'Playful Depth',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -1944,6 +1991,8 @@ Explicit: Creative Simplicity — combining playfulness with a sophisticated sim
     src: '/gallery/gallery28.jpg',
     title: 'Practical Flair',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -2018,6 +2067,8 @@ Casual yet stylish — comfort balanced by readiness; practical intelligence wra
     title: 'Bright & Barefoot',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The individual, a woman, is wearing a striped shirt paired with a bright yellow jacket and light blue jeans, walking barefoot on the beach. The image communicates lightness, comfort, and a sense of freedom, blending casual simplicity with a lively, expressive touch.
@@ -2089,6 +2140,8 @@ Casual, bright, simple, and free — an individual whose brightness and freedom 
     title: 'Bold & Subtle',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 Clothing — the individual is wearing a long red coat, a teal hoodie, a white t-shirt, blue jeans, and white sneakers.
@@ -2149,8 +2202,10 @@ Boldness vs. Subtlety — the individual balances the desire to be noticed with 
     src: '/gallery/gallery31.jpg',
     title: 'Appearance-Based Psychographics Marketing Research',
     description: `
-  
-This study is based on observational data of clothing-store visitors (Massimo Dutti). It is research-oriented, contains no personal data, and does not claim absolute truth. It is a consultative opinion by specialists in Human Risk Analytics and Urban Behaviour Artists.
+
+[Real crowd, no faces]    
+    
+This study is based on observational data of clothing-store visitors. It is research-oriented, contains no personal data, and does not claim absolute truth. It is a consultative opinion by specialists in Human Risk Analytics and Urban Behaviour Artists.
 
 Introduction
 
@@ -2276,7 +2331,7 @@ Control/Structure/Order: 44%
 Growth/Freedom/Development (inner vector): 22%
 
 Conclusion
-On the basis of this study and the brand’s positioning (Massimo Dutti https://www.massimodutti.com/ie/ ), we have grounds to trust appearance-based psychographics as an input to marketing analysis, provided observations or photographs that respect local regulations at the place of study. With iterative collaboration and method improvement, such observations can be used not only as a supporting factor but, where appropriate, as a leading factor, because the decisions described are independent of self-report.`,
+On the basis of this study and the brand’s positioning (no-name luxury clothes shop), we have grounds to trust appearance-based psychographics as an input to marketing analysis, provided observations or photographs that respect local regulations at the place of study. With iterative collaboration and method improvement, such observations can be used not only as a supporting factor but, where appropriate, as a leading factor, because the decisions described are independent of self-report.`,
   },
 
   {
@@ -2284,6 +2339,8 @@ On the basis of this study and the brand’s positioning (Massimo Dutti https://
     src: '/gallery/gallery32.jpg',
     title: 'Freedom & Control',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -2358,6 +2415,8 @@ Core Statement:
     title: 'Elegant Ease',
     description: `
 
+[Real person - fractional read]
+
 A. OBSERVATION
 
 The person is dressed in a black, ribbed, high-neck top — a garment that conveys refinement, restraint, and quiet confidence. The hair is long, well-maintained, and neatly styled, revealing care for presentation and attention to visual harmony.
@@ -2427,6 +2486,8 @@ Personal Style: Elegant Simplicity — combining sophistication with a touch of 
     src: '/gallery/gallery34.jpg',
     title: 'Adaptable Pro',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 
@@ -2506,6 +2567,8 @@ Core Statement:
     src: '/gallery/gallery35.jpg',
     title: 'Calm & Intense',
     description: `
+
+[Real person - fractional read]
 
 A. OBSERVATION
 

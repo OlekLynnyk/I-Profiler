@@ -172,7 +172,7 @@ export default function PricingBody({ onLoginClick }: { onLoginClick: () => void
             <Card
               title="Freemium"
               price={<span>€0</span>}
-              subtitle={<span>Intro to Human Insights</span>}
+              subtitle={<span>Intro to Your Human Insights</span>}
               features={[
                 '5 Discernment Reports',
                 'Private workspace',
@@ -192,12 +192,12 @@ export default function PricingBody({ onLoginClick }: { onLoginClick: () => void
             <Card
               title="Premium"
               price={<span>€399 / month</span>}
-              subtitle={<span>For teams and individual decision-makers</span>}
+              subtitle={<span>Diplomacy-grade Signal Reader</span>}
               preface={<span>Everything in Freemium, plus:</span>}
               features={[
                 'Unlimited Discernment Reports',
                 'Enhanced work tools',
-                'Library of best-practice frameworks',
+                'Secret Stype Library',
                 'Onboarding on request',
               ]}
               buttonLabel="Upgrade to Premium"
@@ -242,10 +242,10 @@ export default function PricingBody({ onLoginClick }: { onLoginClick: () => void
               price={<span>Custom</span>}
               subtitle={<span>For leadership teams and enterprises</span>}
               features={[
-                'Sales Discernment Workshop (consensus-driven insight extraction, without disclosing confidential details.)',
-                'Organisational Insight Audit (an inside view into your team.)',
-                'Anonymous Marketing Insights (anonymised group wisdom without personal data; via short-form consultation, no files required.)',
-                'Hiring and Human Risk Assessment (structured, role-fit insight evaluation.)',
+                'Read & Close Workshop (live body language and appearance reads without disclosing confidential details.)',
+                'Culture Snapshot Review (for change-makers who need the real mood.)',
+                'Psychographics for Marketing (anonymised group wisdom without personal data; real crowds, no files required.)',
+                'Shadow Fit Consultancy (anonymous human audit.)',
               ]}
               buttonLabel="Book a Call"
               onButtonClick={() =>

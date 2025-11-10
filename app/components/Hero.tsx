@@ -18,8 +18,8 @@ const HOLD_AFTER_DELETE = 280;
 
 const PHRASES = [
   'make clearer calls',
-  'recognise intent faster',
-  'spot risk early',
+  'spot bluff faster',
+  'catch personal risk',
   'focus on what matters',
   'build trust in seconds',
   'weigh signals not noise',
@@ -160,7 +160,7 @@ export default function Hero({
                 color: 'rgba(255,255,255,0.5)',
               }}
             >
-              with uncommon clarity —
+              with diplomatic precision —
             </span>
 
             {/* 5-я строка: "and" (серый) + анимация (белая) + каретка + divider */}

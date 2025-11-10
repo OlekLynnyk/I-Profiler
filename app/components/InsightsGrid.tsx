@@ -8,12 +8,12 @@ import { Eye, MessageSquare, Pin, AlertTriangle, Ban, User } from 'lucide-react'
 type Item = { icon: React.ComponentType<any>; label: string };
 
 const items: Item[] = [
-  { icon: Eye, label: 'Hidden Drivers\nand Risks' },
-  { icon: MessageSquare, label: 'Communication\nApproach' },
-  { icon: Pin, label: 'Decision-\nMaking Style' },
+  { icon: Eye, label: 'Hidden Drivers\n' },
+  { icon: MessageSquare, label: 'First-Impression\n' },
+  { icon: Pin, label: 'Decision-\nMaking Tells' },
   { icon: AlertTriangle, label: 'Conflict\nManagement' },
-  { icon: Ban, label: '‘Go/No-Go’\nAssistance' },
-  { icon: User, label: 'C-level\nRecruitment' },
+  { icon: Ban, label: '‘Go/No-Go’\nSwitch' },
+  { icon: User, label: 'Top-Call\nVibe Check' },
 ];
 
 const easing: any = [0.22, 1, 0.36, 1];

@@ -40,7 +40,7 @@ export const getSidebarBoxes = ({
   return [
     {
       id: 'templates',
-      title: 'Templates',
+      title: 'Diplomacy Templates',
       description: 'Preset templates for various use cases.',
       // ⬇️ Новый динамический контент с папками + файлами, Create block/template, CDRs-гейт
       renderContent: <TemplatesPanel isCdrMode={isCdrMode} />,
