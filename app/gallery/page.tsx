@@ -99,7 +99,7 @@ Core Statement:
     title: 'Calm x Impulse',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -168,7 +168,7 @@ Core Statement:
     title: 'Casual & Ready',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -241,7 +241,7 @@ Core Statement:
     title: 'Elegant Bold',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -323,7 +323,7 @@ Core Statement:
     title: 'Ethereal Elegance',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -470,7 +470,7 @@ Core Statement:
     title: 'Structured Edge',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -545,7 +545,7 @@ The balance between maintaining a professional demeanor and expressing creativit
     title: 'Tough & Tender',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -633,7 +633,7 @@ Core Statement:
     title: 'Gentleman Scholar',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -721,7 +721,7 @@ Core Statement:
     title: 'Calm & Bold',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -806,7 +806,7 @@ Core Statement:
     title: 'Clean & Private',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -894,7 +894,7 @@ Core Statement:
     title: 'Relaxed & Focused',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1191,7 +1191,7 @@ Core Statement:
     title: 'Grounded Depth',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1270,7 +1270,7 @@ Core Statement:
     title: 'Strength & Trust',
     description: `
 
-[Real people - fractional reads]
+[Real people - fictional reads]
 
 A. OBSERVATION
 
@@ -1333,7 +1333,7 @@ Person 2 (right): "Let me lead, but provide me with stability."
     title: 'Comfort x Style',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1404,7 +1404,7 @@ The individual balances comfort and individuality, practicality and style — a 
     title: 'Natural Elegance',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1473,7 +1473,7 @@ Natural Elegance — merging authenticity, grace, and quiet glamour with an unde
     title: 'Comfort & Intellect',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1540,7 +1540,7 @@ Seeking a balance between physical relaxation and mental stimulation, valuing bo
     title: 'Free within Form',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1615,7 +1615,7 @@ Core Statement:
     title: 'Graceful Simplicity',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1676,7 +1676,7 @@ Synthesized Role:
     title: 'Minimalist Poise',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1719,7 +1719,7 @@ Synthesized Role: The Iceberg — what you see is just the tip, with much more b
     title: 'Edge & Whimsy',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1799,7 +1799,7 @@ C. CONCLUSION
     title: 'Casual Boldness',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1871,7 +1871,7 @@ Casual elegance with a touch of boldness — the embodiment of comfort, individu
     title: 'Cozy Explorer',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1923,7 +1923,7 @@ Role: Adventurous Explorer — combining comfort, practicality, and a love for n
     title: 'Playful Depth',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -1992,7 +1992,7 @@ Explicit: Creative Simplicity — combining playfulness with a sophisticated sim
     title: 'Practical Flair',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -2067,7 +2067,7 @@ Casual yet stylish — comfort balanced by readiness; practical intelligence wra
     title: 'Bright & Barefoot',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -2140,7 +2140,7 @@ Casual, bright, simple, and free — an individual whose brightness and freedom 
     title: 'Bold & Subtle',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -2340,7 +2340,7 @@ On the basis of this study and the brand’s positioning (no-name luxury clothes
     title: 'Freedom & Control',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -2415,7 +2415,7 @@ Core Statement:
     title: 'Elegant Ease',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -2487,7 +2487,7 @@ Personal Style: Elegant Simplicity — combining sophistication with a touch of 
     title: 'Adaptable Pro',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
@@ -2568,7 +2568,7 @@ Core Statement:
     title: 'Calm & Intense',
     description: `
 
-[Real person - fractional read]
+[Real person - fictional read]
 
 A. OBSERVATION
 
