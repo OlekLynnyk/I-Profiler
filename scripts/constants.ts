@@ -48,7 +48,7 @@ RESPONSE FORMAT:
   (1) estimated accuracy;
   (2) if applicable, the AI-suspicion note in the required format;
   (3) the consolidation line in the user’s language:
-      "Verification tip: create 2–3 profiles of the same person from different photos, save them, and merge into one final result.";
+      "Verification tip: create 2–3 analysis of the same person from different photos, save them, and merge into one final result.";
   (4) only when two persons are present — append this two-person reliability warning (it becomes the last line of item 12):
       "Note: there are two people in the photo — this analysis is less reliable; details may mix. For accuracy, use separate photos for each person."
 

@@ -21,8 +21,8 @@ export default function VideoShowcase({
 
   // 🔗 Ссылки на видео — из ENV (AWS)
   const VIDEO_BASE = process.env.NEXT_PUBLIC_VIDEO_BASE_URL ?? '';
-  const DESKTOP_VIDEO = `${VIDEO_BASE}/how-it-works-desktop1.MP4`;
-  const MOBILE_VIDEO = `${VIDEO_BASE}/how-it-works-mobile2.MP4`;
+  const DESKTOP_VIDEO = `${VIDEO_BASE}/how-it-works-desktop1.mp4`;
+  const MOBILE_VIDEO = `${VIDEO_BASE}/how-it-works-mobile2.mp4`;
 
   // 🖼️ Постеры (пока статичные)
   const POSTER = '/images/howitworks-poster.jpg';
