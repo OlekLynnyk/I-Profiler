@@ -48,13 +48,7 @@ type TItemRow = {
  * Constants / Limits
  * ──────────────────────────────────────────────────────────────────────────── */
 
-export const SYS_FOLDERS = [
-  'General',
-  'Human resources (HR)',
-  'Team leadership',
-  'Sales',
-  'CDRs',
-] as const;
+export const SYS_FOLDERS = ['General', 'Team leadership', 'Sales', 'CDRs'] as const;
 
 export const MAX_CUSTOM_FOLDERS = 5;
 export const FOLDER_NAME_LIMIT = 30;
