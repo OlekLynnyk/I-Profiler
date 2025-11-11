@@ -372,7 +372,7 @@ export default function Hero({
             {/* 2-4 — серые */}
             <div style={{ color: 'rgba(255,255,255,0.5)' }}>Read tiny cues from outfits</div>
             <div style={{ color: 'rgba(255,255,255,0.5)' }}>to understand people</div>
-            <div style={{ color: 'rgba(255,255,255,0.5)' }}>with uncommon clarity —</div>
+            <div style={{ color: 'rgba(255,255,255,0.5)' }}>with diplomatic precision —</div>
             {/* 5-я: and (серый) + typed (белый) + каретка */}
             <div
               className="flex items-center justify-center gap-[8px]"
