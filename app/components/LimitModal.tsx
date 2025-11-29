@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
+import { PACKAGE_TO_PRICE } from '@/types/plan';
 
 interface LimitModalProps {
   show: boolean;
@@ -29,14 +30,20 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
   const [expanded, setExpanded] = useState(false);
   const supabase = createPagesBrowserClient();
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (plan: 'Premium' | 'Business') => {
     try {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
 
+      const priceId = PACKAGE_TO_PRICE[plan];
+
+      if (!priceId) {
+        throw new Error(`Missing Stripe priceId for plan: ${plan}`);
+      }
+
       const res = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
-        body: JSON.stringify({ priceId: 'price_1SOHlgAGnqjZyhfA7Z9fMlSl' }),
+        body: JSON.stringify({ priceId }),
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -89,18 +96,24 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
             text-[var(--text-primary)]
           `}
         >
-          {/* --- COMPACT: не меняем --- */}
+          {/* --- COMPACT --- */}
           {!expanded ? (
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 py-3 text-sm text-white">
               <span className="whitespace-normal md:whitespace-nowrap text-center md:text-left">
-                Your subscription limit has been reached: 🚀
+                You've reached the plan limit:
               </span>
               <div className="flex flex-col md:flex-row gap-2 md:items-center w-full md:w-auto">
                 <button
-                  onClick={handleCheckout}
+                  onClick={() => handleCheckout('Premium')}
                   className="text-[11px] bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md w-full md:w-auto min-w-[95px]"
                 >
                   Upgrade to Premium
+                </button>
+                <button
+                  onClick={() => handleCheckout('Business')}
+                  className="text-[11px] bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-md w-full md:w-auto min-w-[95px]"
+                >
+                  Upgrade to Business
                 </button>
                 <button
                   onClick={() => setExpanded(true)}
@@ -112,7 +125,7 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
               </div>
             </div>
           ) : (
-            /* --- EXPANDED: заменено на 1 Premium --- */
+            /* --- EXPANDED --- */
             <div
               className="relative px-4 pt-2 pb-4 sm:px-6 sm:pt-2 sm:pb-5 rounded-2xl overflow-y-auto"
               style={{ maxHeight: 'min(65svh, calc(100vh - 200px))' }}
@@ -130,16 +143,17 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                 </div>
               </div>
 
-              {/* --- Premium Plan Only --- */}
+              {/* --- Plans --- */}
               <div className="grid grid-cols-1 gap-6">
+                {/* Premium */}
                 <div className="bg-gray-800 bg-opacity-50 rounded-xl p-6 flex flex-col justify-between text-white">
                   <div>
                     <h3 className="text-lg font-semibold text-white text-center">Premium</h3>
                     <div className="text-2xl font-semibold mt-2 text-center">
-                      €399 <span className="text-sm text-white/70">/ month</span>
+                      €49 <span className="text-sm text-white/70">/ month</span>
                     </div>
                     <p className="text-center text-sm text-white/80 mt-2">
-                      For teams and individual decision-makers
+                      Diplomacy-grade Signal Reader. Personal Use
                     </p>
 
                     <p className="text-center text-xs text-white/60 mt-3 mb-3">
@@ -149,27 +163,65 @@ export default function LimitModal({ show, onClose }: LimitModalProps) {
                     <ul className="space-y-2 text-gray-300 text-sm">
                       <li className="flex items-start gap-2">
                         <CheckIcon />
-                        <span>Unlimited Discernment Reports</span>
+                        <span>25 Pattern Recognitions</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckIcon />
-                        <span>Enhanced work tools</span>
+                        <span>Enhanced Work Tools</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckIcon />
-                        <span>Library of best-practice frameworks</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckIcon />
-                        <span>Onboarding on request</span>
+                        <span>Knowledge Library</span>
                       </li>
                     </ul>
                   </div>
                   <button
-                    onClick={handleCheckout}
+                    onClick={() => handleCheckout('Premium')}
                     className={`bg-purple-600 hover:bg-purple-700 text-white ${buttonClasses} w-full mt-5`}
                   >
                     Upgrade to Premium
+                  </button>
+                </div>
+
+                {/* Business */}
+                <div className="bg-gray-800 bg-opacity-50 rounded-xl p-6 flex flex-col justify-between text-white">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white text-center">Business</h3>
+                    <div className="text-2xl font-semibold mt-2 text-center">
+                      €199 <span className="text-sm text-white/70">/ month</span>
+                    </div>
+                    <p className="text-center text-sm text-white/80 mt-2">
+                      For Teams & Enterprises to Scale Up Faster
+                    </p>
+
+                    <p className="text-center text-xs text-white/60 mt-3 mb-3">
+                      Everything in Premium, plus:
+                    </p>
+
+                    <ul className="space-y-2 text-gray-300 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Unlimited Pattern Recognitions</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Enhanced Insight Syntheses</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Onboarding on Request</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span>Discounted Workshops</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => handleCheckout('Business')}
+                    className={`bg-purple-600 hover:bg-purple-700 text-white ${buttonClasses} w-full mt-5`}
+                  >
+                    Upgrade to Business
                   </button>
                 </div>
               </div>

@@ -43,10 +43,16 @@ export function useOnboardingWorkspace() {
     step6: false,
   });
 
-  // INIT: load flags (DB -> LS)
+  // 👉 если мобильный – просто сразу считаем онбординг "готовым" и не грузим ничего
   useEffect(() => {
     (async () => {
       if (!session || !user) {
+        setReady(true);
+        return;
+      }
+
+      if (device === 'mobile') {
+        // мобильный workspace: онбординг отключён
         setReady(true);
         return;
       }
@@ -86,7 +92,7 @@ export function useOnboardingWorkspace() {
   }, [session, user, supabase, device]);
 
   async function persist(partial: Partial<WSFlags>) {
-    if (!session || !user) return;
+    if (!session || !user || device === 'mobile') return; // 🚫 не пишем флаги для мобильного
     Object.entries(partial).forEach(([k, v]) => {
       if (v) localStorage.setItem(lsKey(user.id, device, k as keyof WSFlags), 'true');
     });
@@ -95,12 +101,13 @@ export function useOnboardingWorkspace() {
   }
 
   async function log(name: string, extra: Record<string, any> = {}) {
-    if (!session || !user) return;
+    if (!session || !user || device === 'mobile') return; // 🚫 не логируем шаги онбординга на мобиле
     await logUserAction(supabase, user.id, name, { device, path: '/workspace', ...extra });
   }
 
   // PUBLIC API: confirmations
   const acceptStep1 = async () => {
+    if (device === 'mobile') return;
     await persist({ step1: true });
     setV((s) => ({ ...s, step1: false }));
     await log('onboarding_workspace_step1_accepted');
@@ -110,52 +117,62 @@ export function useOnboardingWorkspace() {
     }
   };
   const dismissStep1 = async () => {
+    if (device === 'mobile') return;
     setV((s) => ({ ...s, step1: false }));
     await log('onboarding_workspace_step1_dismissed');
   };
 
   const acceptStep2 = async () => {
+    if (device === 'mobile') return;
     await persist({ step2: true });
     setV((s) => ({ ...s, step2: false }));
     await log('onboarding_workspace_step2_accepted');
   };
   const dismissStep2 = async () => {
+    if (device === 'mobile') return;
     setV((s) => ({ ...s, step2: false }));
     await log('onboarding_workspace_step2_dismissed');
   };
 
   const acceptStep3 = async () => {
+    if (device === 'mobile') return;
     await persist({ step3: true });
     setV((s) => ({ ...s, step3: false }));
     await log('onboarding_workspace_step3_accepted');
   };
   const dismissStep3 = async () => {
+    if (device === 'mobile') return;
     setV((s) => ({ ...s, step3: false }));
     await log('onboarding_workspace_step3_dismissed');
   };
 
   const acceptStep4 = async () => {
+    if (device === 'mobile') return;
     await persist({ step4: true });
     setV((s) => ({ ...s, step4: false }));
     await log('onboarding_workspace_step4_accepted');
   };
   const dismissStep4 = async () => {
+    if (device === 'mobile') return;
     setV((s) => ({ ...s, step4: false }));
     await log('onboarding_workspace_step4_dismissed');
   };
 
   const acceptFirstImageDrag = async () => {
+    if (device === 'mobile') return;
     await persist({ firstImageDrag: true });
     setV((s) => ({ ...s, firstImageDrag: false }));
     await log('onboarding_workspace_first_image_drag_accepted');
   };
   const laterFirstImageDrag = async () => {
+    if (device === 'mobile') return;
     await persist({ firstImageDrag: true });
     setV((s) => ({ ...s, firstImageDrag: false }));
     await log('onboarding_workspace_first_image_drag_later');
   };
 
   const acceptStep6 = async () => {
+    if (device === 'mobile') return;
     await persist({ step6: true });
     setV((s) => ({ ...s, step6: false }));
     await log('onboarding_workspace_cdrs_accepted');
@@ -163,24 +180,28 @@ export function useOnboardingWorkspace() {
 
   // TRIGGERS (внешние события)
   const triggerFirstAssistantReply = async () => {
+    if (device === 'mobile') return;
     if (!flagsRef.current.step3 && !v.step3) {
       setV((s) => ({ ...s, step3: true }));
       await log('onboarding_workspace_step3_shown');
     }
   };
   const triggerSaveModalOpened = async () => {
+    if (device === 'mobile') return;
     if (!flagsRef.current.step4 && !v.step4) {
       setV((s) => ({ ...s, step4: true }));
       await log('onboarding_workspace_step4_shown');
     }
   };
   const triggerFirstImage = async () => {
+    if (device === 'mobile') return;
     if (!flagsRef.current.firstImageDrag && !v.firstImageDrag) {
       setV((s) => ({ ...s, firstImageDrag: true }));
       await log('onboarding_workspace_first_image_drag_shown');
     }
   };
   const triggerCdrsEnabled = async () => {
+    if (device === 'mobile') return;
     if (!flagsRef.current.step6 && !v.step6) {
       setV((s) => ({ ...s, step6: true }));
       await log('onboarding_workspace_cdrs_shown');
@@ -191,12 +212,12 @@ export function useOnboardingWorkspace() {
     device,
     ready,
     // visibility
-    showStep1: v.step1,
-    showStep2: v.step2,
-    showStep3: v.step3,
-    showStep4: v.step4,
-    showFirstImageDrag: v.firstImageDrag,
-    showStep6: v.step6,
+    showStep1: device === 'mobile' ? false : v.step1,
+    showStep2: device === 'mobile' ? false : v.step2,
+    showStep3: device === 'mobile' ? false : v.step3,
+    showStep4: device === 'mobile' ? false : v.step4,
+    showFirstImageDrag: device === 'mobile' ? false : v.firstImageDrag,
+    showStep6: device === 'mobile' ? false : v.step6,
     // accepts/dismiss
     acceptStep1,
     dismissStep1,
@@ -209,7 +230,10 @@ export function useOnboardingWorkspace() {
     acceptFirstImageDrag,
     laterFirstImageDrag,
     acceptStep6,
-    dismissStep6: () => setV((s) => ({ ...s, step6: false })),
+    dismissStep6: () => {
+      if (device === 'mobile') return;
+      setV((s) => ({ ...s, step6: false }));
+    },
     // triggers
     triggerFirstAssistantReply,
     triggerSaveModalOpened,

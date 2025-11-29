@@ -6,9 +6,7 @@ import { useProfile } from '../hooks/useProfile';
 import { PlanProgress } from '@/components/PlanProgress';
 import { PackageType } from '@/types/plan';
 import { useUserPlan } from '../hooks/useUserPlan';
-// import { usePlanUsage, PlanUsageProvider } from '../workspace/context/PlanUsageContext'; // УДАЛЕНО
 import { useSidebar } from '@/app/context/SidebarContext';
-import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 
 // Типы
 type SidebarProps = {
@@ -59,35 +57,6 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
     return () => window.removeEventListener('usage:inc', onInc as EventListener);
   }, []);
   // === КОНЕЦ ДОБАВЛЕНИЯ ===
-
-  const supabase = createPagesBrowserClient();
-  const [portalLoading, setPortalLoading] = useState(false);
-
-  const handleOpenPortal = async () => {
-    try {
-      setPortalLoading(true);
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) return;
-
-      const res = await fetch('/api/stripe/portal', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        console.error('❌ Portal fetch failed:', await res.text());
-        return;
-      }
-
-      const { url } = await res.json();
-      if (url) window.location.href = url;
-    } catch (e) {
-      console.error('❌ Portal error:', e);
-    } finally {
-      setPortalLoading(false);
-    }
-  };
 
   const handleKeyToggle = (e: KeyboardEvent<HTMLDivElement>, boxId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -185,42 +154,12 @@ export default function Sidebar({ packageType, refreshToken }: SidebarProps) {
       id: 'plan-box',
       title: packageType,
       content: (
-        // УБРАНО: <PlanUsageProvider>
         <div
           className="space-y-2 text-sm text-[var(--text-primary)]"
           onClick={(e) => e.stopPropagation()}
         >
           <MonthlyUsage refreshToken={refreshToken} usageBump={usageBump} />
-          <button
-            onClick={async () => {
-              try {
-                setPortalLoading(true);
-                const res = await fetch('/api/stripe/create-checkout-session', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    priceId: 'price_1SOHlgAGnqjZyhfA7Z9fMlSl', // ← твой Live-прайс из Stripe
-                  }),
-                });
-
-                if (!res.ok) throw new Error('Stripe checkout failed');
-                const { url } = await res.json();
-                if (url) window.location.href = url;
-                else throw new Error('Missing Stripe redirect URL');
-              } catch (err) {
-                console.error('❌ Stripe checkout error:', err);
-                alert('Payment redirect failed. Please try again later.');
-              } finally {
-                setPortalLoading(false);
-              }
-            }}
-            disabled={portalLoading}
-            className="text-xs bg-[var(--button-bg)] hover:bg-[var(--button-hover-bg)] text-[var(--text-primary)] ring-1 ring-[var(--card-border)] rounded-xl px-3 py-1 w-full transition"
-          >
-            {portalLoading ? 'Opening…' : 'Update your plan'}
-          </button>
         </div>
-        // УБРАНО: </PlanUsageProvider>
       ),
     },
     {

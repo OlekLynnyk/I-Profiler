@@ -94,7 +94,7 @@ export default function Hero({
   return (
     <section className="relative z-0 w-full text-white">
       {/* ==== DESKTOP (>= md) ==== */}
-      <div className="hidden md:block relative z-0 min-h-[800px]">
+      <div className="hidden md:block relative z-0 min-h-[800px] mx-auto max-w-[1440px]">
         {/* Левая колонка по фигме */}
         <div
           className="absolute"

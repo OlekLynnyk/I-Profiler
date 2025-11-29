@@ -1,19 +1,25 @@
 // types/plan.ts
 
-export const PACKAGE_TYPES = ['Freemium', 'Premium'] as const;
+export const PACKAGE_TYPES = ['Freemium', 'Premium', 'Business'] as const;
 export type ValidPackageType = (typeof PACKAGE_TYPES)[number];
 export type PackageType = ValidPackageType | string;
 
 export const PACKAGE_LIMITS = {
   Freemium: {
-    requestsPerMonth: 5,
-    dailyGenerations: 5,
+    requestsPerMonth: 3,
+    dailyGenerations: 3,
     allowExport: false,
     allowCustomBranding: false,
   },
   Premium: {
+    requestsPerMonth: 25,
+    dailyGenerations: 25,
+    allowExport: true,
+    allowCustomBranding: true,
+  },
+  Business: {
     requestsPerMonth: 10000,
-    dailyGenerations: 50,
+    dailyGenerations: 100,
     allowExport: true,
     allowCustomBranding: true,
   },
@@ -24,11 +30,13 @@ export function isValidPackageType(pkg: string): pkg is ValidPackageType {
 }
 
 export const PRICE_TO_PACKAGE: Record<string, ValidPackageType> = {
-  price_1SOHlgAGnqjZyhfA7Z9fMlSl: 'Premium',
+  price_1SYssAAGnqjZyhfAQOj6kr2x: 'Premium',
+  price_1SYssQAGnqjZyhfAm4rvjIhY: 'Business',
 };
 
 export const PACKAGE_TO_PRICE: Partial<Record<ValidPackageType, string>> = {
-  Premium: 'price_1SOHlgAGnqjZyhfA7Z9fMlSl',
+  Premium: 'price_1SYssAAGnqjZyhfAQOj6kr2x',
+  Business: 'price_1SYssQAGnqjZyhfAm4rvjIhY',
 };
 
 export type NormalizedSubscriptionStatus = 'active' | 'incomplete' | 'canceled';
@@ -57,7 +65,7 @@ export function mapStripeStatus(status: string): NormalizedSubscriptionStatus {
   }
 }
 
-export const PAID_PLANS = ['Premium'] as const;
+export const PAID_PLANS = ['Premium', 'Business'] as const;
 
 export function isPaidPlan(plan: PackageType): plan is ValidPackageType {
   return isValidPackageType(plan) && plan !== 'Freemium';

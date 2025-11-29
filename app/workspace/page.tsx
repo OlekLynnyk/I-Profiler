@@ -886,6 +886,7 @@ export default function WorkspacePage() {
                         id="ws-cdrs-btn"
                         type="button"
                         data-ignore-sidebar-close="true"
+                        disabled={window.matchMedia('(max-width: 767px)').matches}
                         onClick={() => {
                           if (isCdrMode && cdrSelected.length > 0) {
                             alert('Remove all CDR attachments to turn CDRs off.');
