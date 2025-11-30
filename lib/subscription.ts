@@ -187,16 +187,22 @@ export async function syncSubscriptionWithSupabase(
   }
   // ======================= [REPLACEMENT #1 END] =========================
 
+  // ======================= [NEW BLOCK START] ============================
   const { data: existing, error: readErr } = await supabase
     .from('user_subscription')
-    .select('stripe_price_id, plan')
+    .select('stripe_price_id, plan, current_period_start')
     .eq('user_id', userId)
     .maybeSingle();
   if (readErr) throw readErr;
 
-  const planChanged =
-    (existing?.stripe_price_id || null) !== mapped.priceId ||
-    (existing?.plan || null) !== mapped.plan;
+  const prevPriceId = existing?.stripe_price_id || null;
+  const prevPlan = (existing?.plan as ValidPackageType | null) || null;
+  const prevPeriodStart = existing?.current_period_start || null;
+
+  const planChanged = prevPriceId !== mapped.priceId || prevPlan !== mapped.plan;
+
+  const periodChanged =
+    !!resolvedPeriodStart && (!prevPeriodStart || prevPeriodStart !== resolvedPeriodStart);
 
   const baseFields = {
     stripe_customer_id: subscription.customer as string,
@@ -232,9 +238,24 @@ export async function syncSubscriptionWithSupabase(
     if (updateErr) throw updateErr;
   }
 
-  if (planChanged) {
+  if (!existing || planChanged || periodChanged) {
     await updateUserLimits(supabase, mapped.plan, userId);
   }
 
+  if (periodChanged) {
+    const { error: limitsUpdateErr } = await supabase
+      .from('user_limits')
+      .update({
+        used_today: 0,
+        used_monthly: 0,
+      })
+      .eq('user_id', userId);
+
+    if (limitsUpdateErr) {
+      console.warn('⚠️ Failed to reset usage on new billing period:', limitsUpdateErr);
+    }
+  }
+
   return { plan: mapped.plan, status: mapped.status };
+  // ======================= [NEW BLOCK END] ==============================
 }
